@@ -152,7 +152,15 @@ Details in [SANITY.md](./SANITY.md). Summary:
 
 - **Repository:** `juliolmuller/portfolio`. Formerly `juliolmuller.github.io` (a GitHub Pages user site); hosting is Vercel (D11). Branches: `next` is the working/staging branch, `main` is production. `main` still holds the **old static portfolio** until the launch merge (§6.4). Remote branches today: `main`, `next` (plus a stale `master`).
 - **CI** (`.github/workflows/ci.yml`): runs on **push** to `main` and `next` (not on pull requests): frozen install, format, lint, typecheck, unit tests, i18n and icon audits, build, `check:bundle`, `check:seo`, Playwright (Chromium, WebKit, mobile, Firefox smoke, visual), Lighthouse CI (reports as artifacts); `bun audit` runs as a separate job. It needs no secrets: it uses fixtures and test-only credentials. Runners are pinned to `ubuntu-24.04` (Playwright WebKit does not start on 26.04); bump together with Playwright. Actions are pinned to commit SHAs.
-- **Dependabot** (`.github/dependabot.yml`): grouped weekly updates on Mondays; review release notes for the `framework` group (Next.js + React together).
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:02d5066d3b1e45c1d0f2ef2fbfd9a49f2361126cdfd9e793eed05a75659f591c -->
+
+- **Dependabot** (`.github/dependabot.yml`): grouped weekly version updates for Bun and GitHub Actions target `next`; security updates target the default branch, `main`. Keep the configuration on `main`, where Dependabot reads it. Review release notes for the `framework` group (Next.js + React together).
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - **Visual baselines** (`visual-baselines.yml`, manual): Actions → _Visual baselines_ → Run workflow, download the artifact and commit the PNGs under `tests/e2e/__screenshots__/`.
 - **PR author assignment** (`pr-author-assign.yml`): on `pull_request_target` (`opened`, `reopened`) it assigns the PR author as assignee with `toshimaru/auto-author-assign` (pinned to a commit SHA). It needs no secrets and only `pull-requests: write`; it never checks out PR code.
 - **Claude issue to PR** (`claude-issue.yml`) and **Claude PR review** (`claude-review.yml`): label-triggered (`Claude`); need the Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. Flow and setup in [AI.md](./AI.md#claude-workflows-d78).

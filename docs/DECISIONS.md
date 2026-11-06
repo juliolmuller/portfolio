@@ -23,7 +23,15 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 ## Toolchain and versions
 
 - **D5 — TypeScript 6.0, not 7.0** (active). `typescript-eslint@8.71` peers on `<6.1` and `eslint-config-next` depends on it. Pin `~6.0.3`; revisit when typescript-eslint supports 7.
-- **D6 — ESLint 9, not 10** (active). `eslint-plugin-jsx-a11y@6.10.2` peers on ESLint ≤ 9 and jsx-a11y strict is required.
+
+<!-- coderabbit-ai-generated:v1 -->
+
+<!-- coderabbit-ai-generated-section:v1:41e31d04b6835298f5368fa5fa0b68a35e60e7261c5f5576d99a18264ca36d72 -->
+
+- **D6 — ESLint 10** (active). `eslint-config-any@3.0.0-beta.3` requires ESLint `^10.3.0`; its `eslint-plugin-jsx-a11y-x@0.2.0` supports ESLint 9 and 10.
+
+<!-- /coderabbit-ai-generated:v1 -->
+
 - **D15 — Dependency build scripts** (superseded by D24). Bun blocks lifecycle scripts by default; `trustedDependencies: []`. The three blocked (`@parcel/watcher`, `@swc/core`, `unrs-resolver`) have prebuilt optional binaries. Add an entry only when a package fails without its script.
 - **D20 — Prettier** (active). Single quotes, trailing commas, 80 columns, semicolons, LF (the owner's editor default is CRLF, but the repo lives in WSL/Linux and CI is Linux; `.gitattributes` enforces it), Tailwind plugin.
 - **D24 — Bun 1.4 as package manager and Vercel runtime** (active; replaced pnpm). `vercel.json`: `bunVersion: "1.4.x"`, `bun install --frozen-lockfile`. `dev/build/start` run `bun run --bun next …` (required for ISR on Vercel's Bun runtime). Repo scripts run `bun --conditions=react-server scripts/*.ts` (resolves `server-only` to its no-op). Node 24 stays for tools that spawn `node` (ESLint, Vitest, Playwright). `audit:deps` ignores GHSA-vfj7-8cjw-p6xm (`braces`, dev-only via `eslint-config-next` → `fast-glob`, no patched release); remove the ignore when one ships. **Risk:** Bun runtime on Vercel is beta and the proxy likely stays on Node; if ISR or `sharp` misbehave, drop `bunVersion`.

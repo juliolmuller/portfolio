@@ -5,6 +5,7 @@ version: 2
 updates:
   - package-ecosystem: bun
     directory: /
+    target-branch: next
     schedule:
       interval: weekly
       day: monday
@@ -44,7 +45,6 @@ updates:
       # D5: typescript-eslint does not support TypeScript 7 yet.
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
-      # D6: ESLint 10 waits for eslint-config-next.
       - dependency-name: eslint
         update-types: ['version-update:semver-major']
       # D71: v10 needs conventional-changelog-writer@9, which
@@ -54,6 +54,7 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    target-branch: next
     schedule:
       interval: weekly
       day: monday
