@@ -78,7 +78,7 @@ Things that cost time and are easy to repeat:
 - **Lighthouse under WSL** litters the repo with `C:\Users\…\lighthouse.*` and then breaks the Tailwind scanner (`rm -rf ./C:*`).
 - **Playwright reuses a server on :3100**; kill stale ones by PID, never `pkill -f "next start"`.
 - **Pin runners** (`ubuntu-24.04`): Playwright WebKit doesn't start on 26.04.
-- **Peer ranges decide versions** (TypeScript 6.0, ESLint 9): `bun run update` restores both pins after a blanket upgrade.
+- **Peer ranges decide versions** (TypeScript 6.0, ESLint 9).
 - **Don't leak the admin through side channels**: headers set in `next.config` apply to anonymous 404s too (D51); multipart POSTs get Next's 400, not 404 (D54).
 - **Performance targets in the original spec are unmet** (D58, D60). Decide deliberately before spending effort there; don't tighten the floors without a plan.
 - **Fixture changes need a re-seed** (`sanity:seed --reset` on `development`), or technologies and categories drift between fixtures and Sanity (D39, SANITY.md).

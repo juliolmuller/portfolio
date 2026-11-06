@@ -23,7 +23,6 @@
     "fixtures:generate": "bun scripts/generate-fixtures.ts && eslint --fix src/lib/content/fixtures/assets.generated.ts",
     "sanity:seed": "bun --conditions=react-server scripts/seed-sanity.ts",
     "admin:hash": "bun --conditions=react-server scripts/admin-hash.ts",
-    "update": "bun update --latest && bun add -d eslint@^10 typescript@~6.0",
     "prepare": "husky",
     "admin:smoke": "bun --conditions=react-server scripts/admin-smoke.ts",
     "commit": "commit",

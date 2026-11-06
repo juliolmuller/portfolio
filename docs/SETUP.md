@@ -254,7 +254,7 @@ Admin edits on staging already refresh staging. A `development` webhook only mat
 | Task                        | How                                                                                                        |
 | --------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Ship a change               | Branch from `next`, PR to `next` (preview build; CI runs on the push), merge `next` → `main` to release    |
-| Dependency updates          | Dependabot PRs on Mondays; `bun run update` bumps everything to latest (keeps ESLint 9 and TypeScript 6.0) |
+| Dependency updates          | Dependabot PRs on Mondays |
 | Rotate the admin password   | `bun run admin:hash`, update `ADMIN_PASSWORD_HASH` in Vercel, redeploy                                     |
 | Sign everyone out           | Change `SESSION_SECRET`, redeploy                                                                          |
 | Rotate a Sanity token       | Create the new token, update Vercel, redeploy, then delete the old token                                   |
