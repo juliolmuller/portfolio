@@ -47,6 +47,10 @@ updates:
       # D6: ESLint 10 waits for eslint-config-next.
       - dependency-name: eslint
         update-types: ['version-update:semver-major']
+      # D71: v10 needs conventional-changelog-writer@9, which
+      # @semantic-release/release-notes-generator does not support yet.
+      - dependency-name: conventional-changelog-conventionalcommits
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
