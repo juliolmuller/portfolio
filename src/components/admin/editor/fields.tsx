@@ -189,16 +189,18 @@ export function SelectField({
   emptyLabel?: string;
   hint?: ReactNode;
   label: string;
-  options: ReadonlyArray<{ label: string; value: number | string }>;
+  options: ReadonlyArray<{ fontFamily?: string; label: string; value: number | string }>;
   path: string;
 }): React.JSX.Element {
   const form = useForm();
   const value = form.get(path);
+  const selected = options.find((option) => String(option.value) === String(value));
 
   return (
     <Field path={path} label={label} hint={hint}>
       {(props) => (
         <select
+          style={{ fontFamily: selected?.fontFamily }}
           {...props}
           value={value === undefined ? '' : String(value)}
           onChange={(event) => {
@@ -217,7 +219,11 @@ export function SelectField({
             <option value="">{emptyLabel ?? 'Choose…'}</option>
           ) : null}
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option
+              key={option.value}
+              value={option.value}
+              style={{ fontFamily: option.fontFamily }}
+            >
               {option.label}
             </option>
           ))}

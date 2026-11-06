@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { THEME_COLOR } from '@/config/site';
 import { requireAdmin } from '@/lib/auth/session';
 import { fontVariables } from '@/styles/fonts';
+import { titleFontVariables } from '@/styles/title-fonts';
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -34,7 +35,7 @@ export default async function AdminLayout({
   const session = await requireAdmin();
 
   return (
-    <html lang="en" className={fontVariables}>
+    <html lang="en" className={`${fontVariables} ${titleFontVariables}`}>
       <body>
         <AdminShell expiresAt={session.exp * 1000}>{children}</AdminShell>
         <Toaster />

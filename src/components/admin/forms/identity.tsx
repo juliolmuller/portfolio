@@ -46,6 +46,7 @@ export function ProfileForm(): React.JSX.Element {
           options={titleFonts.map((value) => ({
             value,
             label: titleFontLabels[value],
+            fontFamily: `var(--font-title-${value})`,
           }))}
         />
         <ImageField path="photo" label="Photo (square, hero and social image)" />
