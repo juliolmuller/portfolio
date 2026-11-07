@@ -27,7 +27,7 @@ The current shape of the system. Why it is this way (and what was tried first) i
 src/
   app/
     [locale]/        public root layout (<html lang>), page, projects/, accessibility/, resume/ route, OG images
-    admin/           own root layout; [area]/ (list, new, [id]) driven by areas config; api/upload/route.ts
+    admin/           own root layout; [area]/ (list, new, [id]) driven by areas config; api/upload, api/logo-search, api/logo-import routes
     api/             terminal-content (snapshot), revalidate (Sanity webhook)
     tech-icons/      content-hashed, immutable SVG logos
     sitemap.ts robots.ts manifest.ts icon.* global-not-found.tsx dev/ui (404 in production)
@@ -36,7 +36,7 @@ src/
   lib/
     content/         schema.ts (zod contract), repository, pipeline, sanity/ fixtures/ admin/ icons/
     auth/            session, token, password, rate-limit, cookie, actions
-    admin/           upload sanitizers (image, pdf, svg), actions
+    admin/           upload sanitizers (image, pdf, svg), actions, logo-search/ (AI suggestions + hardened SVG fetcher); `lib/ai/` holds the provider chain (Vercel AI Gateway, OpenRouter)
     terminal/        pure TS core: parser, vfs, registry, engine, completion, commands/{public,secret}
     window-manager/  geometry (pure)         tech-cloud/  motion math (pure)
     security/        headers.ts (dependency-free, also imported by next.config.ts)
@@ -99,7 +99,7 @@ Server resolves each technology to a content-hashed SVG file served from `/tech-
 - **Admin invisibility:** never in robots.txt, sitemap, public HTML, client bundles or catalogs. Admin-only headers (`noindex` with AI opt-outs `noai, noimageai`, `no-referrer`, `no-store`) are added by the proxy **only on the allowed branch** (D51).
 - **Session:** `__Host-jm_session` (`Secure`) when the site URL is https, plain `jm_session` otherwise; HttpOnly, SameSite=Strict. 30 min idle / 8 h absolute. `requireAdmin()` in every admin RSC, Route Handler and Server Action.
 - **Brute force:** in-memory limiter (5 failures/15 min lockout, doubling; 30/hour global pause), client = HMAC of the first `x-forwarded-for`; every login response ≥ 800 ms + jitter. Per instance on serverless (known gap; Upstash is the reserved seam).
-- **Boundaries:** zod everywhere, `rehype-sanitize` Markdown, https-only URL allowlists, no `dangerouslySetInnerHTML` except the escaped JSON-LD and the constant motion-init script (D21), no server fetches of user-supplied URLs, webhook signature (`sanity-webhook-signature`, 10-minute tolerance), `check:bundle` fails if a server-only variable name or value reaches the client.
+- **Boundaries:** zod everywhere, `rehype-sanitize` Markdown, https-only URL allowlists, no `dangerouslySetInnerHTML` except the escaped JSON-LD and the constant motion-init script (D21), no server fetches of user-supplied URLs except the admin-only SVG logo fetch (D73), webhook signature (`sanity-webhook-signature`, 10-minute tolerance), `check:bundle` fails if a server-only variable name or value reaches the client.
 
 ## i18n
 

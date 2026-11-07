@@ -72,14 +72,22 @@ bun run admin:hash "<a password of 16+ characters>"   # → ADMIN_PASSWORD_HASH
 
 Put both in `.env.local` (a plain `ADMIN_PASSWORD` also works for a quick local try). Then press `Ctrl + /`, type `su julio`, enter the password, type `admin`. If either value is missing or weak, the admin stays disabled and the server logs a warning naming the variable. Full flow: [USAGE.md](./USAGE.md).
 
-### 2.4 Run
+### 2.4 AI logo search (optional)
+
+The admin's **Find a logo** field asks an AI model for SVG logo links. Without keys it still lists the bundled catalogs and accepts a pasted URL, so nothing here is required. Put keys in `.env.local` only, never commit them.
+
+- **Vercel AI Gateway (primary):** dashboard → _AI Gateway_ → create an API key → `AI_GATEWAY_API_KEY`; choose `AI_GATEWAY_MODEL` (`provider/model`) from the [model list](https://vercel.com/ai-gateway/models) with the **Free Tier** filter. The free tier is $5 of credits every 30 days from the first request, only while you have not bought credits; only a subset of models is free, per-model rate limits are low (`429`), and `403 RestrictedModelsError` can appear temporarily. Hobby is for personal, non-commercial use. See the [pricing page](https://vercel.com/docs/ai-gateway/pricing).
+- **OpenRouter (fallback):** create a key at [openrouter.ai/keys](https://openrouter.ai/keys) → `OPENROUTER_API_KEY`; pick a model ending in `:free` for `OPENROUTER_MODEL`. Free quotas are low.
+- **Order and failure:** `AI_PROVIDER_ORDER` defaults to `vercel,openrouter`. A provider needs both its key and its model to count as configured; any failure moves on to the next, and if all fail the editor says online search is unavailable. No model id is hard-coded because free availability changes.
+
+### 2.5 Run
 
 ```sh
 bun run dev                          # http://localhost:3000 → /en
 bun run build && bun run start       # production build on port 3000
 ```
 
-### 2.5 Verify like CI does
+### 2.6 Verify like CI does
 
 ```sh
 bun run lint && bun run typecheck
@@ -99,21 +107,22 @@ bun run lhci                         # optional, slow
 
 All live in [.env.example](../.env.example) and are validated at boot by `src/env.ts` (names only in errors). Only `NEXT_PUBLIC_SITE_URL` is public. Local values go in `.env.local`; Vercel values go in the dashboard.
 
-| Variable                                             | Production                    | Preview                                | Purpose                                                                                                |
-| ---------------------------------------------------- | ----------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_SITE_URL`                               | `https://juliolmuller.com`    | `https://next-juliolmuller.vercel.app` | Canonical origin. An https URL also enables HSTS, `upgrade-insecure-requests` and the `__Host-` cookie |
-| `CONTENT_SOURCE`                                     | `sanity`                      | `sanity`                               | `sanity` or `fixtures`; inferred from the Sanity variables when empty                                  |
-| `SANITY_PROJECT_ID`                                  | `njcnsmax`                    | `njcnsmax`                             |                                                                                                        |
-| `SANITY_DATASET`                                     | `production`                  | `development`                          |                                                                                                        |
-| `SANITY_API_VERSION`                                 | `2026-10-01`                  | `2026-10-01`                           | Pinned API date                                                                                        |
-| `SANITY_READ_TOKEN`                                  | `production-read`             | `preview-read`                         | Viewer token for reads                                                                                 |
-| `SANITY_WRITE_TOKEN`                                 | `production-write`            | `preview-write`                        | Editor token for admin writes and seeding                                                              |
-| `SANITY_WEBHOOK_SECRET`                              | own `openssl rand -hex 32`    | own (only with a staging webhook)      | Signs `POST /api/revalidate`                                                                           |
-| `SESSION_SECRET`                                     | own `openssl rand -base64 48` | own                                    | 32+ chars; rotating signs everyone out                                                                 |
-| `ADMIN_PASSWORD_HASH`                                | `bun run admin:hash`          | a different password's hash            | Preferred over `ADMIN_PASSWORD` (16+ chars in production); the hash wins when both are set             |
-| `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | after launch                  | empty                                  | Search console ownership tags                                                                          |
-| `ADMIN_FIXTURE_WRITES`                               | **never**                     | **never**                              | E2E only: lets the admin write demo data in a production build                                         |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | empty                         | empty                                  | Reserved; the rate limiter is in memory (D51)                                                          |
+| Variable                                                                                                                             | Production                    | Preview                                | Purpose                                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_SITE_URL`                                                                                                               | `https://juliolmuller.com`    | `https://next-juliolmuller.vercel.app` | Canonical origin. An https URL also enables HSTS, `upgrade-insecure-requests` and the `__Host-` cookie                                     |
+| `CONTENT_SOURCE`                                                                                                                     | `sanity`                      | `sanity`                               | `sanity` or `fixtures`; inferred from the Sanity variables when empty                                                                      |
+| `SANITY_PROJECT_ID`                                                                                                                  | `njcnsmax`                    | `njcnsmax`                             |                                                                                                                                            |
+| `SANITY_DATASET`                                                                                                                     | `production`                  | `development`                          |                                                                                                                                            |
+| `SANITY_API_VERSION`                                                                                                                 | `2026-10-01`                  | `2026-10-01`                           | Pinned API date                                                                                                                            |
+| `SANITY_READ_TOKEN`                                                                                                                  | `production-read`             | `preview-read`                         | Viewer token for reads                                                                                                                     |
+| `SANITY_WRITE_TOKEN`                                                                                                                 | `production-write`            | `preview-write`                        | Editor token for admin writes and seeding                                                                                                  |
+| `SANITY_WEBHOOK_SECRET`                                                                                                              | own `openssl rand -hex 32`    | own (only with a staging webhook)      | Signs `POST /api/revalidate`                                                                                                               |
+| `SESSION_SECRET`                                                                                                                     | own `openssl rand -base64 48` | own                                    | 32+ chars; rotating signs everyone out                                                                                                     |
+| `ADMIN_PASSWORD_HASH`                                                                                                                | `bun run admin:hash`          | a different password's hash            | Preferred over `ADMIN_PASSWORD` (16+ chars in production); the hash wins when both are set                                                 |
+| `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION`                                                                                 | after launch                  | empty                                  | Search console ownership tags                                                                                                              |
+| `ADMIN_FIXTURE_WRITES`                                                                                                               | **never**                     | **never**                              | E2E only: lets the admin write demo data in a production build                                                                             |
+| `AI_GATEWAY_API_KEY`, `AI_GATEWAY_MODEL`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `AI_PROVIDER_ORDER`, `LOGO_SEARCH_ALLOWED_HOSTS` | empty                         | optional, **Sensitive**                | AI logo search (§2.4); empty means catalogs and URL import only. `AI_GATEWAY_BASE_URL` and `OPENROUTER_BASE_URL` are for the e2e stub only |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                                                                                 | empty                         | empty                                  | Reserved; the rate limiter is in memory (D51)                                                                                              |
 
 `VERCEL_ENV` is set by Vercel and keeps previews `noindex`; never override it. Fill-in copies of the production and preview columns can be kept as `.env.production` / `.env.preview` in the repo root (git-ignored by `.env*`; Next.js loads them only in a matching `next build/start`, so treat them as scratch files and don't leave real secrets in them longer than needed).
 

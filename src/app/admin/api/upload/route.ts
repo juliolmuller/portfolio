@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { createWindowCounter } from '@/lib/admin/rate';
+import { sameOrigin } from '@/lib/admin/same-origin';
 import { MAX_IMAGE_BYTES, processImage, sniffImage } from '@/lib/admin/upload/image';
 import { checkPdf, MAX_PDF_BYTES } from '@/lib/admin/upload/pdf';
 import { getSession } from '@/lib/auth/session';
@@ -13,18 +14,6 @@ const MB = 1024 * 1024;
 
 const fail = (status: number, error: string): NextResponse<{ error: string }> =>
   NextResponse.json({ error }, { status });
-
-/**
- * Same-origin browser requests only: Origin and Sec-Fetch-Site must agree.
- */
-function sameOrigin(request: NextRequest): boolean {
-  const origin = request.headers.get('origin');
-  const fetchSite = request.headers.get('sec-fetch-site');
-
-  if (fetchSite && fetchSite !== 'same-origin') return false;
-
-  return origin !== null && new URL(origin).host === request.headers.get('host');
-}
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const session = await getSession();

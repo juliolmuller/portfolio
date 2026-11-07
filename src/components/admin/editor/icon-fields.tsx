@@ -14,6 +14,7 @@ import { type LinkIcon as LinkIconData, type TechIcon } from '@/lib/content';
 
 import { SelectField, TextField } from './fields';
 import { useForm } from './form';
+import { LogoCombobox } from './logo-combobox';
 import { hintClass, inputClass, labelClass, smallButton } from './styles';
 
 function TechIconPreview({ icon }: { icon: TechIcon }): React.JSX.Element {
@@ -138,6 +139,7 @@ export function TechIconFields(): React.JSX.Element {
 
   return (
     <div className="flex flex-col gap-4">
+      <LogoCombobox />
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-60 flex-1">
           <SelectField path="iconSource" label="Icon source" options={SOURCES} />

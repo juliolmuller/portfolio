@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                        |
-| --------------------------- | ------------------------------------------------ |
-| Toolchain and versions      | D5, D6, D15, D20, D24                            |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65               |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
-| Home, hero, header          | D17, D46–D48, D67, D69                           |
-| Window manager and terminal | D49, D50, D52, D63, D64                          |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61           |
-| Analytics                   | D68                                              |
+| Topic                       | Decisions                                           |
+| --------------------------- | --------------------------------------------------- |
+| Toolchain and versions      | D5, D6, D15, D20, D24                               |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62    |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65                  |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70, D72, D73 |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66                         |
+| Home, hero, header          | D17, D46–D48, D67, D69                              |
+| Window manager and terminal | D49, D50, D52, D63, D64                             |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61              |
+| Analytics                   | D68                                                 |
 
 ## Toolchain and versions
 
@@ -70,6 +70,8 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D54 — Uploads and sanitizers** (active). See ARCHITECTURE. Fixtures mode runs the full pipeline then assigns a placeholder asset with the real dimensions.
 - **D55 — Admin UI structure** (active). One dynamic tree (`/admin/[area]`, `/new`, `/[id]`) driven by `areas.ts` / `area-config.tsx`; URLs carry only the uuid part of ids (the proxy lowercases URLs and ids have capitals); shared editor fields (`LocalizedField`, Markdown editor with safe preview, image field with focal point, list editor with up/down + drag, icon pickers); dirty guard, error summary, conflict dialog, typed-confirmation delete; saves return the stored document. Admin copy is English only.
 - **D56 — Security headers as built** (active). `src/lib/security/headers.ts` is dependency-free (imported by `next.config.ts`); common headers on **every** path; HSTS `max-age=63072000; includeSubDomains` (no `preload` until the owner confirms) only for https site URLs (otherwise WebKit upgrades localhost). `experimental.sri` stays off (stamps only some Turbopack chunks, all same-origin). zod is not imported by client code (v4 probes `new Function('')`, a CSP violation, and bloats the bundle). `security.spec.ts` records `securitypolicyviolation`: zero allowed.
+- **D72 — AI logo search: provider abstraction, fallback chain, SVG-only import** (active; 2026-11-06). Typing a technology name in the admin should suggest importable logos. `AiProvider` has one file per provider (`vercel-gateway.ts`, `openrouter.ts`) over a shared OpenAI-compatible fetch (no SDK, D7/D26); `FallbackAiProvider` skips unconfigured providers and moves on after any failure. Logos are stored as sanitized path data (D37), so only SVG works and the schema is unchanged. Candidates must be on an allowlisted host, download and pass `sanitizeSvg` before the UI shows them. Only the technology name leaves the server. Caches and rate limits are per instance (as login). No model ids are defaulted because free availability changes.
+- **D73 — Admin-initiated remote icon fetch (narrow exception to "no server fetches")** (active; 2026-11-06). The rule that the server never fetches supplied URLs would block D72 and manual URL import. Exception: only from `POST /admin/api/logo-search` and `/logo-import` (session, same-origin, rate limited); https on 443 only, no credentials, DNS-resolved addresses must be public, manual redirects (3 hops, rechecked), 5 s, 100 KB cap, SVG content only, then `sanitizeSvg`. AI-proposed URLs also need an allowlisted host. Never at render time or from stored content. Residual risk: DNS rebinding between lookup and connect, accepted for a single-owner endpoint.
 
 ## Tech cloud
 

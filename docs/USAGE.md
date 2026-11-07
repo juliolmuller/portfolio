@@ -51,7 +51,7 @@ How every area behaves:
 
 ### Step 1: make sure its technologies exist
 
-A project can only reference existing technologies. In **Technologies**, check that every tool it used is there. If one is missing: **New technology** → name, category, priority (1 and 2 appear everywhere; 3 is left out of the cloud on phones but stays in the List view), official site (optional). Icon: search the built-in sets (Simple Icons, Devicon), paste a single-colour SVG (strokes and transforms are refused; convert to filled shapes first), or leave empty for a two-letter monogram. **Save and publish**.
+A project can only reference existing technologies. In **Technologies**, check that every tool it used is there. If one is missing: **New technology** → name, category, priority (1 and 2 appear everywhere; 3 is left out of the cloud on phones but stays in the List view), official site (optional). Icon: type in **Find a logo** (bundled catalogs first, then SVG suggestions from the web after a short pause; **Use a URL instead…** imports any public https SVG; only SVG works, PNG does not, and brand logos may be trademarked, so check the source host shown); if online search says it is unavailable, use the options below. Or search the built-in sets (Simple Icons, Devicon), paste a single-colour SVG (strokes and transforms are refused; convert to filled shapes first), or leave empty for a two-letter monogram. **Save and publish**.
 
 ### Step 2: create the project
 
