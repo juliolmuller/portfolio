@@ -1,0 +1,12 @@
+# Julio L. Muller — Software Engineer Portfolio
+
+> Official developer portfolio, open-source projects, articles, and technical experience of Julio L. Muller.
+
+## Sections
+
+- [Portfolio Repository](https://github.com/juliolmuller/portfolio): Source code and content configuration.
+- [GitHub Profile](https://github.com/juliolmuller): Open-source repositories and contributions.
+
+## AI Agent Discovery
+
+- Structured following the standard /llms.txt specification for AI search engines and LLM assistants.
