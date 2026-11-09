@@ -7,14 +7,13 @@ export const experience: Array<DocumentInput<'experience'>> = [
     ...meta('experience', 'lumen-works'),
     company: 'Lumen Works',
     companyUrl: 'https://example.com/lumen-works',
-    location: L('Remote', 'Remoto'),
     roles: [
       {
         title: L('Senior Full Stack Engineer', 'Engenheiro Full Stack Sênior'),
         start: '2023-03',
         summary: L(
-          'I lead the web platform of a fictional scheduling product, from the database schema to the design system.',
-          'Lidero a plataforma web de um produto fictício de agendamentos, do schema do banco ao design system.',
+          'I lead the web platform of a fictional scheduling product, from the database schema to the design system. The team is spread across four time zones, so most decisions happen in writing: short proposals, a weekly architecture review and a changelog that product and support actually read. I split my time between hands-on work on the hardest parts of the stack, pairing with newer engineers and keeping the delivery pipeline fast enough that shipping small changes stays the default rather than the exception.',
+          'Lidero a plataforma web de um produto fictício de agendamentos, do schema do banco ao design system. O time está espalhado por quatro fusos horários, então a maior parte das decisões acontece por escrito: propostas curtas, uma revisão de arquitetura semanal e um changelog que produto e suporte realmente leem. Divido meu tempo entre colocar a mão nas partes mais difíceis da stack, fazer pair com quem está chegando e manter o pipeline de entrega rápido o bastante para que publicar mudanças pequenas continue sendo o padrão, não a exceção.',
         ),
         bullets: [
           L(

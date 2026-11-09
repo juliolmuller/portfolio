@@ -31,7 +31,7 @@ export interface ContentSnapshot {
   }>;
   experience: Array<{
     company: string;
-    location: string;
+    location?: string;
     roles: Array<{
       bullets: string[];
       end?: string;
@@ -155,7 +155,7 @@ export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
     experience: source.experience.map((entry) => ({
       slug: entry.slug,
       company: entry.company,
-      location: entry.location,
+      ...(entry.location ? { location: entry.location } : {}),
       roles: entry.roles,
       technologies: namesOf(entry.techIds),
     })),

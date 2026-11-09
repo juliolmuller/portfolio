@@ -285,6 +285,29 @@ test.describe('singletons and lists', () => {
     await expect(page).toHaveURL(/\/admin\/practices$/);
   });
 
+  test('an experience saves without location and with a long summary', async ({ page }) => {
+    const company = `E2E Co ${Math.random().toString(36).slice(2, 7)}`;
+    const long = 'Long summary text. '.repeat(25);
+
+    await signIn(page);
+    await openEditor(page, '/admin/experience/new');
+    await field(page, 'company').fill(company);
+    await fillBoth(page, 'roles.0.title', 'Tester', 'Testador');
+    await field(page, 'roles.0.start').fill('2024-01');
+    await fillBoth(page, 'roles.0.summary', long);
+    await expect(field(page, 'roles.0.summary.en')).toHaveAccessibleDescription(
+      /over 400: the site shows the start/,
+    );
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+    await slow.poll(snapshot(page)).toContain(company);
+
+    await openDeleteDialog(page);
+    await page.getByLabel('Confirmation text').fill(company);
+    await page.getByRole('button', { name: 'Delete permanently' }).click();
+    await expect(page).toHaveURL(/\/admin\/experience$/);
+  });
+
   test('a practice: create, copy EN to PT, reorder, hide, delete', async ({ page }) => {
     const label = `E2E practice ${Math.random().toString(36).slice(2, 7)}`;
 

@@ -1,5 +1,6 @@
 import { createFixtureDataset } from './fixtures/dataset';
 import {
+  experienceSchema,
   featuredLinkSchema,
   hasNoRawHtml,
   httpsUrlSchema,
@@ -14,6 +15,7 @@ const project = dataset.project[0];
 const link = dataset.featuredLink[0];
 const tech = dataset.technology[0];
 const profile = dataset.profile[0];
+const job = dataset.experience[0];
 
 describe('content schema', () => {
   it.each([
@@ -50,6 +52,21 @@ describe('content schema', () => {
         heroLead: { en: long, pt: long },
       }).success,
     ).toBe(false);
+  });
+
+  it('allows an experience without location and caps the role summary at 5000', () => {
+    const { location: _location, ...noLocation } = job ?? {};
+    const withSummary = (length: number): unknown => ({
+      ...job,
+      roles: job?.roles.map((role) => ({
+        ...role,
+        summary: { en: 'x'.repeat(length), pt: 'x'.repeat(length) },
+      })),
+    });
+
+    expect(experienceSchema.safeParse(noLocation).success).toBe(true);
+    expect(experienceSchema.safeParse(withSummary(1000)).success).toBe(true);
+    expect(experienceSchema.safeParse(withSummary(5001)).success).toBe(false);
   });
 
   it('rejects the retired hero link placement', () => {

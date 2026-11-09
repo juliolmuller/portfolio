@@ -232,7 +232,7 @@ const converters: Converters = {
       ...base('experience', doc),
       company: doc.company,
       companyUrl: doc.companyUrl,
-      location: localeString(doc.location),
+      location: doc.location ? localeString(doc.location) : undefined,
       roles: doc.roles.map((role, index) =>
         compact({
           _key: key(doc.id, 'roles', index),
