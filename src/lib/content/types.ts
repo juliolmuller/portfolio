@@ -1,4 +1,5 @@
 import {
+  type ImageAsset,
   type linkKinds,
   type linkPlacements,
   type ProjectKind,
@@ -98,7 +99,10 @@ export interface RecommendedProfile {
   url: string;
 }
 
-export type TechIcon = { monogram: string } | SvgData;
+/**
+ * Paths, a raster image drawn as its alpha silhouette (D75), or a monogram.
+ */
+export type TechIcon = { image: ImageAsset } | { monogram: string } | SvgData;
 
 export interface Technology {
   brandColor?: string;

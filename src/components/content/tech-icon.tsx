@@ -2,7 +2,7 @@ import { type CSSProperties } from 'react';
 
 import { cn } from '@/lib/cn';
 import { type TechIcon as TechIconData } from '@/lib/content';
-import { type PublicTechIcon } from '@/lib/content/icon-src';
+import { type PublicTechIcon, toPublicIcon } from '@/lib/content/icon-src';
 
 /**
  * Logo in `currentColor` or a monogram badge. A `src` icon is a cached file
@@ -29,8 +29,11 @@ export function TechIcon({
     );
   }
 
-  if ('src' in icon) {
-    const mask = `url("${icon.src}") center / contain no-repeat`;
+  // A raster logo only exists as the served silhouette file (D75).
+  const file = 'image' in icon ? toPublicIcon(icon) : icon;
+
+  if ('src' in file) {
+    const mask = `url("${file.src}") center / contain no-repeat`;
 
     return (
       <span
@@ -44,15 +47,17 @@ export function TechIcon({
     );
   }
 
+  if ('monogram' in file) return <TechIcon icon={file} className={className} />;
+
   return (
     <svg
-      viewBox={icon.viewBox}
+      viewBox={file.viewBox}
       aria-hidden="true"
       focusable="false"
       fill="currentColor"
       className={cn('size-5 shrink-0', className)}
     >
-      {icon.paths.map((d) => (
+      {file.paths.map((d) => (
         <path key={d} d={d} />
       ))}
     </svg>

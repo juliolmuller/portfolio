@@ -282,10 +282,11 @@ const documents: SchemaType[] = [
         options: list(['language', 'frontend', 'backend', 'data', 'cloud', 'integration', 'ai']),
       }),
       field('iconSource', 'string', {
-        options: list(['simple-icons', 'devicon', 'custom-svg', 'monogram']),
+        options: list(['simple-icons', 'devicon', 'custom-svg', 'custom-image', 'monogram']),
       }),
       field('iconSlug', 'string'),
       field('customSvg', 'svgData'),
+      field('customImage', 'image', { description: 'PNG/WebP with transparency (D75)' }),
       field('monogram', 'string', { description: '1–3 capitals or digits' }),
       field('brandColor', 'string', { description: '#rrggbb' }),
       field('url', 'url'),

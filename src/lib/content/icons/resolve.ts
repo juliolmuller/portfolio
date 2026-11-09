@@ -9,7 +9,7 @@ import { monogramFor } from './monogram';
 import { svgBodyToPaths } from './svg-geometry';
 
 export type IconSourceUsed =
-  'custom-svg' | 'devicon-plain' | 'devicon' | 'monogram' | 'simple-icons';
+  'custom-image' | 'custom-svg' | 'devicon-plain' | 'devicon' | 'monogram' | 'simple-icons';
 
 export interface ResolvedTechIcon {
   /**
@@ -99,7 +99,10 @@ function iconifyIcon(set: IconifyJSON, slug: string): null | SvgData {
  * the source actually used so `icons:audit` can report fallbacks.
  */
 export async function resolveTechIcon(
-  tech: Pick<TechnologyDocument, 'customSvg' | 'iconSlug' | 'iconSource' | 'monogram' | 'name'>,
+  tech: Pick<
+    TechnologyDocument,
+    'customImage' | 'customSvg' | 'iconSlug' | 'iconSource' | 'monogram' | 'name'
+  >,
 ): Promise<ResolvedTechIcon> {
   const monogram: ResolvedTechIcon = {
     icon: { monogram: tech.monogram ?? monogramFor(tech.name) },
@@ -107,6 +110,10 @@ export async function resolveTechIcon(
   };
 
   switch (tech.iconSource) {
+    case 'custom-image':
+      return tech.customImage
+        ? { icon: { image: tech.customImage.asset }, source: 'custom-image' }
+        : monogram;
     case 'custom-svg':
       return tech.customSvg ? { icon: tech.customSvg, source: 'custom-svg' } : monogram;
     case 'devicon': {

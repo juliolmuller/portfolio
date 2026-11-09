@@ -41,13 +41,16 @@ async function main(): Promise<void> {
     const color = tech.brandColor ?? resolved.defaultBrandColor ?? NEUTRAL;
     const icon = resolved.icon;
     const glyph =
-      'paths' in icon
+      'image' in icon
         ? (offset: number, fill: string): string =>
-            `<svg x="${x + offset}" y="${y + 24}" width="48" height="48" viewBox="${icon.viewBox}">${icon.paths
-              .map((d) => `<path d="${d}" fill="${fill}"/>`)
-              .join('')}</svg>`
-        : (offset: number, fill: string): string =>
-            `<g><rect x="${x + offset}" y="${y + 24}" width="48" height="48" rx="10" fill="none" stroke="${fill}" stroke-width="2"/><text x="${x + offset + 24}" y="${y + 54}" font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="${fill}">${escapeXml(icon.monogram)}</text></g>`;
+            `<g><rect x="${x + offset}" y="${y + 24}" width="48" height="48" rx="10" fill="none" stroke="${fill}" stroke-dasharray="4 3" stroke-width="2"/><text x="${x + offset + 24}" y="${y + 54}" font-family="sans-serif" font-size="11" text-anchor="middle" fill="${fill}">image</text></g>`
+        : 'paths' in icon
+          ? (offset: number, fill: string): string =>
+              `<svg x="${x + offset}" y="${y + 24}" width="48" height="48" viewBox="${icon.viewBox}">${icon.paths
+                .map((d) => `<path d="${d}" fill="${fill}"/>`)
+                .join('')}</svg>`
+          : (offset: number, fill: string): string =>
+              `<g><rect x="${x + offset}" y="${y + 24}" width="48" height="48" rx="10" fill="none" stroke="${fill}" stroke-width="2"/><text x="${x + offset + 24}" y="${y + 54}" font-family="sans-serif" font-size="15" font-weight="700" text-anchor="middle" fill="${fill}">${escapeXml(icon.monogram)}</text></g>`;
 
     return `${glyph(18, NEUTRAL)}${glyph(84, color)}<text x="${x + cell / 2}" y="${y + 100}" font-family="sans-serif" font-size="13" text-anchor="middle" fill="#e8eaf0">${escapeXml(tech.name)}</text><text x="${x + cell / 2}" y="${y + 118}" font-family="sans-serif" font-size="11" text-anchor="middle" fill="#828a9f">${resolved.source}</text>`;
   });

@@ -263,7 +263,7 @@ const converters: Converters = {
       visible: doc.visible ?? true,
     }),
 
-  technology: (doc) =>
+  technology: (doc, assets) =>
     compact({
       ...base('technology', doc),
       name: doc.name,
@@ -274,6 +274,7 @@ const converters: Converters = {
         _type: 'svgData',
         ...svg,
       })),
+      customImage: optional(doc.customImage, (logo) => image(assets, logo)),
       monogram: doc.monogram,
       brandColor: doc.brandColor,
       url: doc.url,

@@ -11,7 +11,7 @@ import { LocalizedField } from './fields';
 import { SESSION_EXPIRED, useForm } from './form';
 import { hintClass, labelClass, smallButton } from './styles';
 
-async function upload(file: File, kind: 'image' | 'pdf'): Promise<Record<string, unknown>> {
+export async function upload(file: File, kind: 'image' | 'pdf'): Promise<Record<string, unknown>> {
   const body = new FormData();
 
   body.set('file', file);

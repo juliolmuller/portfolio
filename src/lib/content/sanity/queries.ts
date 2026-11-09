@@ -62,7 +62,9 @@ const EDUCATION_FIELDS = /* groq */ `
 
 const TECHNOLOGY_FIELDS = /* groq */ `
   ${META}, name, category, iconSource, iconSlug,
-  customSvg{ viewBox, paths }, monogram, brandColor, url, priority, order, visible`;
+  customSvg{ viewBox, paths },
+  "customImage": customImage{ "asset": asset->{ url, "width": metadata.dimensions.width, "height": metadata.dimensions.height } },
+  monogram, brandColor, url, priority, order, visible`;
 
 const PRACTICE_FIELDS = /* groq */ `
   ${META}, label, order, visible`;

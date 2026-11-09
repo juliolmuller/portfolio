@@ -1,5 +1,6 @@
 'use client';
 
+import { getImageProps } from 'next/image';
 import { useEffect, useState } from 'react';
 
 import { LinkIcon } from '@/components/content/link-icon';
@@ -11,9 +12,11 @@ import {
 } from '@/lib/admin/actions';
 import { type IconHit, type IconSearchSource } from '@/lib/admin/icons';
 import { type LinkIcon as LinkIconData, type TechIcon } from '@/lib/content';
+import { type ImageAsset } from '@/lib/content/schema';
 
 import { SelectField, TextField } from './fields';
-import { useForm } from './form';
+import { SESSION_EXPIRED, useForm } from './form';
+import { upload } from './image-field';
 import { LogoCombobox } from './logo-combobox';
 import { hintClass, inputClass, labelClass, smallButton } from './styles';
 
@@ -28,6 +31,8 @@ function TechIconPreview({ icon }: { icon: TechIcon }): React.JSX.Element {
         <span aria-hidden="true" className="font-mono text-lg">
           {icon.monogram}
         </span>
+      ) : 'image' in icon ? (
+        <ImageSilhouette asset={icon.image} />
       ) : (
         <svg viewBox={icon.viewBox} aria-hidden="true" fill="currentColor" className="size-8">
           {icon.paths.map((d) => (
@@ -36,6 +41,19 @@ function TechIconPreview({ icon }: { icon: TechIcon }): React.JSX.Element {
         </svg>
       )}
     </span>
+  );
+}
+
+/**
+ * The stored raster through the same-origin image optimizer, drawn as its
+ * silhouette like the site does (D75).
+ */
+function ImageSilhouette({ asset }: { asset: ImageAsset }): React.JSX.Element {
+  const { props } = getImageProps({ src: asset.url, alt: '', width: 64, height: 64 });
+  const mask = `url("${props.src}") center / contain no-repeat`;
+
+  return (
+    <span aria-hidden="true" className="size-8 bg-current" style={{ mask, WebkitMask: mask }} />
   );
 }
 
@@ -86,6 +104,7 @@ const SOURCES = [
   { value: 'simple-icons', label: 'Simple Icons (brands)' },
   { value: 'devicon', label: 'Devicon (developer tools)' },
   { value: 'custom-svg', label: 'Custom SVG' },
+  { value: 'custom-image', label: 'Custom image (PNG, WebP)' },
   { value: 'monogram', label: 'Monogram (letters)' },
 ];
 
@@ -97,6 +116,7 @@ export function TechIconFields(): React.JSX.Element {
   const source = String(form.get('iconSource') ?? 'monogram');
   const slug = String(form.get('iconSlug') ?? '');
   const customSvg = form.get('customSvg') as { paths: string[]; viewBox: string } | undefined;
+  const customImage = form.get('customImage') as { asset: ImageAsset } | undefined;
   const monogram = String(form.get('monogram') ?? '');
   const name = String(form.get('name') ?? '');
   const [preview, setPreview] = useState<{
@@ -112,6 +132,7 @@ export function TechIconFields(): React.JSX.Element {
       const result = await previewTechIconAction({
         name,
         iconSource: source as 'monogram',
+        ...(customImage?.asset ? { customImage } : {}),
         ...(slug ? { iconSlug: slug } : {}),
         ...(customSvg ? { customSvg } : {}),
         ...(monogram ? { monogram } : {}),
@@ -124,7 +145,7 @@ export function TechIconFields(): React.JSX.Element {
       live = false;
       window.clearTimeout(timer);
     };
-  }, [source, slug, customSvg, monogram, name]);
+  }, [source, slug, customSvg, customImage, monogram, name]);
 
   async function applySvg(text: string): Promise<void> {
     const result = await parseSvgAction(text);
@@ -228,6 +249,52 @@ export function TechIconFields(): React.JSX.Element {
           {form.error('customSvg') ? (
             <p role="alert" className="text-small text-danger">
               {form.error('customSvg')}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {source === 'custom-image' ? (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className={`${smallButton} cursor-pointer`}>
+              Choose PNG or WebP file
+              <input
+                type="file"
+                accept="image/png,image/webp,image/avif"
+                disabled={form.disabled}
+                className="sr-only"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = '';
+
+                  if (!file) return;
+
+                  try {
+                    form.set('customImage', { asset: await upload(file, 'image') });
+                    setSvgError('');
+                  } catch (error) {
+                    setSvgError(
+                      error instanceof Error && error.message === SESSION_EXPIRED
+                        ? error.message
+                        : 'That image could not be uploaded',
+                    );
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <p className={hintClass}>
+            Use a logo with a transparent background: it is drawn as a single-color silhouette.
+          </p>
+          {svgError ? (
+            <p role="alert" className="text-small text-danger">
+              {svgError}
+            </p>
+          ) : null}
+          {form.error('customImage') ? (
+            <p role="alert" className="text-small text-danger">
+              {form.error('customImage')}
             </p>
           ) : null}
         </div>

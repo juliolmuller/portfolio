@@ -266,7 +266,13 @@ export const recommendedProfileSchema = z.object({
   visible: visibleSchema,
 });
 
-export const iconSources = ['simple-icons', 'devicon', 'custom-svg', 'monogram'] as const;
+export const iconSources = [
+  'simple-icons',
+  'devicon',
+  'custom-svg',
+  'custom-image',
+  'monogram',
+] as const;
 
 export const technologySchema = z
   .object({
@@ -280,6 +286,10 @@ export const technologySchema = z
       .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
       .optional(),
     customSvg: svgDataSchema.optional(),
+    /**
+     * Raster logo with transparency, drawn as its alpha silhouette (D75).
+     */
+    customImage: z.object({ asset: imageAssetSchema }).optional(),
     /**
      * Overrides the generated monogram (1–3 letters or digits).
      */
@@ -309,6 +319,14 @@ export const technologySchema = z
         code: 'custom',
         path: ['customSvg'],
         message: 'Required for custom-svg',
+      });
+    }
+
+    if (tech.iconSource === 'custom-image' && !tech.customImage) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['customImage'],
+        message: 'Required for custom-image',
       });
     }
   });

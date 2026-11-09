@@ -1,4 +1,11 @@
-import { iconHash, renderIconSvg, TECH_ICON_BASE, toPublicIcon, withFill } from './icon-src';
+import {
+  iconHash,
+  renderIconSvg,
+  renderImageIconSvg,
+  TECH_ICON_BASE,
+  toPublicIcon,
+  withFill,
+} from './icon-src';
 
 const icon = { viewBox: '0 0 24 24', paths: ['M0 0h24v24H0z', 'M1 1h2'] };
 
@@ -15,6 +22,21 @@ describe('icon-src', () => {
       src: `${TECH_ICON_BASE}/${iconHash(icon)}.svg`,
     });
     expect(toPublicIcon({ monogram: 'VB' })).toEqual({ monogram: 'VB' });
+  });
+
+  it('hashes image icons by asset URL and renders them as a mask', () => {
+    const image = (url: string): { image: { height: number; url: string; width: number } } => ({
+      image: { url, width: 1, height: 1 },
+    });
+
+    expect(iconHash(image('https://a/1.png'))).not.toBe(iconHash(image('https://a/2.png')));
+    expect(toPublicIcon(image('https://a/1.png'))).toHaveProperty('src');
+
+    const svg = renderImageIconSvg({ base64Png: 'AAAA', width: 4, height: 2 }, 'abcdef');
+
+    expect(svg).toContain('viewBox="0 0 4 2"');
+    expect(svg).toContain('href="data:image/png;base64,AAAA"');
+    expect(svg).toContain('fill="#abcdef" mask="url(#m)"');
   });
 
   it('adds only valid hex fills', () => {

@@ -120,5 +120,15 @@ describe('content schema', () => {
       }).success,
     ).toBe(false);
     expect(technologySchema.safeParse({ ...tech, iconSource: 'custom-svg' }).success).toBe(false);
+    expect(technologySchema.safeParse({ ...tech, iconSource: 'custom-image' }).success).toBe(false);
+    expect(
+      technologySchema.safeParse({
+        ...tech,
+        iconSource: 'custom-image',
+        customImage: {
+          asset: { url: 'https://cdn.sanity.io/images/p/d/a-1x1.png', width: 1, height: 1 },
+        },
+      }).success,
+    ).toBe(true);
   });
 });

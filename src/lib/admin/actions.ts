@@ -8,7 +8,12 @@ import {
   type SaveOutcome,
 } from '@/lib/content/admin/service';
 import { resolveLinkIcon, resolveTechIcon } from '@/lib/content/icons/resolve';
-import { type DocumentType, documentTypes } from '@/lib/content/schema';
+import {
+  type DocumentType,
+  documentTypes,
+  type iconSources,
+  type ImageAsset,
+} from '@/lib/content/schema';
 
 import { revalidateEverything } from './hooks';
 import { type IconHit, type IconSearchSource, searchIcons } from './icons';
@@ -89,9 +94,10 @@ export async function searchIconsAction(
 }
 
 export async function previewTechIconAction(input: {
+  customImage?: { asset: ImageAsset };
   customSvg?: { paths: string[]; viewBox: string };
   iconSlug?: string;
-  iconSource: 'custom-svg' | 'devicon' | 'monogram' | 'simple-icons';
+  iconSource: (typeof iconSources)[number];
   monogram?: string;
   name: string;
 }): Promise<{ brandColor?: string; icon: TechIcon }> {

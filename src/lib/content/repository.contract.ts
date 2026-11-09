@@ -236,6 +236,10 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
           expect(tech.icon.paths.length).toBeGreaterThan(0);
         }
 
+        if ('image' in tech.icon) {
+          expect(tech.icon.image.url).toMatch(/^(?:https:\/\/|\/fixtures\/)/);
+        }
+
         expect(tech.brandColor ?? '#000000').toMatch(/^#[0-9a-f]{6}$/i);
       }
     });
