@@ -1,5 +1,9 @@
 'use client';
 
+import Link from 'next/link';
+
+import { ROLE_SUMMARY_PREVIEW } from '@/lib/format';
+
 import {
   CheckboxGroup,
   LocalizedField,
@@ -23,7 +27,7 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
       <Section title="Company">
         <TextField path="company" label="Company" maxLength={80} />
         <TextField path="companyUrl" label="Company website (optional)" type="url" />
-        <LocalizedField path="location" label="Location" max={80} />
+        <LocalizedField path="location" label="Location (optional)" max={80} />
         <ToggleField path="collapsedByDefault" label="Collapsed by default on the site" />
         <ToggleField path="visible" label="Visible on the site" />
       </Section>
@@ -64,7 +68,13 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
                   maxLength={7}
                 />
               </div>
-              <LocalizedField path={`${itemPath}.summary`} label="Summary" max={400} multiline />
+              <LocalizedField
+                path={`${itemPath}.summary`}
+                label="Summary"
+                max={ROLE_SUMMARY_PREVIEW}
+                overMaxNote={`over ${ROLE_SUMMARY_PREVIEW}: the site shows the start and a "More" link`}
+                multiline
+              />
               <ListEditor
                 path={`${itemPath}.bullets`}
                 label="Highlights"
@@ -82,7 +92,21 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
       </Section>
 
       <Section title="Technologies">
-        <CheckboxGroup path="techIds" label="Technologies used" options={techOptions} max={32} />
+        <CheckboxGroup
+          path="techIds"
+          label="Technologies used"
+          options={techOptions}
+          max={32}
+          hint={
+            <>
+              Missing one? Add it in{' '}
+              <Link href="/admin/technologies" target="_blank" className="underline">
+                Technologies (opens in a new tab)
+              </Link>
+              , then reload this page.
+            </>
+          }
+        />
       </Section>
     </>
   );

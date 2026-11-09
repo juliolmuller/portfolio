@@ -385,7 +385,7 @@ export function createRepository(
         company: string;
         companyUrl: string | undefined;
         id: string;
-        location: string;
+        location: string | undefined;
         order: number;
         roles: Array<{
           bullets: string[];

@@ -179,7 +179,7 @@ export interface Experience {
   company: string;
   companyUrl?: string;
   id: string;
-  location: string;
+  location?: string;
   order: number;
   roles: ExperienceRole[];
   /**

@@ -377,6 +377,8 @@
     "educationTab": "Formação",
     "present": "Atual",
     "technologies": "Tecnologias",
+    "more": "Mais",
+    "less": "Menos",
     "kinds": {
       "degree": "Graduação",
       "certification": "Certificação"

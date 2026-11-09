@@ -377,6 +377,8 @@
     "educationTab": "Education",
     "present": "Present",
     "technologies": "Technologies",
+    "more": "More",
+    "less": "Less",
     "kinds": {
       "degree": "Degree",
       "certification": "Certification"
