@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { createDefaultLogoProvider } from '@/lib/admin/logo-search/aggregate';
 import { createRemoteIconFetcher } from '@/lib/admin/logo-search/remote-icon';
-import { allowedHosts, createLogoSearch } from '@/lib/admin/logo-search/search';
+import { createLogoSearch } from '@/lib/admin/logo-search/search';
 import { createWindowCounter } from '@/lib/admin/rate';
 import { sameOrigin } from '@/lib/admin/same-origin';
-import { getAiProvider } from '@/lib/ai/fallback';
 import { requireAdmin } from '@/lib/auth/session';
 
 export const maxDuration = 30;
@@ -28,9 +28,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (!parsed.success) return fail(400, 'Send a query of 2 to 64 characters');
 
+  const provider = createDefaultLogoProvider();
   const search = createLogoSearch({
-    ai: getAiProvider(),
-    fetcher: createRemoteIconFetcher({ allowedHosts: allowedHosts() }),
+    provider,
+    fetcher: createRemoteIconFetcher({ allowedHosts: new Set(provider.hosts) }),
   });
 
   return NextResponse.json(await search(parsed.data.query, request.signal), { headers });

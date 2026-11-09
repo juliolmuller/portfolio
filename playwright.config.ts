@@ -79,6 +79,8 @@ export default defineConfig({
       SESSION_SECRET,
       ADMIN_FIXTURE_WRITES: '1',
       SANITY_WEBHOOK_SECRET: WEBHOOK_SECRET,
+      // Never call the logo provider APIs from tests (D74).
+      LOGO_SEARCH_PROVIDERS: 'none',
     },
   },
 });

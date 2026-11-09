@@ -60,6 +60,64 @@ export interface ProcessedImage {
   width: number;
 }
 
+export const LOGO_SIDE = 256;
+
+/**
+ * A raster logo for the editor: re-encoded to WebP, at most 256 px. Logos are
+ * drawn as their alpha silhouette (D75), so an image without transparency would
+ * render as a solid block and is refused.
+ */
+export async function toLogoImage(
+  input: Buffer,
+): Promise<{ dataUrl: string; height: number; width: number } | { message: string }> {
+  const format = sniffImage(input);
+
+  if (!format || format === 'jpeg') return { message: 'Use a PNG, WebP or AVIF logo' };
+
+  try {
+    const image = sharp(input, { limitInputPixels: 25_000_000 });
+
+    if (!(await image.metadata()).hasAlpha) return { message: 'That logo has no transparency' };
+
+    const { data, info } = await image
+      .resize({ width: LOGO_SIDE, height: LOGO_SIDE, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 90 })
+      .toBuffer({ resolveWithObject: true });
+
+    return {
+      dataUrl: `data:image/webp;base64,${data.toString('base64')}`,
+      width: info.width,
+      height: info.height,
+    };
+  } catch {
+    return { message: 'That image could not be read' };
+  }
+}
+
+// Anything that could load another resource: only `#fragment` and inline
+// `data:image/` references are left for the renderer.
+const EXTERNAL_REF =
+  /<!DOCTYPE|<!ENTITY|<\?xml-stylesheet|@import|(?:href|src)\s*=(?!\s*(?:["']\s*)?(?:#|data:image\/))|url\((?!\s*(?:["']\s*)?(?:#|data:image\/))/i;
+
+/**
+ * An SVG the path sanitizer refuses, rendered to a transparent PNG (256 px) by
+ * sharp/librsvg. Refuses documents with external or entity references so the
+ * renderer never fetches or reads anything (D75).
+ */
+export async function rasterizeSvg(svg: string): Promise<Buffer | null> {
+  if (EXTERNAL_REF.test(svg)) return null;
+
+  try {
+    return await sharp(Buffer.from(svg), { density: 192, limitInputPixels: 25_000_000 })
+      .resize({ width: LOGO_SIDE, height: LOGO_SIDE, fit: 'inside' })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Re-encodes every upload: EXIF orientation is applied, all metadata (including
  * GPS) is dropped, the longest side is capped, alpha is kept. sharp discards

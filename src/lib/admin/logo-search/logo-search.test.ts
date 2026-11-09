@@ -1,9 +1,10 @@
+import sharp from 'sharp';
 import { describe, expect, it, vi } from 'vitest';
 
-import { type AiProvider } from '@/lib/ai/provider';
-
+import { type LogoCandidate, type LogoProvider } from './provider';
+import { parseCandidates } from './providers/ai';
 import { createRemoteIconFetcher, isBlockedAddress, type RemoteIconResult } from './remote-icon';
-import { createLogoSearch, parseCandidates } from './search';
+import { createLogoSearch } from './search';
 
 const SVG = '<svg viewBox="0 0 10 10"><path d="M1 1h8v8H1z"/></svg>';
 const svgResponse = (body = SVG, type = 'image/svg+xml'): Response =>
@@ -146,6 +147,34 @@ describe('createRemoteIconFetcher', () => {
     ).toBe(false);
   });
 
+  it('accepts transparent rasters and refuses JPEG or oversize ones', async () => {
+    const png = await sharp({
+      create: { width: 4, height: 4, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    })
+      .png()
+      .toBuffer();
+    const raster = (body: Uint8Array, type: string): Response =>
+      new Response(Buffer.from(body), { headers: { 'content-type': type } });
+
+    expect(
+      await make(() => Promise.resolve(raster(png, 'image/png'))).fetch('https://a.test/x.png'),
+    ).toMatchObject({ ok: true, image: expect.any(Buffer) });
+    expect(
+      (
+        await make(() =>
+          Promise.resolve(raster(Uint8Array.from([0xff, 0xd8, 0xff, 0]), 'image/png')),
+        ).fetch('https://a.test/x.png')
+      ).ok,
+    ).toBe(false);
+    expect(
+      (
+        await make(() =>
+          Promise.resolve(raster(new Uint8Array(1024 * 1024 + 1), 'image/png')),
+        ).fetch('https://a.test/x.png')
+      ).ok,
+    ).toBe(false);
+  });
+
   it('enforces the host allowlist', async () => {
     const fetcher = createRemoteIconFetcher({
       allowedHosts: new Set(['ok.test']),
@@ -165,31 +194,23 @@ describe('parseCandidates', () => {
 
     expect(parseCandidates(text)).toHaveLength(1);
     expect(parseCandidates('no json')).toEqual([]);
-
-    const many = JSON.stringify({
-      candidates: Array.from({ length: 9 }, (_, i) => ({
-        url: `https://cdn.jsdelivr.net/${i}.svg`,
-      })),
-    });
-
-    expect(parseCandidates(many)).toHaveLength(6);
     expect(parseCandidates('{"candidates":[{"url":"not a url"}]}')).toEqual([]);
   });
 });
 
 describe('createLogoSearch', () => {
-  const ai = (text: string, configured = true): AiProvider => ({
-    id: 'fake',
-    isConfigured: () => configured,
-    complete: () => Promise.resolve({ text, provider: 'fake', model: 'm' }),
+  const candidate = (url: string, name: string, kind: LogoCandidate['kind']): LogoCandidate => ({
+    url,
+    name,
+    kind,
+    format: 'svg',
+    source: 'fake',
+    sourceId: `fake:${url}`,
   });
-  const answer = JSON.stringify({
-    candidates: [
-      { url: 'https://cdn.jsdelivr.net/a.svg', variant: 'wordmark' },
-      { url: 'https://cdn.jsdelivr.net/b.svg', variant: 'mark' },
-      { url: 'https://evil.test/c.svg', variant: 'mark' },
-      { url: 'https://cdn.jsdelivr.net/missing.svg', variant: 'mark' },
-    ],
+  const provider = (found: Error | LogoCandidate[]): LogoProvider => ({
+    id: 'fake',
+    hosts: ['a.test'],
+    search: () => (found instanceof Error ? Promise.reject(found) : Promise.resolve(found)),
   });
   const fetcher = {
     fetch: (url: string): Promise<RemoteIconResult> =>
@@ -200,20 +221,32 @@ describe('createLogoSearch', () => {
       ),
   };
 
-  it('filters hosts, drops unimportable logos and ranks marks first', async () => {
-    const result = await createLogoSearch({ ai: ai(answer), fetcher })('Bun');
+  it('ranks by name closeness, then marks first, and drops unimportable logos', async () => {
+    const search = createLogoSearch({
+      fetcher,
+      provider: provider([
+        candidate('https://a.test/hashnode.svg', 'Hashnode', 'icon'),
+        candidate('https://a.test/word.svg', 'Node.js', 'wordmark'),
+        candidate('https://a.test/mark.svg', 'Node.js', 'icon'),
+        candidate('https://a.test/missing.svg', 'Node.js', 'icon'),
+      ]),
+    });
+    const result = await search('Node.js');
 
     expect(result.status).toBe('ok');
     expect(result.results.map((r) => r.url)).toEqual([
-      'https://cdn.jsdelivr.net/b.svg',
-      'https://cdn.jsdelivr.net/a.svg',
+      'https://a.test/mark.svg',
+      'https://a.test/word.svg',
+      'https://a.test/hashnode.svg',
     ]);
   });
 
-  it('reports no-match and ai-unavailable', async () => {
-    expect((await createLogoSearch({ ai: ai('{}'), fetcher })('Bun')).status).toBe('no-match');
-    expect((await createLogoSearch({ ai: ai('', false), fetcher })('Bun')).status).toBe(
-      'ai-unavailable',
+  it('reports no-match and unavailable', async () => {
+    expect((await createLogoSearch({ fetcher, provider: provider([]) })('Bun')).status).toBe(
+      'no-match',
     );
+    expect(
+      (await createLogoSearch({ fetcher, provider: provider(new Error('down')) })('Bun')).status,
+    ).toBe('unavailable');
   });
 });

@@ -2,13 +2,30 @@
 
 import { useId, useState } from 'react';
 
+import { type LogoImagePreview, type LogoSuggestion } from '@/lib/admin/logo-search/search';
 import { type SvgData } from '@/lib/content/schema';
 
-import { useForm } from './form';
+import { SESSION_EXPIRED, useForm } from './form';
+import { upload } from './image-field';
 import { hintClass, inputClass, labelClass, smallButton } from './styles';
 import { type CatalogHit, useLogoSearch } from './use-logo-search';
 
-function Thumb({ svg }: { svg: SvgData }): React.JSX.Element {
+function Thumb({ suggestion }: { suggestion: LogoSuggestion }): React.JSX.Element {
+  if ('image' in suggestion) {
+    // Drawn as a silhouette, as the site renders raster logos (D75).
+    const mask = `url("${suggestion.image.dataUrl}") center / contain no-repeat`;
+
+    return (
+      <span
+        aria-hidden="true"
+        className="size-7 shrink-0 bg-current"
+        style={{ mask, WebkitMask: mask }}
+      />
+    );
+  }
+
+  const { svg } = suggestion;
+
   return (
     <svg viewBox={svg.viewBox} aria-hidden="true" fill="currentColor" className="size-7 shrink-0">
       {svg.paths.map((d, index) => (
@@ -25,15 +42,16 @@ const MAX_SLUG = 64;
 
 type Option =
   | { hit: CatalogHit; id: string; kind: 'catalog' }
-  | { host: string; id: string; kind: 'online'; label: string; svg: SvgData; variant: string }
+  | { id: string; kind: 'online'; suggestion: LogoSuggestion }
   | { id: string; kind: 'url' };
 
 const optionClass =
   'flex min-h-11 w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-small text-text-1 aria-selected:bg-surface-2';
 
 /**
- * "Find a logo": bundled-catalog matches plus AI-suggested, pre-validated SVGs.
- * Never required; the controls below it keep working on their own.
+ * "Find a logo": bundled-catalog matches plus logos found by the provider APIs
+ * (D74), downloaded and validated on the server. Never required; the controls
+ * below it keep working on their own.
  */
 export function LogoCombobox(): React.JSX.Element {
   const form = useForm();
@@ -53,7 +71,11 @@ export function LogoCombobox(): React.JSX.Element {
       id: `${baseId}-c-${hit.source}-${hit.slug}`,
       hit,
     })),
-    ...online.map((item): Option => ({ ...item, kind: 'online', id: `${baseId}-o-${item.id}` })),
+    ...online.map((suggestion): Option => ({
+      kind: 'online',
+      id: `${baseId}-o-${suggestion.id}`,
+      suggestion,
+    })),
     { kind: 'url', id: `${baseId}-url` },
   ];
   const current = options[Math.min(active, options.length - 1)];
@@ -63,7 +85,7 @@ export function LogoCombobox(): React.JSX.Element {
     status === 'searching'
       ? 'Searching…'
       : status === 'unavailable'
-        ? 'Online search is unavailable right now. Paste an SVG URL or file below.'
+        ? 'Online search is unavailable right now. Paste a logo URL or file below.'
         : status === 'idle'
           ? ''
           : `${catalog.length + online.length} logos found`;
@@ -78,8 +100,43 @@ export function LogoCombobox(): React.JSX.Element {
       form.set('iconSlug', option.hit.slug);
       setOpen(false);
     } else {
-      applySvg(option.svg);
+      const { suggestion } = option;
+
       setOpen(false);
+
+      if ('svg' in suggestion) applySvg(suggestion.svg);
+      else applyImage(suggestion.image);
+    }
+  }
+
+  /**
+   * Raster logos become an image asset through the regular upload route, which
+   * re-validates and re-encodes them (D75).
+   */
+  async function applyImage(image: LogoImagePreview): Promise<boolean> {
+    setUrlError('');
+
+    try {
+      // Decoded by hand: a fetch of a data: URL would need `connect-src data:`.
+      const bytes = Uint8Array.from(atob(image.dataUrl.split(',')[1] ?? ''), (char) =>
+        char.charCodeAt(0),
+      );
+      const asset = await upload(new File([bytes], 'logo.webp', { type: 'image/webp' }), 'image');
+
+      form.set('iconSource', 'custom-image');
+      form.set('customImage', { asset });
+      clearInvalidSlug();
+
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+
+      setUrlError(
+        message === SESSION_EXPIRED ? message : message || 'That logo could not be imported',
+      );
+      setUrlMode(true);
+
+      return false;
     }
   }
 
@@ -90,7 +147,10 @@ export function LogoCombobox(): React.JSX.Element {
   function applySvg(svg: SvgData): void {
     form.set('iconSource', 'custom-svg');
     form.set('customSvg', svg);
+    clearInvalidSlug();
+  }
 
+  function clearInvalidSlug(): void {
     const slug = String(form.get('iconSlug') ?? '');
 
     if (slug.length > MAX_SLUG || !SLUG.test(slug)) form.set('iconSlug', '');
@@ -105,15 +165,21 @@ export function LogoCombobox(): React.JSX.Element {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
       });
-      const data = (await response.json()) as { error?: string; svg?: SvgData };
+      const data = (await response.json()) as {
+        error?: string;
+        image?: LogoImagePreview;
+        svg?: SvgData;
+      };
 
-      if (!response.ok || !data.svg) {
+      if (!response.ok || (!data.svg && !data.image)) {
         setUrlError(data.error ?? 'That logo could not be imported');
 
         return;
       }
 
-      applySvg(data.svg);
+      if (data.svg) applySvg(data.svg);
+      else if (data.image && !(await applyImage(data.image))) return;
+
       setUrlMode(false);
       setUrl('');
     } catch {
@@ -207,11 +273,13 @@ export function LogoCombobox(): React.JSX.Element {
                     >
                       {option.kind === 'online' ? (
                         <>
-                          <Thumb svg={option.svg} />
+                          <Thumb suggestion={option.suggestion} />
                           <span className="flex-1">
-                            {option.label}
+                            {option.suggestion.label}
                             <span className="block text-xs text-text-3">
-                              {option.host} · {option.variant}
+                              {option.suggestion.source} · {option.suggestion.variant}
+                              {option.suggestion.theme ? ` · ${option.suggestion.theme}` : ''}
+                              {'image' in option.suggestion ? ' · raster' : ''}
                             </span>
                           </span>
                         </>
@@ -248,10 +316,23 @@ export function LogoCombobox(): React.JSX.Element {
       <p role="status" aria-live="polite" className={hintClass}>
         {message}
       </p>
+      {online.some((item) => item.source === 'logo-dev') ? (
+        <p className={hintClass}>
+          Some logos provided by{' '}
+          <a
+            href="https://logo.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Logo.dev
+          </a>
+        </p>
+      ) : null}
       {urlMode ? (
         <div className="flex flex-col gap-2">
           <label htmlFor={`${baseId}-url-input`} className={labelClass}>
-            SVG URL
+            Logo URL (SVG, PNG, WebP or AVIF)
           </label>
           <div className="flex flex-wrap gap-2">
             <input

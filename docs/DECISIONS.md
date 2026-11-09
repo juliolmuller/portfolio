@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                           |
-| --------------------------- | --------------------------------------------------- |
-| Toolchain and versions      | D5, D6, D15, D20, D24                               |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62    |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65                  |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70, D72, D73 |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66, D75                    |
-| Home, hero, header          | D17, D46–D48, D67, D69                              |
-| Window manager and terminal | D49, D50, D52, D63, D64                             |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61              |
-| Analytics                   | D68                                                 |
+| Topic                       | Decisions                                          |
+| --------------------------- | -------------------------------------------------- |
+| Toolchain and versions      | D5, D6, D15, D20, D24                              |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62   |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65                 |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70, D72–D74 |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66, D75                   |
+| Home, hero, header          | D17, D46–D48, D67, D69                             |
+| Window manager and terminal | D49, D50, D52, D63, D64                            |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61             |
+| Analytics                   | D68                                                |
 
 ## Toolchain and versions
 
@@ -70,8 +70,9 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D54 — Uploads and sanitizers** (active). See ARCHITECTURE. Fixtures mode runs the full pipeline then assigns a placeholder asset with the real dimensions.
 - **D55 — Admin UI structure** (active). One dynamic tree (`/admin/[area]`, `/new`, `/[id]`) driven by `areas.ts` / `area-config.tsx`; URLs carry only the uuid part of ids (the proxy lowercases URLs and ids have capitals); shared editor fields (`LocalizedField`, Markdown editor with safe preview, image field with focal point, list editor with up/down + drag, icon pickers); dirty guard, error summary, conflict dialog, typed-confirmation delete; saves return the stored document. Admin copy is English only.
 - **D56 — Security headers as built** (active). `src/lib/security/headers.ts` is dependency-free (imported by `next.config.ts`); common headers on **every** path; HSTS `max-age=63072000; includeSubDomains` (no `preload` until the owner confirms) only for https site URLs (otherwise WebKit upgrades localhost). `experimental.sri` stays off (stamps only some Turbopack chunks, all same-origin). zod is not imported by client code (v4 probes `new Function('')`, a CSP violation, and bloats the bundle). `security.spec.ts` records `securitypolicyviolation`: zero allowed.
-- **D72 — AI logo search: provider abstraction, fallback chain, SVG-only import** (active; 2026-11-06). Typing a technology name in the admin should suggest importable logos. `AiProvider` has one file per provider (`vercel-gateway.ts`, `openrouter.ts`) over a shared OpenAI-compatible fetch (no SDK, D7/D26); `FallbackAiProvider` skips unconfigured providers and moves on after any failure. Logos are stored as sanitized path data (D37), so only SVG works and the schema is unchanged. Candidates must be on an allowlisted host, download and pass `sanitizeSvg` before the UI shows them. Only the technology name leaves the server. Caches and rate limits are per instance (as login). No model ids are defaulted because free availability changes.
-- **D73 — Admin-initiated remote icon fetch (narrow exception to "no server fetches")** (active; 2026-11-06). The rule that the server never fetches supplied URLs would block D72 and manual URL import. Exception: only from `POST /admin/api/logo-search` and `/logo-import` (session, same-origin, rate limited); https on 443 only, no credentials, DNS-resolved addresses must be public, manual redirects (3 hops, rechecked), 5 s, 100 KB cap, SVG content only, then `sanitizeSvg`. AI-proposed URLs also need an allowlisted host. Never at render time or from stored content. Each hop connects to the address it just validated (`node:https` with `servername` and `Host` kept on the hostname), so DNS rebinding between lookup and connect is closed.
+- **D72 — AI logo search: provider abstraction, fallback chain, SVG-only import** (superseded by D74 for logo search and by D75 for SVG-only; the `lib/ai` chain stays; 2026-11-06). Typing a technology name in the admin should suggest importable logos. `AiProvider` has one file per provider (`vercel-gateway.ts`, `openrouter.ts`) over a shared OpenAI-compatible fetch (no SDK, D7/D26); `FallbackAiProvider` skips unconfigured providers and moves on after any failure. Logos are stored as sanitized path data (D37), so only SVG works and the schema is unchanged. Candidates must be on an allowlisted host, download and pass `sanitizeSvg` before the UI shows them. Only the technology name leaves the server. Caches and rate limits are per instance (as login). No model ids are defaulted because free availability changes.
+- **D73 — Admin-initiated remote icon fetch (narrow exception to "no server fetches")** (active; 2026-11-06). The rule that the server never fetches supplied URLs would block D72 and manual URL import. Exception: only from `POST /admin/api/logo-search` and `/logo-import` (session, same-origin, rate limited); https on 443 only, no credentials, DNS-resolved addresses must be public, manual redirects (3 hops, rechecked), 5 s, 100 KB cap, SVG content only, then `sanitizeSvg`. Search candidates also need a host their provider declares (svgl.app, api.iconify.design, cdn.worldvectorlogo.com, img.logo.dev; D74). Never at render time or from stored content. Each hop connects to the address it just validated (`node:https` with `servername` and `Host` kept on the hostname), so DNS rebinding between lookup and connect is closed.
+- **D74 — Logo search through public APIs behind `LogoProvider` and an aggregate** (active; owner request, 2026-11-09). On staging, the AI Gateway was unreliable and OpenRouter's free models were inconsistent (issue #6). Each provider is one adapter implementing `LogoProvider { id, hosts, search }`: svgl, Iconify (`logos` only, since `simple-icons`/`devicon` are already bundled), Worldvectorlogo (optional key) and Logo.dev (raster, only with `LOGODEV_PK`). The AI source is kept as an unregistered adapter. `createAggregateLogoProvider` runs them all with `allSettled`, merges and deduplicates by URL, logs failing ids only, and throws only when every provider failed. The route consumes only the aggregate. A query is expanded into a few spellings (`terms.ts`), because svgl matches title substrings and Iconify matches keywords. Candidates are ranked by name closeness, then mark before wordmark, and only those that download and validate are shown. Provider API hosts are code constants; candidate files go through the D73 fetcher, limited to the providers' `hosts`. Brandfetch was excluded because its terms forbid storing files or building a logo search on its API. Logo.dev's key never reaches the browser, because the editor receives a re-encoded preview, and the editor credits Logo.dev as its free plan requires. `LOGO_SEARCH_PROVIDERS=none` keeps e2e offline. Consequence: no result cache yet (client cache plus rate limit); Iconify's CDN rate-limits per IP, so it is asked for two spellings only.
 
 ## Tech cloud
 

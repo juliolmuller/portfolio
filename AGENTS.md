@@ -88,7 +88,7 @@ Run the relevant gates before saying something works. For UI work, run the dev s
 - Passwords are never stored in terminal state, history, sessionStorage, console or error reports. Auth failures are generic and delayed to a constant minimum.
 - zod at every boundary; URL allowlists (`https:`, plus `mailto:`/`tel:` only where specified); no `javascript:`/`data:`.
 - No `dangerouslySetInnerHTML` except the escaped JSON-LD serializer and the constant motion-init script (D21). Markdown goes through `rehype-sanitize`; custom SVG through the allowlist parser.
-- No browser requests to third-party origins; the server never fetches URLs supplied by visitors or admin content, except the admin-only SVG logo fetch (D73). Mutating Route Handlers verify `Origin` and `Sec-Fetch-Site`; no state change on GET; admin responses `no-store`.
+- No browser requests to third-party origins; the server never fetches URLs supplied by visitors or admin content, except the admin-only logo fetch (D73, D74). Mutating Route Handlers verify `Origin` and `Sec-Fetch-Site`; no state change on GET; admin responses `no-store`.
 - Analytics is cookieless same-origin Vercel Web Analytics only (D68). The only visitor cookie is `NEXT_LOCALE`.
 
 ## Working agreement

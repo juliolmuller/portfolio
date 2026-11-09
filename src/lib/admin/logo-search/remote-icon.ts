@@ -5,10 +5,12 @@ import { request } from 'node:https';
 import { isIP } from 'node:net';
 import { Readable } from 'node:stream';
 
+import { rasterizeSvg, sniffImage } from '@/lib/admin/upload/image';
 import { sanitizeSvg } from '@/lib/admin/upload/svg';
 import { type SvgData } from '@/lib/content/schema';
 
-export type RemoteIconResult = { message: string; ok: false } | { ok: true; svg: SvgData };
+export type RemoteIconResult =
+  { image: Buffer; ok: true } | { message: string; ok: false } | { ok: true; svg: SvgData };
 
 export interface RemoteIconFetcher {
   fetch: (url: string, signal?: AbortSignal) => Promise<RemoteIconResult>;
@@ -16,6 +18,8 @@ export interface RemoteIconFetcher {
 
 const MAX_URL = 2048;
 const MAX_BODY = 100 * 1024;
+const MAX_RASTER = 1024 * 1024;
+const RASTER_TYPE = /^image\/(?:png|webp|avif)\b/i;
 const MAX_HOPS = 3;
 const TIMEOUT_MS = 5000;
 
@@ -152,7 +156,7 @@ const pinnedFetch: PinnedFetch = (raw, init, address) => {
   });
 };
 
-async function readCapped(response: Response): Promise<null | string> {
+async function readCapped(response: Response, max: number): Promise<Buffer | null> {
   const reader = response.body?.getReader();
 
   if (!reader) return null;
@@ -167,7 +171,7 @@ async function readCapped(response: Response): Promise<null | string> {
 
     size += value.byteLength;
 
-    if (size > MAX_BODY) {
+    if (size > max) {
       await reader.cancel();
 
       return null;
@@ -176,11 +180,12 @@ async function readCapped(response: Response): Promise<null | string> {
     chunks.push(value);
   }
 
-  return new TextDecoder().decode(Buffer.concat(chunks));
+  return Buffer.concat(chunks);
 }
 
 /**
- * Admin-initiated, SSRF-hardened SVG download (D73). `allowedHosts` narrows
+ * Admin-initiated, SSRF-hardened logo download (D73): SVG is sanitized to
+ * paths; PNG/WebP/AVIF come back as checked bytes (D75). `allowedHosts` narrows
  * AI-proposed URLs; manual imports pass none. Each hop connects to its own
  * validated address (see `pinnedFetch`).
  */
@@ -209,7 +214,10 @@ export function createRemoteIconFetcher(
               redirect: 'manual',
               credentials: 'omit',
               cache: 'no-store',
-              headers: { 'User-Agent': 'juliolmuller.com-logo-import', 'Accept': 'image/svg+xml' },
+              headers: {
+                'User-Agent': 'juliolmuller.com-logo-import',
+                'Accept': 'image/svg+xml, image/webp;q=0.9, image/png;q=0.9, image/avif;q=0.8',
+              },
               signal: combined,
             },
             checked.address,
@@ -238,23 +246,45 @@ export function createRemoteIconFetcher(
 
         const type = response.headers.get('content-type') ?? '';
 
-        if (!/^(?:image\/svg\+xml|text\/)/i.test(type)) return fail('That URL is not an SVG');
+        const raster = RASTER_TYPE.test(type);
 
-        let text: null | string;
+        if (!raster && !/^(?:image\/svg\+xml|text\/)/i.test(type)) {
+          await response.body?.cancel();
+
+          return fail('That URL is not an SVG, PNG, WebP or AVIF image');
+        }
+
+        let body: Buffer | null;
 
         try {
-          text = await readCapped(response);
+          body = await readCapped(response, raster ? MAX_RASTER : MAX_BODY);
         } catch {
           return fail('That URL could not be read');
         }
 
-        if (text === null) return fail('That file is too large');
+        if (body === null) return fail('That file is too large');
+
+        if (raster) {
+          const format = sniffImage(body);
+
+          return format && format !== 'jpeg'
+            ? { ok: true, image: body }
+            : fail('That URL is not a PNG, WebP or AVIF image');
+        }
+
+        const text = new TextDecoder().decode(body);
 
         if (!/<svg[\s>]/i.test(text)) return fail('That URL is not an SVG');
 
         const result = sanitizeSvg(text);
 
-        return result.ok ? { ok: true, svg: result.svg } : fail(result.message);
+        if (result.ok) return { ok: true, svg: result.svg };
+
+        // Most real logos use fill-rule, masks or gradients, which paths can't
+        // keep: draw them as a raster silhouette instead (D75).
+        const drawn = await rasterizeSvg(text);
+
+        return drawn ? { ok: true, image: drawn } : fail(result.message);
       }
 
       return fail('That URL redirects too many times');

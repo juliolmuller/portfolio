@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 
 import { signIn } from './admin-helpers';
 
-// No AI keys are set in the e2e server, so online search reports "unavailable"
+// LOGO_SEARCH_PROVIDERS=none in the e2e server, so online search reports "unavailable"
 // and the manual paths must keep working (successful imports are unit-tested:
 // the fetcher refuses localhost by design).
 test.describe('admin logo search', () => {
@@ -34,7 +34,7 @@ test.describe('admin logo search', () => {
     await expect(combobox).toHaveAttribute('aria-expanded', 'true');
     await combobox.press('End');
     await combobox.press('Enter');
-    await page.getByLabel('SVG URL').fill('http://127.0.0.1/x.svg');
+    await page.getByLabel('Logo URL (SVG, PNG, WebP or AVIF)').fill('http://127.0.0.1/x.svg');
     await page.getByRole('button', { name: 'Import' }).click();
     await expect(page.getByText('Only https URLs')).toBeVisible();
 

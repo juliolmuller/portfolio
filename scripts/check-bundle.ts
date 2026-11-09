@@ -50,6 +50,8 @@ const SERVER_ONLY_VARS = [
   'ADMIN_PASSWORD_HASH',
   'SESSION_SECRET',
   'SANITY_WEBHOOK_SECRET',
+  'LOGODEV_PK',
+  'WORLDVECTORLOGO_KEY',
 ];
 
 const ADMIN_PATH = /["'`]\/admin(?:[/"'`?]|$)/;

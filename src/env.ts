@@ -54,6 +54,9 @@ const schema = z.object({
   OPENROUTER_BASE_URL: optionalString.pipe(z.url({ protocol: /^https?$/ }).optional()),
   AI_PROVIDER_ORDER: optionalString,
   LOGO_SEARCH_ALLOWED_HOSTS: optionalString,
+  LOGO_SEARCH_PROVIDERS: optionalString,
+  LOGODEV_PK: optionalString,
+  WORLDVECTORLOGO_KEY: optionalString,
   UPSTASH_REDIS_REST_URL: optionalString.pipe(z.url().optional()),
   UPSTASH_REDIS_REST_TOKEN: optionalString,
 });

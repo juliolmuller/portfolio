@@ -124,11 +124,7 @@ export function useLogoSearch(): Cached & { search: (query: string) => void } {
 
           online = {
             online: result?.results ?? [],
-            status: result
-              ? result.status === 'ai-unavailable'
-                ? 'unavailable'
-                : result.status
-              : 'unavailable',
+            status: result?.status ?? 'unavailable',
           };
           setState((current) => ({ ...current, ...online }));
           settle();

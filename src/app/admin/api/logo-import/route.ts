@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { createRemoteIconFetcher } from '@/lib/admin/logo-search/remote-icon';
 import { createWindowCounter } from '@/lib/admin/rate';
 import { sameOrigin } from '@/lib/admin/same-origin';
+import { toLogoImage } from '@/lib/admin/upload/image';
 import { requireAdmin } from '@/lib/auth/session';
 
 export const maxDuration = 15;
@@ -29,7 +30,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Any public https host (D73): the owner typed it; every other check still applies.
   const result = await createRemoteIconFetcher().fetch(parsed.data.url, request.signal);
 
-  return result.ok
-    ? NextResponse.json({ svg: result.svg }, { headers })
-    : fail(422, result.message);
+  if (!result.ok) return fail(422, result.message);
+
+  if ('svg' in result) return NextResponse.json({ svg: result.svg }, { headers });
+
+  // Raster (D75): the editor uploads this preview as an image asset.
+  const image = await toLogoImage(result.image);
+
+  return 'dataUrl' in image ? NextResponse.json({ image }, { headers }) : fail(422, image.message);
 }
