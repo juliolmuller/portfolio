@@ -11,7 +11,7 @@ import { ButtonAnchor } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { owner } from '@/config/site';
 import { cn } from '@/lib/cn';
-import { type Profile } from '@/lib/content';
+import { type Profile, titleFontFamily } from '@/lib/content';
 
 import { FitTitle } from './fit-title';
 
@@ -46,7 +46,7 @@ export async function Hero({ profile, nextSection }: HeroProps): Promise<React.J
             id="hero-title"
             // A CSS variable from the layout: importing the font module here
             // would split its CSS into a second render-blocking stylesheet.
-            fontFamily={profile?.titleFont && `var(--font-title-${profile.titleFont})`}
+            fontFamily={profile?.titleFont && titleFontFamily(profile.titleFont)}
             className={cn(
               // Below lg the title takes the full width: lift the size cap.
               'max-lg:[--title-max:16rem]',
@@ -110,7 +110,7 @@ function Portrait({
   role: string;
 }): React.JSX.Element {
   const frameClass = cn(
-    'relative shrink-0',
+    'relative shrink-0 max-lg:mx-auto',
     'size-36 overflow-hidden rounded-lg p-[2px] shadow-[0_20px_60px_-20px_rgb(139_124_255/0.55)] max-lg:bg-gradient-accent',
     'lg:aspect-[3/4] lg:h-auto lg:w-[clamp(18rem,min(35vw,calc((100svh-var(--header-height)-9rem)*0.75)),31.5rem)] lg:overflow-visible lg:rounded-none lg:p-0 lg:shadow-none',
   );
