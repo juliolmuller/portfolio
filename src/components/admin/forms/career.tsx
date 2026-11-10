@@ -100,7 +100,12 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
           hint={
             <>
               Missing one? Add it in{' '}
-              <Link href="/admin/technologies" target="_blank" className="underline">
+              <Link
+                href="/admin/technologies"
+                target="_blank"
+                prefetch={false}
+                className="underline"
+              >
                 Technologies (opens in a new tab)
               </Link>
               , then reload this page.
