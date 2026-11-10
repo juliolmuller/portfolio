@@ -298,6 +298,9 @@ test.describe('singletons and lists', () => {
     await expect(field(page, 'roles.0.summary.en')).toHaveAccessibleDescription(
       /over 400: the site shows the start/,
     );
+    // Re-reading the technologies keeps the unsaved form state.
+    await page.getByRole('button', { name: 'Refresh the list' }).click();
+    await expect(field(page, 'company')).toHaveValue(company);
     await page.getByRole('button', { name: 'Save and publish' }).click();
     await published(page);
     await slow.poll(snapshot(page)).toContain(company);
