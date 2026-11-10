@@ -173,8 +173,8 @@ function Portrait({
         }
       >
         <picture>
-          <source media="(min-width: 1024px)" srcSet={desktopSrcSet} />
-          <source media="(max-width: 1023px)" srcSet={mobileSrcSet} />
+          <source media="(min-width: 1024px)" srcSet={desktopSrcSet} sizes={HERO_SIZES} />
+          <source media="(max-width: 1023px)" srcSet={mobileSrcSet} sizes={HERO_SIZES} />
           <img
             {...img}
             alt={photo.alt}
