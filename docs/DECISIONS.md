@@ -12,7 +12,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | --------------------------- | ------------------------------------------------ |
 | Toolchain and versions      | D5, D6, D15, D20, D24                            |
 | Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65               |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
 | Home, hero, header          | D17, D46–D48, D67, D69                           |
@@ -65,6 +65,8 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D30 — Datasets and seeding** (active). Project `njcnsmax`: private `production` (real) and `development` (fictional seed). `sanity:seed` uses `createOrReplace` in one transaction, refuses `production` without `--force`, `--reset` deletes only `isFixture == true` after typing the dataset name, `--dry-run` converts only.
 - **D53 — Admin write path** (active). `AdminStore` / `AdminService` split, optimistic concurrency, revalidation, signed webhook (`sanity-webhook-signature` = `t=<ms>,v1=<base64url HMAC-SHA256 of "<t>.<body>">`, 10-minute tolerance, rate-limited, anything invalid is a bare 404), fixtures writable outside production (`ADMIN_FIXTURE_WRITES=1` for e2e only), `proxyClientMaxBodySize: 5mb`, `serverActions.bodySizeLimit: 2mb`. In fixtures mode public HTML regenerates lazily (seconds); the uncached terminal snapshot shows edits at once. Reorders renumber `order` to 10, 20, …
 - **D65 — Studio-ready schemas** (active; extends D29). `sanity/studio.ts` exports `studioSchemaTypes` (previews, "Display order" orderings, `validation` built from the zod field schemas via a two-method structural `Rule`) and `singletonTypes`. Cross-field/cross-document rules aren't repeated. Studio-created docs get random ids the admin can't open (D55). Setup in SANITY.md.
+- **D76 — Experience location optional, role summary soft limit** (active; 2026-11-09, owner request #20, overrides the spec's 400-character cap). Remote jobs have no meaningful location, so `experience.location` is optional; the résumé and terminal omit the line when it is absent. A role summary may run to 5000 characters per language (a safety cap, not an editorial limit). Past `ROLE_SUMMARY_PREVIEW` (400, `src/lib/format.ts`) the admin counter warns without blocking the save, and the résumé shows the text cut at a word boundary plus a native `<details>` "More"/"Less" toggle, so the full text stays reachable without JavaScript. The terminal always prints the full summary.
+- **D77 — Technologies are picked, never created, in other forms** (active; 2026-11-09, owner request #20). Experience and project forms list the documents of the **Technologies** area; there is no inline creation, so name, category, priority and icon have one editor. Only the Experience form links to Technologies (new tab) and offers **Refresh the list**, which re-reads technologies with `router.refresh()` and keeps unsaved edits; the Project form keeps its step-1 workflow in USAGE.
 
 ## Security and admin
 

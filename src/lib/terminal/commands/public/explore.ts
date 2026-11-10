@@ -56,7 +56,7 @@ const experience: Command = {
     return entries.flatMap((entry): OutputNode[] => [
       lines(
         { text: entry.company, tone: 'bold' },
-        { text: entry.location, tone: 'dim' },
+        ...(entry.location ? [{ text: entry.location, tone: 'dim' as const }] : []),
         ...entry.roles.flatMap((role) => [
           {
             text: `${role.title} (${periodLabel(ctx, date, role.start, role.end)})`,

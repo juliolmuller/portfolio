@@ -1,6 +1,6 @@
 'use client';
 
-import { titleFontLabels, titleFonts } from '@/lib/content/taxonomy';
+import { titleFontFamily, titleFontLabels, titleFonts } from '@/lib/content/taxonomy';
 
 import {
   LocalizedField,
@@ -46,6 +46,7 @@ export function ProfileForm(): React.JSX.Element {
           options={titleFonts.map((value) => ({
             value,
             label: titleFontLabels[value],
+            fontFamily: titleFontFamily(value),
           }))}
         />
         <ImageField path="photo" label="Photo (square, hero and social image)" />

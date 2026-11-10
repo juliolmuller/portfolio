@@ -153,6 +153,29 @@ test('language switch keeps the route and hash', async ({ page }) => {
   expect(cookies.find((c) => c.name === 'NEXT_LOCALE')?.value).toBe('pt');
 });
 
+test('long role summaries are server-rendered in full and expand on demand', async ({
+  page,
+  request,
+}) => {
+  const ending = 'rather than the exception';
+
+  // Crawlers and no-JS visitors get the whole text in the HTML (D76).
+  expect(await (await request.get('/en')).text()).toContain(ending);
+
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/en#experience');
+
+  const role = page.locator('#experience li').first();
+  const more = role.getByText('More', { exact: true });
+
+  await expect(role.getByText(ending, { exact: false })).toBeHidden();
+  await more.click();
+  await expect(role.getByText(ending, { exact: false })).toBeVisible();
+  await expect(more).toBeHidden();
+  await role.getByText('Less', { exact: true }).click();
+  await expect(role.getByText(ending, { exact: false })).toBeHidden();
+});
+
 test('motion toggle persists the paused state', async ({ page }) => {
   await page.goto('/en', { waitUntil: 'domcontentloaded' });
 

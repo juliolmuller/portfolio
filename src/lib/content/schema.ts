@@ -390,7 +390,7 @@ export const experienceRoleSchema = z
     title: localized(80),
     start: yearMonthSchema,
     end: yearMonthSchema.optional(),
-    summary: localized(400),
+    summary: localized(5000),
     bullets: z.array(localized(200)).max(6).default([]),
   })
   .refine((role) => !role.end || role.end >= role.start, {
@@ -402,7 +402,7 @@ export const experienceSchema = z.object({
   ...documentMeta,
   company: text(80),
   companyUrl: httpsUrlSchema.optional(),
-  location: localized(80),
+  location: localized(80).optional(),
   roles: z.array(experienceRoleSchema).min(1).max(10),
   techIds: z
     .array(documentIdSchema)

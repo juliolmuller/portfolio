@@ -60,6 +60,7 @@ export {
   techCategories,
   type TechCategory,
   type TitleFont,
+  titleFontFamily,
   titleFontLabels,
   titleFonts,
 } from './taxonomy';

@@ -15,7 +15,7 @@ import {
   type Resume as ResumeFiles,
   type Technology,
 } from '@/lib/content';
-import { formatPartialDate } from '@/lib/format';
+import { formatPartialDate, ROLE_SUMMARY_PREVIEW, truncateAtWord } from '@/lib/format';
 
 import { JobDetails } from './job-details';
 import { externalRel } from './links';
@@ -66,10 +66,54 @@ function DateRange({
   );
 }
 
-function RoleBody({ role }: { role: ExperienceRole }): React.JSX.Element {
+interface ToggleLabels {
+  less: string;
+  more: string;
+}
+
+/**
+ * Long summaries collapse behind a native `<details>`, so the full text stays
+ * reachable without JavaScript (D76).
+ */
+function RoleSummary({
+  text,
+  title,
+  labels,
+}: {
+  labels: ToggleLabels;
+  text: string;
+  title: string;
+}): React.JSX.Element {
+  const preview = truncateAtWord(text, ROLE_SUMMARY_PREVIEW);
+
+  if (preview === null) return <p className="mt-3 text-text-2">{text}</p>;
+
+  return (
+    <div className="group/summary mt-3 text-text-2">
+      <p className="group-has-open/summary:hidden">{preview}…</p>
+      <details>
+        <summary className="inline-flex min-h-11 w-fit cursor-pointer list-none items-center text-small text-accent-2 underline underline-offset-4 [&::-webkit-details-marker]:hidden">
+          <span className="group-has-open/summary:hidden">{labels.more}</span>
+          <span className="hidden group-has-open/summary:inline">{labels.less}</span>
+          {/* Tells several roles' toggles apart for screen readers (WCAG 2.4.6). */}
+          <span className="sr-only">: {title}</span>
+        </summary>
+        <p>{text}</p>
+      </details>
+    </div>
+  );
+}
+
+function RoleBody({
+  role,
+  labels,
+}: {
+  labels: ToggleLabels;
+  role: ExperienceRole;
+}): React.JSX.Element {
   return (
     <>
-      <p className="mt-3 text-text-2">{role.summary}</p>
+      <RoleSummary text={role.summary} title={role.title} labels={labels} />
       {role.bullets.length > 0 ? (
         <ul className="mt-4 space-y-2">
           {role.bullets.map((bullet) => (
@@ -101,6 +145,7 @@ export async function Resume({
     getTranslations('header'),
   ]);
   const names = new Map(technologies.map((tech) => [tech.id, tech.name]));
+  const labels = { more: t('more'), less: t('less') };
   const linkedIn = ownLinkedIn(links);
   const resumeLocales = [locale, ...routing.locales.filter((other) => other !== locale)].filter(
     (candidate) => resume?.files[candidate],
@@ -119,7 +164,7 @@ export async function Resume({
               const current = Boolean(first && !first.end);
               const details = (
                 <>
-                  {first ? <RoleBody role={first} /> : null}
+                  {first ? <RoleBody role={first} labels={labels} /> : null}
                   {rest.map((role) => (
                     <div key={`${role.title}-${role.start}`} className="mt-8">
                       <h4 className="font-semibold text-text-1">{role.title}</h4>
@@ -129,7 +174,7 @@ export async function Resume({
                         end={role.end}
                         presentLabel={t('present')}
                       />
-                      <RoleBody role={role} />
+                      <RoleBody role={role} labels={labels} />
                     </div>
                   ))}
                   {stack.length > 0 ? (
@@ -172,7 +217,9 @@ export async function Resume({
                           className="size-4 text-text-3 transition-transform group-open/details:rotate-180"
                         />
                       </span>
-                      <span className="w-full text-small text-text-3">{entry.location}</span>
+                      {entry.location ? (
+                        <span className="w-full text-small text-text-3">{entry.location}</span>
+                      ) : null}
                     </summary>
                     <div className="pb-4">{details}</div>
                   </JobDetails>

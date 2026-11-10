@@ -189,16 +189,18 @@ export function SelectField({
   emptyLabel?: string;
   hint?: ReactNode;
   label: string;
-  options: ReadonlyArray<{ label: string; value: number | string }>;
+  options: ReadonlyArray<{ fontFamily?: string; label: string; value: number | string }>;
   path: string;
 }): React.JSX.Element {
   const form = useForm();
   const value = form.get(path);
+  const selected = options.find((option) => String(option.value) === String(value));
 
   return (
     <Field path={path} label={label} hint={hint}>
       {(props) => (
         <select
+          style={{ fontFamily: selected?.fontFamily }}
           {...props}
           value={value === undefined ? '' : String(value)}
           onChange={(event) => {
@@ -214,10 +216,17 @@ export function SelectField({
           className={inputClass}
         >
           {emptyLabel || value === undefined || value === '' ? (
-            <option value="">{emptyLabel ?? 'Choose…'}</option>
+            // The select takes the chosen option's font; keep this one in the UI font.
+            <option value="" style={{ fontFamily: 'var(--font-sans)' }}>
+              {emptyLabel ?? 'Choose…'}
+            </option>
           ) : null}
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option
+              key={option.value}
+              value={option.value}
+              style={{ fontFamily: option.fontFamily }}
+            >
               {option.label}
             </option>
           ))}
@@ -370,6 +379,10 @@ interface LocalizedProps {
   markdown?: boolean;
   max: number;
   multiline?: boolean;
+  /**
+   * Appended to the counter once the text passes `max` (only zod blocks saves).
+   */
+  overMaxNote?: string;
   path: string;
   /**
    * Recommended length range (SEO), shown as guidance.
@@ -474,6 +487,7 @@ export function LocalizedField({
   markdown,
   range,
   gallery,
+  overMaxNote,
 }: LocalizedProps): React.JSX.Element {
   const form = useForm();
   const [tab, setTab] = useState<'en' | 'pt'>('en');
@@ -587,6 +601,7 @@ export function LocalizedField({
               >
                 {value.length}/{max}
                 {range ? ` · aim for ${range[0]}–${range[1]}` : ''}
+                {overMaxNote && value.length > max ? ` · ${overMaxNote}` : ''}
               </p>
               {error ? (
                 <p id={`${id}-error`} className="text-small text-danger">
