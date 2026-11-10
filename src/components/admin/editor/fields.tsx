@@ -380,7 +380,7 @@ interface LocalizedProps {
   max: number;
   multiline?: boolean;
   /**
-   * Makes `max` a soft limit: shown past it instead of a hard error.
+   * Appended to the counter once the text passes `max` (only zod blocks saves).
    */
   overMaxNote?: string;
   path: string;
