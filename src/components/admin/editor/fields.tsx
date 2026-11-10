@@ -216,7 +216,10 @@ export function SelectField({
           className={inputClass}
         >
           {emptyLabel || value === undefined || value === '' ? (
-            <option value="">{emptyLabel ?? 'Choose…'}</option>
+            // The select takes the chosen option's font; keep this one in the UI font.
+            <option value="" style={{ fontFamily: 'var(--font-sans)' }}>
+              {emptyLabel ?? 'Choose…'}
+            </option>
           ) : null}
           {options.map((option) => (
             <option
