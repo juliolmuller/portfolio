@@ -15,8 +15,8 @@ import { type Profile, titleFontFamily } from '@/lib/content';
 
 import { FitTitle } from './fit-title';
 
-const HERO_SIZES =
-  '(min-width: 1440px) 504px, (min-width: 1280px) 448px, (min-width: 1024px) 360px, 144px';
+// Mirrors the lg frame width clamp(18rem, 35vw, 31.5rem); the svh cap only shrinks it.
+const HERO_SIZES = '(min-width: 1024px) clamp(288px, 35vw, 504px), 144px';
 
 interface HeroProps {
   nextSection: 'about' | 'stack';
