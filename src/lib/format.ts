@@ -40,7 +40,9 @@ export const ROLE_SUMMARY_PREVIEW = 400;
  * The text cut at the last word boundary within `max` characters, without
  * trailing punctuation, or `null` when it already fits.
  */
-export function truncateAtWord(text: string, max: number): null | string {
+export function truncateAtWord(text: string, limit: number): null | string {
+  const max = Math.max(0, limit);
+
   if (text.length <= max) return null;
 
   const head = text.slice(0, max + 1);

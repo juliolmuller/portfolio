@@ -14,4 +14,8 @@ describe('truncateAtWord', () => {
   it('hard-cuts a single long word', () => {
     expect(truncateAtWord('x'.repeat(20), 8)).toBe('x'.repeat(8));
   });
+
+  it('treats a negative limit as zero', () => {
+    expect(truncateAtWord('abc', -2)).toBe('');
+  });
 });
