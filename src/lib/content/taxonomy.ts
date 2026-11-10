@@ -45,3 +45,9 @@ export const titleFontLabels: Record<TitleFont, string> = {
   'rock-salt': 'Rock Salt (no accents)',
   'sacramento': 'Sacramento',
 };
+
+/**
+ * The CSS font stack for a title font; matches the `variable` names in
+ * `src/styles/title-fonts.ts`.
+ */
+export const titleFontFamily = (font: TitleFont): string => `var(--font-title-${font})`;
