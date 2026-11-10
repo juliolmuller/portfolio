@@ -4,7 +4,7 @@ import { locale as rootLocale } from 'next/root-params';
 import { owner } from '@/config/site';
 import { Link } from '@/i18n/navigation';
 import { isAppLocale } from '@/i18n/routing';
-import { getContent } from '@/lib/content';
+import { getContent, titleFontFamily } from '@/lib/content';
 
 import { DesktopNav } from './desktop-nav';
 import { HeaderFrame } from './header-frame';
@@ -33,7 +33,7 @@ export async function Header(): Promise<React.JSX.Element> {
           <span
             aria-hidden="true"
             data-header-name
-            style={titleFont ? { fontFamily: `var(--font-title-${titleFont})` } : undefined}
+            style={titleFont ? { fontFamily: titleFontFamily(titleFont) } : undefined}
             className={`hidden text-[0.9375rem] tracking-[-0.01em] text-text-1 transition-opacity duration-300 motion-reduce:transition-none min-[400px]:inline ${
               titleFont ? 'font-normal [font-synthesis:none]' : 'font-semibold'
             }`}
