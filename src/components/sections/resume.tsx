@@ -75,7 +75,15 @@ interface ToggleLabels {
  * Long summaries collapse behind a native `<details>`, so the full text stays
  * reachable without JavaScript (D76).
  */
-function RoleSummary({ text, labels }: { labels: ToggleLabels; text: string }): React.JSX.Element {
+function RoleSummary({
+  text,
+  title,
+  labels,
+}: {
+  labels: ToggleLabels;
+  text: string;
+  title: string;
+}): React.JSX.Element {
   const preview = truncateAtWord(text, ROLE_SUMMARY_PREVIEW);
 
   if (preview === null) return <p className="mt-3 text-text-2">{text}</p>;
@@ -87,6 +95,8 @@ function RoleSummary({ text, labels }: { labels: ToggleLabels; text: string }): 
         <summary className="inline-flex min-h-11 w-fit cursor-pointer list-none items-center text-small text-accent-2 underline underline-offset-4 [&::-webkit-details-marker]:hidden">
           <span className="group-has-open/summary:hidden">{labels.more}</span>
           <span className="hidden group-has-open/summary:inline">{labels.less}</span>
+          {/* Tells several roles' toggles apart for screen readers (WCAG 2.4.6). */}
+          <span className="sr-only">: {title}</span>
         </summary>
         <p>{text}</p>
       </details>
@@ -103,7 +113,7 @@ function RoleBody({
 }): React.JSX.Element {
   return (
     <>
-      <RoleSummary text={role.summary} labels={labels} />
+      <RoleSummary text={role.summary} title={role.title} labels={labels} />
       {role.bullets.length > 0 ? (
         <ul className="mt-4 space-y-2">
           {role.bullets.map((bullet) => (
