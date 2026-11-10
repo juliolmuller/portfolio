@@ -66,7 +66,8 @@ export function HeaderFrame({ children }: { children: ReactNode }): React.JSX.El
       { rootMargin: `-${offset || 0}px 0px 0px 0px`, threshold: 0 },
     );
 
-    observer.observe(hero);
+    // Track the name itself: nav jumps leave the hero's bottom padding under the header.
+    observer.observe(document.getElementById('hero-title') ?? hero);
 
     return (): void => observer.disconnect();
   }, [pathname]);
