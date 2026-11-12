@@ -370,6 +370,11 @@ async function checkNotFound(): Promise<void> {
 
     if (result.response.headers.has('location')) fail(`${path} redirects instead of 404`);
 
+    // Vercel served the prerendered 404 file as a 200 download (D83).
+    if (result.response.headers.has('content-disposition')) {
+      fail(`${path} is served as a download (content-disposition)`);
+    }
+
     if (!NOINDEX.test(result.text)) fail(`${path}: 404 page is missing robots meta noindex`);
   }
 
