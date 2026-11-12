@@ -2,7 +2,7 @@
 
 How to run the site locally and how to wire up every external service: **GitHub**, **Sanity** and **Vercel**. Each part can be followed on its own; the [checklists](#checklists) at the end summarize them.
 
-Related: [USAGE.md](./USAGE.md) (signing in and editing content) · [SANITY.md](./SANITY.md) (datasets, tokens, webhook, seeding) · [ARCHITECTURE.md](./ARCHITECTURE.md) · [AI.md](./AI.md) (Claude PR review setup).
+Related: [USAGE.md](./USAGE.md) (signing in and editing content) · [SANITY.md](./SANITY.md) (datasets, tokens, webhook, seeding) · [ARCHITECTURE.md](./ARCHITECTURE.md) · [AI.md](./AI.md) (Claude workflows setup).
 
 ## Environments at a glance
 
@@ -155,7 +155,7 @@ Details in [SANITY.md](./SANITY.md). Summary:
 - **Dependabot** (`.github/dependabot.yml`): grouped weekly updates on Mondays; review release notes for the `framework` group (Next.js + React together).
 - **Visual baselines** (`visual-baselines.yml`, manual): Actions → _Visual baselines_ → Run workflow, download the artifact and commit the PNGs under `tests/e2e/__screenshots__/`.
 - **PR author assignment** (`pr-author-assign.yml`): on `pull_request_target` (`opened`, `reopened`) it assigns the PR author as assignee with `toshimaru/auto-author-assign` (pinned to a commit SHA). It needs no secrets and only `pull-requests: write`; it never checks out PR code.
-- **Claude PR review** (`claude-review.yml`, manual): needs the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. Setup in [AI.md](./AI.md#claude-pr-review-workflow).
+- **Claude issue to PR** (`claude-issue.yml`) and **Claude PR review** (`claude-review.yml`): label-triggered (`Claude`); need the Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. Flow and setup in [AI.md](./AI.md#claude-workflows-d78).
 - **GitHub Pages:** while `main` is the old site, Pages serves it. See §6.4 for what to do at launch.
 - **Husky** runs `lint-staged` (ESLint with `--max-warnings=0`, Prettier) before each commit.
 
