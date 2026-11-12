@@ -15,14 +15,13 @@ import { useShortcutLabel } from './use-shortcut-label';
 /**
  * The labelled terminal button in the header; its tooltip shows the shortcut.
  */
-export function TerminalToggle({ className }: { className?: string }): React.JSX.Element {
+export function TerminalToggle(): React.JSX.Element {
   const t = useTranslations('window');
   const shortcut = useShortcutLabel();
 
   return (
     <Tooltip
       side="bottom"
-      className={className}
       content={
         <span className="flex items-center gap-2">
           {t('toggle')} <Kbd>{shortcut}</Kbd>
