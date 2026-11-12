@@ -61,7 +61,7 @@ Visual snapshots run in CI; locally use `VISUAL=1 bun run test:e2e visual.spec.t
 | [docs/PRODUCT.md](docs/PRODUCT.md)                                          | Purpose, signature features, non-goals, content rules, definition of done                                |
 | [docs/SANITY.md](docs/SANITY.md)                                            | Project, datasets, tokens, schema, webhook, seeding, optional Studio                                     |
 | [docs/SEO.md](docs/SEO.md) · [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md) | What is emitted and verified; launch and manual checklists                                               |
-| [docs/AI.md](docs/AI.md)                                                    | AI-assisted development history, Claude PR review workflow, lessons learned                              |
+| [docs/AI.md](docs/AI.md)                                                    | AI-assisted development history, Claude workflows, lessons learned                                       |
 | [AGENTS.md](AGENTS.md) / [CLAUDE.md](CLAUDE.md)                             | Rules and conventions for AI agents (and humans)                                                         |
 | [docs/archive/SPEC.md](docs/archive/SPEC.md)                                | Original implementation prompt, kept for history                                                         |
 
