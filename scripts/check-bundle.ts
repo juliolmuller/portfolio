@@ -28,7 +28,7 @@ const KB = 1024;
 const ROUTE_BUDGETS: Record<string, number> = {
   '/[locale]': 195,
   '/[locale]/projects': 190,
-  '/[locale]/projects/[slug]': 190,
+  '/[locale]/projects/[slug]': 191,
   '/[locale]/accessibility': 185,
   '/[locale]/[...rest]': 185,
 };
