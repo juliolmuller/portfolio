@@ -39,6 +39,7 @@ src/
     admin/           upload sanitizers (image, pdf, svg), actions
     terminal/        pure TS core: parser, vfs, registry, engine, completion, commands/{public,secret}
     window-manager/  geometry (pure)         tech-cloud/  motion math (pure)
+    timeline-rail.ts  rail tip easing/anchor math (pure; tip follows a fine pointer, D81)
     security/        headers.ts (dependency-free, also imported by next.config.ts)
     seo/             metadata, json-ld, og-image
   i18n/  stores/  config/site.ts  env.ts  styles/
