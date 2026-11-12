@@ -28,7 +28,7 @@ Commit trailers are the audit trail for which tool wrote what: `git log --format
 
 ## Claude workflows (D78)
 
-Both run `anthropics/claude-code-action` (SHA-pinned) and authenticate with the Claude subscription.
+Both run `anthropics/claude-code-action` (floating `@v1` tag: always the latest v1 release, by owner choice) and authenticate with the Claude subscription.
 
 **One-time setup**
 
