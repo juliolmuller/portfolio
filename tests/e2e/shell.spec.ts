@@ -55,6 +55,17 @@ test.describe('global 404', () => {
     expect(await admin.text()).toBe(await random.text());
   });
 
+  test('unmatched top-level files and the rewrite target are real 404s', async ({ request }) => {
+    const random = await (await request.get('/definitely-not-here')).text();
+
+    for (const path of ['/llms.txt', '/.well-known/ard.json', '/__not-found']) {
+      const response = await request.get(path);
+
+      expect(response.status(), path).toBe(404);
+      expect(await response.text(), path).toBe(random);
+    }
+  });
+
   test('unknown localized paths return the localized 404', async ({ request }) => {
     const response = await request.get('/pt/nada-aqui');
 

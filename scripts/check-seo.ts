@@ -355,6 +355,38 @@ async function extras(): Promise<void> {
   }
 }
 
+async function checkNotFound(): Promise<void> {
+  const paths = ['/zz-nope-123', '/llms.txt', '/.well-known/ard.json', '/__not-found', '/admin'];
+  const results = new Map<string, { response: Response; text: string }>();
+
+  for (const path of paths) {
+    const result = await fetchText(path);
+
+    results.set(path, result);
+
+    if (result.response.status !== 404) {
+      fail(`${path} returned ${result.response.status} (want 404)`);
+    }
+
+    if (result.response.headers.has('location')) fail(`${path} redirects instead of 404`);
+
+    if (!NOINDEX.test(result.text)) fail(`${path}: 404 page is missing robots meta noindex`);
+  }
+
+  const random = results.get('/zz-nope-123');
+  const admin = results.get('/admin');
+
+  if (!random || !admin) return;
+
+  if (admin.text !== random.text) fail('anonymous /admin 404 body differs from a random 404');
+
+  for (const header of ['content-type', 'cache-control']) {
+    if (admin.response.headers.get(header) !== random.response.headers.get(header)) {
+      fail(`anonymous /admin 404 ${header} differs from a random 404`);
+    }
+  }
+}
+
 async function main(): Promise<void> {
   const child = await startServer();
 
@@ -362,6 +394,7 @@ async function main(): Promise<void> {
     const locs = await checkRobotsAndSitemap();
     for (const loc of locs) await checkPage(loc);
     await extras();
+    await checkNotFound();
     await checkPrivateHeaders();
   } finally {
     child?.kill('SIGTERM');

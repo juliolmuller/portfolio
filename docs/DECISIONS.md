@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                        |
-| --------------------------- | ------------------------------------------------ |
-| Toolchain and versions      | D5, D6, D15, D20, D24                            |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
-| Home, hero, header          | D17, D46–D48, D67, D69                           |
-| Window manager and terminal | D49, D50, D52, D63, D64, D80                     |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79 |
-| Analytics                   | D68                                              |
+| Topic                       | Decisions                                             |
+| --------------------------- | ----------------------------------------------------- |
+| Toolchain and versions      | D5, D6, D15, D20, D24                                 |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D81 |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77          |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70             |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66                           |
+| Home, hero, header          | D17, D46–D48, D67, D69                                |
+| Window manager and terminal | D49, D50, D52, D63, D64, D80                          |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79      |
+| Analytics                   | D68                                                   |
 
 ## Toolchain and versions
 
@@ -44,7 +44,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D3 — URL policy and the indistinguishable 404** (active). The proxy invokes next-intl only for `/` (307: cookie → `Accept-Language` → `en`). Any other unprefixed path, and anonymous `/admin/**` (GET, POST, Server Action posts, `/admin/api/upload`), is a real 404 from the same global page with identical body and headers (an e2e diffs them). Multipart POSTs to a page are treated by Next as Server Action attempts (400 for every path).
 - **D16 — View Transitions** (superseded by D62).
 - **D18 — Locale negotiation in the proxy, not next-intl middleware** (active). `src/i18n/negotiate.ts` (pure, tested); `Vary: Accept-Language, Cookie`, `private, no-store`; next-intl runs with `localeCookie: false`, `localeDetection: false`. The cookie is written only by the language switcher. Without JS the switch works but nothing is remembered.
-- **D19 — Global 404 is `global-not-found.tsx`** (active; `experimental.globalNotFound`). The proxy rewrites any path whose first segment isn't a locale or known root file (including anonymous admin) to `/404`; `[locale]/[...rest]` calls `notFound()` for localized 404s.
+- **D19 — Global 404 is `global-not-found.tsx`** (active; `experimental.globalNotFound`). The proxy rewrites any path whose first segment isn't a locale or known root file (including anonymous admin) to a fixed non-prerendered path (D81); `[locale]/[...rest]` calls `notFound()` for localized 404s.
 - **D33 — Invalid project query params are 404s** (active). Unknown `?kind=`, non-positive `?page=`, empty kinds and pages past the end → 404, so soft-404 URLs never enter the index.
 - **D34 — Project filter is link navigation** (active). No Motion layout animation: cards stay Server Components wrapping the `Tilt` island; the live region announces the count.
 - **D35 — `/projects` is request-rendered** (active). Awaiting `searchParams` makes it dynamic (`ƒ`); first hit after a deploy pays a render, then 24 h cache.
@@ -111,6 +111,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D63 — Snap preview** (active). One always-mounted `aria-hidden` element written straight to the DOM; hysteresis 8 px to arm / 32 px to release (`snapSideAt(pointer, viewport, armed)`); CSS transitions only.
 - **D64 — Easter eggs** (active). `fortune`, `cowsay`, `matrix` (4 s CSS rain behind `actions.effect`, skipped for reduced motion), `ping`, `ssh`, `sudo`, `rm`, `vim`/`vi`/`nano`/`emacs`. All local and harmless; none may mention the admin, `su`, sessions or passwords (unit-tested). Lives in the lazy terminal chunk (≤ 20 KB).
 - **D80 — Dock chip only from 640 px** (active; 2026-11-12, issue #32, amends D50). On phones the floating chip covers content. The chip and the "type help" hint use `max-sm:hidden` (Tailwind `sm` = 640 px = `SHEET_BREAKPOINT`), in every state including minimized; the hint is not even scheduled below that width (`matchMedia`: no timer, no `sessionStorage` write, so it can still show later on a wide screen). The header button is the entry on phones (`toggleTerminal` opens, restores and minimizes). Width rule, not `pointer: coarse`: a narrow desktop window already gets the sheet. The footer shortcut text is deliberately unchanged (devices with a keyboard have the shortcut). Consequence: no minimized indicator on phones; mobile tests restore through the header button.
+- **D81 — Global 404 rewrite target is a non-prerendered path** (active; 2026-11-12, issue #13, amends D19). Context: on Vercel, a proxy rewrite to `/404` serves the prerendered not-found file as a static asset with status 200 (soft 404, `content-disposition: filename="404"`); `next start` was unaffected, so e2e missed it. Decision: the proxy rewrites to the fixed path `/__not-found`, which has no build output and falls into `[locale]`, where the root layout guard calls `notFound()` and Next renders `global-not-found.tsx` with a real 404. One fixed target (not the original URL) keeps random and anonymous admin paths identical (D3) and caps ISR at one 404 entry. It must never be `/404`, `/_not-found` or any path with an output. Consequence: `check:seo` asserts real 404s on top-level unknown paths and, with `SEO_BASE_URL`, catches this on production. Vercel-side confirmation is pending; if production still answers 200, add `{ status: 404 }` to the rewrite and update this entry.
 
 ## Quality, tests, CI
 
@@ -163,6 +164,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **R8 — Server Action origin behind proxies.** Self-hosting behind a host-rewriting proxy needs `serverActions.allowedOrigins`.
 - **R9 — Bun runtime on Vercel is beta** (D24). **Open.**
 - **R10 — Per-instance login rate limiter.** **Open**, known gap (D51).
+- **R11 — Soft 404 on Vercel for top-level unknown paths.** Closed by D81 (production confirmation pending).
 
 ## Assumptions
 
