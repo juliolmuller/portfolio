@@ -15,7 +15,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
-| Home, hero, header          | D17, D46–D48, D67, D69                           |
+| Home, hero, header          | D17, D46–D48, D67, D69, D80                      |
 | Window manager and terminal | D49, D50, D52, D63, D64                          |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79 |
 | Analytics                   | D68                                              |
@@ -93,7 +93,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D42 — No Cloud|List toggle** (active). The geoid shows after hydration unless `useReducedMotionPreference()` (reduced motion or Pause animations); SSR/no-JS/crash render the List.
 - **D43 — Centered chips** (active). **D44 — Filter mutes unmatched icons** (active): ×0.08 opacity, no pointer events; exclusive filtering. **D45 — Dim eases in rAF** (active): lerp factor 0.12 (~250 ms); depth opacity stays a direct write.
 - **D59 — Logos as cached files; document weight** (active). `/tech-icons/<hash>.svg` (hash = two FNV-1a passes over viewBox+paths) is `immutable`, only visible technologies resolve, `?fill=<6 hex>` colours it; List view draws the same file as a CSS mask. Project detail keeps a few inline icons. JetBrains Mono not preloaded. Detail cover uses `preload` + `fetchPriority="high"` (`priority` is deprecated). Home HTML went 690 → 278 KB (47 KB gzip).
-- **D66 — Frame-time scaling and drag model** (active; from `techs-cloud` PR #1). `k = min(gap, 50 ms)/16.67 ms` for spin, easing, dim and friction; pointer travel accumulated per frame; stationary-hold decay; stage size from ResizeObserver only; loop stops when hidden/off-screen/zero-sized. Pure math in `src/lib/tech-cloud/motion.ts` (tested at 60/90/120/144 Hz). Not transposed: `touch-action: none` (the geoid sits in a scrolling page).
+- **D66 — Frame-time scaling and drag model** (active; from `techs-cloud` PR #1). `k = min(gap, 50 ms)/16.67 ms` for spin, easing, dim and friction; pointer travel accumulated per frame; stationary-hold decay; stage size from ResizeObserver only; loop stops when hidden/off-screen/zero-sized. Pure math in `src/lib/tech-cloud/motion.ts` (tested at 60/90/120/144 Hz); the timeline rail reuses it (D80). Not transposed: `touch-action: none` (the geoid sits in a scrolling page).
 
 ## Home, hero, header
 
@@ -103,6 +103,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D48 — About absorbs Summary** (active). One `#about`: bio left, up to 4 metrics as a 2×2 tile right from `lg`; `#summary` stays on the stats list; facts (`location`, `spokenLanguages`, `focus`) are terminal-only.
 - **D67 — Name as the hero title, selectable font, header links** (active). H1 = `displayName` on one line. `heroHeadline` and `rotatingWords` are gone; `heroLead` ≤ 120 chars (so the home meta description uses `meta.siteDescription`, intended). `profile.titleFont` picks one of ten Google fonts via `next/font/google` (self-hosted at build, `preload: false`, each defines `--font-title-<id>`, only the chosen file is fetched). **The hero must not import `styles/title-fonts.ts`** (Turbopack splits `@font-face` into a render-blocking stylesheet that cost `/pt` ~0.03 Lighthouse performance). `FitTitle` measures and sets `--fit`; never wraps or clips. Featured-link placement `hero` → `header` (max three icons from `md`). Terminal button is primary with a visible label. The header wordmark hides while the hero is in view. Migration steps: [SANITY.md](./SANITY.md#migration-2026-11-d67).
 - **D69 — Quote band removed** (active; 2026-11-04, owner request). The "Quotes of the moment" band, `profile.featuredQuote` (schema, repository, Sanity schema/query/mapper, fixtures), its admin fields and the `quote` messages are deleted. Existing Sanity documents may still hold the field; reads ignore it. The hero scroll cue now targets `#about`.
+- **D80 — Timeline rail tip follows a fine pointer** (active; from issue #29). Context: the experience rail only tracked scroll. Decision: with `(hover: hover) and (pointer: fine)` over the resume section the rail tip eases toward the cursor's Y; otherwise it eases toward a fixed scroll anchor (`SCROLL_ANCHOR` = 60% of the viewport). Nodes pulse when the tip passes them (replacing the `IntersectionObserver` reveal). Math is pure in `src/lib/timeline-rail.ts`, reusing the frame-time helpers of D66; styles are written via refs in rAF, and reduced motion draws the full rail. Consequence: touch and reduced-motion users keep the scroll-driven rail; node reveal depends on tip position.
 
 ## Window manager and terminal
 
