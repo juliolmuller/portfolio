@@ -52,6 +52,7 @@ export default defineConfig({
         'terminal.spec.ts',
         'window.spec.ts',
         'stack.spec.ts',
+        'timeline.spec.ts',
         'security.spec.ts',
         'a11y.spec.ts',
       ],

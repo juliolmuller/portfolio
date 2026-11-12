@@ -39,6 +39,7 @@ src/
     admin/           upload sanitizers (image, pdf, svg), actions
     terminal/        pure TS core: parser, vfs, registry, engine, completion, commands/{public,secret}
     window-manager/  geometry (pure)         tech-cloud/  motion math (pure)
+    timeline-rail.ts  rail tip easing/anchor math (pure; tip follows a fine pointer, D83)
     security/        headers.ts (dependency-free, also imported by next.config.ts)
     seo/             metadata, json-ld, og-image
   i18n/  stores/  config/site.ts  env.ts  styles/
@@ -60,7 +61,7 @@ Conventions that keep this layout honest: server-only modules import `server-onl
 
 ## Request flow (`src/proxy.ts`)
 
-In order: (1) canonicalization (lowercase → 308); (2) **admin gate** for `/admin/**`: verify the JWT with `jose`, otherwise rewrite to a nonexistent path (a fixed path with no prerendered output, D81) so Next renders the **same global 404** as any unknown URL (D3, D19); allowed requests get the admin headers and a per-request nonce CSP; the session cookie is re-issued at most once a minute and never for Server Action posts (D51); (3) locale negotiation for `/` only: cookie → `Accept-Language` → `en`, 307 (D18). Any other unprefixed path is a real 404.
+In order: (1) canonicalization (lowercase → 308); (2) **admin gate** for `/admin/**`: verify the JWT with `jose`, otherwise rewrite to a nonexistent path (a fixed path with no prerendered output, D83) so Next renders the **same global 404** as any unknown URL (D3, D19); allowed requests get the admin headers and a per-request nonce CSP; the session cookie is re-issued at most once a minute and never for Server Action posts (D51); (3) locale negotiation for `/` only: cookie → `Accept-Language` → `en`, 307 (D18). Any other unprefixed path is a real 404.
 
 ## Content layer
 

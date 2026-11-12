@@ -11,11 +11,11 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Topic                       | Decisions                                             |
 | --------------------------- | ----------------------------------------------------- |
 | Toolchain and versions      | D5, D6, D15, D20, D24                                 |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D81 |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D83 |
 | Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77          |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70             |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                           |
-| Home, hero, header          | D17, D46–D48, D67, D69                                |
+| Home, hero, header          | D17, D46–D48, D67, D69, D81                           |
 | Window manager and terminal | D49, D50, D52, D63, D64, D80                          |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79      |
 | Analytics                   | D68                                                   |
@@ -44,7 +44,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D3 — URL policy and the indistinguishable 404** (active). The proxy invokes next-intl only for `/` (307: cookie → `Accept-Language` → `en`). Any other unprefixed path, and anonymous `/admin/**` (GET, POST, Server Action posts, `/admin/api/upload`), is a real 404 from the same global page with identical body and headers (an e2e diffs them). Multipart POSTs to a page are treated by Next as Server Action attempts (400 for every path).
 - **D16 — View Transitions** (superseded by D62).
 - **D18 — Locale negotiation in the proxy, not next-intl middleware** (active). `src/i18n/negotiate.ts` (pure, tested); `Vary: Accept-Language, Cookie`, `private, no-store`; next-intl runs with `localeCookie: false`, `localeDetection: false`. The cookie is written only by the language switcher. Without JS the switch works but nothing is remembered.
-- **D19 — Global 404 is `global-not-found.tsx`** (active; `experimental.globalNotFound`). The proxy rewrites any path whose first segment isn't a locale or known root file (including anonymous admin) to a fixed non-prerendered path (D81); `[locale]/[...rest]` calls `notFound()` for localized 404s.
+- **D19 — Global 404 is `global-not-found.tsx`** (active; `experimental.globalNotFound`). The proxy rewrites any path whose first segment isn't a locale or known root file (including anonymous admin) to a fixed non-prerendered path (D83); `[locale]/[...rest]` calls `notFound()` for localized 404s.
 - **D33 — Invalid project query params are 404s** (active). Unknown `?kind=`, non-positive `?page=`, empty kinds and pages past the end → 404, so soft-404 URLs never enter the index.
 - **D34 — Project filter is link navigation** (active). No Motion layout animation: cards stay Server Components wrapping the `Tilt` island; the live region announces the count.
 - **D35 — `/projects` is request-rendered** (active). Awaiting `searchParams` makes it dynamic (`ƒ`); first hit after a deploy pays a render, then 24 h cache.
@@ -93,7 +93,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D42 — No Cloud|List toggle** (active). The geoid shows after hydration unless `useReducedMotionPreference()` (reduced motion or Pause animations); SSR/no-JS/crash render the List.
 - **D43 — Centered chips** (active). **D44 — Filter mutes unmatched icons** (active): ×0.08 opacity, no pointer events; exclusive filtering. **D45 — Dim eases in rAF** (active): lerp factor 0.12 (~250 ms); depth opacity stays a direct write.
 - **D59 — Logos as cached files; document weight** (active). `/tech-icons/<hash>.svg` (hash = two FNV-1a passes over viewBox+paths) is `immutable`, only visible technologies resolve, `?fill=<6 hex>` colours it; List view draws the same file as a CSS mask. Project detail keeps a few inline icons. JetBrains Mono not preloaded. Detail cover uses `preload` + `fetchPriority="high"` (`priority` is deprecated). Home HTML went 690 → 278 KB (47 KB gzip).
-- **D66 — Frame-time scaling and drag model** (active; from `techs-cloud` PR #1). `k = min(gap, 50 ms)/16.67 ms` for spin, easing, dim and friction; pointer travel accumulated per frame; stationary-hold decay; stage size from ResizeObserver only; loop stops when hidden/off-screen/zero-sized. Pure math in `src/lib/tech-cloud/motion.ts` (tested at 60/90/120/144 Hz). Not transposed: `touch-action: none` (the geoid sits in a scrolling page).
+- **D66 — Frame-time scaling and drag model** (active; from `techs-cloud` PR #1). `k = min(gap, 50 ms)/16.67 ms` for spin, easing, dim and friction; pointer travel accumulated per frame; stationary-hold decay; stage size from ResizeObserver only; loop stops when hidden/off-screen/zero-sized. Pure math in `src/lib/tech-cloud/motion.ts` (tested at 60/90/120/144 Hz); the timeline rail reuses it (D81). Not transposed: `touch-action: none` (the geoid sits in a scrolling page).
 
 ## Home, hero, header
 
@@ -103,6 +103,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D48 — About absorbs Summary** (active). One `#about`: bio left, up to 4 metrics as a 2×2 tile right from `lg`; `#summary` stays on the stats list; facts (`location`, `spokenLanguages`, `focus`) are terminal-only.
 - **D67 — Name as the hero title, selectable font, header links** (active). H1 = `displayName` on one line. `heroHeadline` and `rotatingWords` are gone; `heroLead` ≤ 120 chars (so the home meta description uses `meta.siteDescription`, intended). `profile.titleFont` picks one of ten Google fonts via `next/font/google` (self-hosted at build, `preload: false`, each defines `--font-title-<id>`, only the chosen file is fetched). **The hero must not import `styles/title-fonts.ts`** (Turbopack splits `@font-face` into a render-blocking stylesheet that cost `/pt` ~0.03 Lighthouse performance). `FitTitle` measures and sets `--fit`; never wraps or clips. Featured-link placement `hero` → `header` (max three icons from `md`). Terminal button is primary with a visible label. The header wordmark hides while the hero is in view. Migration steps: [SANITY.md](./SANITY.md#migration-2026-11-d67).
 - **D69 — Quote band removed** (active; 2026-11-04, owner request). The "Quotes of the moment" band, `profile.featuredQuote` (schema, repository, Sanity schema/query/mapper, fixtures), its admin fields and the `quote` messages are deleted. Existing Sanity documents may still hold the field; reads ignore it. The hero scroll cue now targets `#about`.
+- **D81 — Timeline rail tip follows a fine pointer** (active; from issue #29). Context: the experience rail only tracked scroll. Decision: with `(hover: hover) and (pointer: fine)` over the resume section the rail tip eases toward the cursor's Y; otherwise it eases toward a fixed scroll anchor (`SCROLL_ANCHOR` = 60% of the viewport). Nodes pulse when the tip passes them (replacing the `IntersectionObserver` reveal). Math is pure in `src/lib/timeline-rail.ts`, reusing the frame-time helpers of D66; styles are written via refs in rAF, and reduced motion draws the full rail. Consequence: touch and reduced-motion users keep the scroll-driven rail; node reveal depends on tip position.
 
 ## Window manager and terminal
 
@@ -111,7 +112,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D63 — Snap preview** (active). One always-mounted `aria-hidden` element written straight to the DOM; hysteresis 8 px to arm / 32 px to release (`snapSideAt(pointer, viewport, armed)`); CSS transitions only.
 - **D64 — Easter eggs** (active). `fortune`, `cowsay`, `matrix` (4 s CSS rain behind `actions.effect`, skipped for reduced motion), `ping`, `ssh`, `sudo`, `rm`, `vim`/`vi`/`nano`/`emacs`. All local and harmless; none may mention the admin, `su`, sessions or passwords (unit-tested). Lives in the lazy terminal chunk (≤ 20 KB).
 - **D80 — Dock chip only from 640 px** (active; 2026-11-12, issue #32, amends D50). On phones the floating chip covers content. The chip and the "type help" hint use `max-sm:hidden` (Tailwind `sm` = 640 px = `SHEET_BREAKPOINT`), in every state including minimized; the hint is not even scheduled below that width (`matchMedia`: no timer, no `sessionStorage` write, so it can still show later on a wide screen). The header button is the entry on phones (`toggleTerminal` opens, restores and minimizes). Width rule, not `pointer: coarse`: a narrow desktop window already gets the sheet. The footer shortcut text is deliberately unchanged (devices with a keyboard have the shortcut). Consequence: no minimized indicator on phones; mobile tests restore through the header button.
-- **D81 — Global 404 rewrite target is a non-prerendered path** (active; 2026-11-12, issue #13, amends D19). Context: on Vercel, a proxy rewrite to `/404` serves the prerendered not-found file as a static asset with status 200 (soft 404, `content-disposition: filename="404"`); `next start` was unaffected, so e2e missed it. Decision: the proxy rewrites to the fixed path `/__not-found`, which has no build output and falls into `[locale]`, where the root layout guard calls `notFound()` and Next renders `global-not-found.tsx` with a real 404. One fixed target (not the original URL) keeps random and anonymous admin paths identical (D3) and caps ISR at one 404 entry. It must never be `/404`, `/_not-found` or any path with an output. Consequence: `check:seo` asserts real 404s on top-level unknown paths and, with `SEO_BASE_URL`, catches this on production. Vercel-side confirmation is pending; if production still answers 200, add `{ status: 404 }` to the rewrite and update this entry.
+- **D83 — Global 404 rewrite target is a non-prerendered path** (active; 2026-11-12, issue #13, amends D19). Context: on Vercel, a proxy rewrite to `/404` serves the prerendered not-found file as a static asset with status 200 (soft 404, `content-disposition: filename="404"`); `next start` was unaffected, so e2e missed it. Decision: the proxy rewrites to the fixed path `/__not-found`, which has no build output and falls into `[locale]`, where the root layout guard calls `notFound()` and Next renders `global-not-found.tsx` with a real 404. One fixed target (not the original URL) keeps random and anonymous admin paths identical (D3) and caps ISR at one 404 entry. It must never be `/404`, `/_not-found` or any path with an output. Consequence: `check:seo` asserts real 404s on top-level unknown paths and, with `SEO_BASE_URL`, catches this on production. Vercel-side confirmation is pending; if production still answers 200, add `{ status: 404 }` to the rewrite and update this entry.
 
 ## Quality, tests, CI
 
@@ -164,7 +165,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **R8 — Server Action origin behind proxies.** Self-hosting behind a host-rewriting proxy needs `serverActions.allowedOrigins`.
 - **R9 — Bun runtime on Vercel is beta** (D24). **Open.**
 - **R10 — Per-instance login rate limiter.** **Open**, known gap (D51).
-- **R11 — Soft 404 on Vercel for top-level unknown paths.** Closed by D81 (production confirmation pending).
+- **R11 — Soft 404 on Vercel for top-level unknown paths.** Closed by D83 (production confirmation pending).
 
 ## Assumptions
 
