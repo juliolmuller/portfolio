@@ -15,7 +15,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
-| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82                |
+| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82                 |
 | Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79 |
 | Analytics                   | D68                                              |
