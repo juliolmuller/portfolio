@@ -151,7 +151,7 @@ Details in [SANITY.md](./SANITY.md). Summary:
 
 - **Visual baselines** (`visual-baselines.yml`, manual): Actions → _Visual baselines_ → Run workflow, download the artifact and commit the PNGs under `tests/e2e/__screenshots__/`.
 - **PR author assignment** (`pr-author-assign.yml`): on `pull_request_target` (`opened`, `reopened`) it assigns the PR author as assignee with `toshimaru/auto-author-assign` (pinned to a commit SHA). It needs no secrets and only `pull-requests: write`; it never checks out PR code.
-- **Claude issue to PR** (`claude-issue.yml`) and **Claude PR review** (`claude-review.yml`): label-triggered (`Claude`); need the Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. Flow and setup in [AI.md](./AI.md#claude-workflows-d78).
+- **Claude issue to PR** (`claude-issue.yml`) and **Claude PR review** (`claude-review.yml`): label-triggered (`Claude` → `main`, `claude:next` → `next`); need the Claude GitHub App and the `CLAUDE_CODE_OAUTH_TOKEN` repository secret. Flow and setup in [AI.md](./AI.md#claude-workflows-d78).
 - **GitHub Pages:** while `main` is the old site, Pages serves it. See §6.4 for what to do at launch.
 - **Husky** runs `lint-staged` (ESLint with `--max-warnings=0`, Prettier) before each commit.
 

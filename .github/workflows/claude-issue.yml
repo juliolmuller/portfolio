@@ -1,19 +1,20 @@
 name: Claude issue to PR
 
 # Flow:
-#   1. The owner adds the "Claude" label to an issue → the planner (Opus) reads
-#      the issue and the code. If anything needs a decision it posts the
+#   1. The owner adds the "Claude" label (work on `main`) or "claude:next" (work
+#      on `next`) to an issue → the planner (Opus) reads the issue and the code. If anything needs a decision it posts the
 #      questions mentioning the owner and stops (label claude:needs-input).
 #   2. The owner answers in ONE comment → this same workflow runs again
 #      (issue_comment trigger) and the planner resumes with the whole thread.
 #   3. With no open questions the planner posts the plan as an issue comment
 #      (marker <!-- claude:plan -->) and the implementer (Sonnet) builds it
-#      from that comment on branch claude/issue-<n>-<slug>, cut from `next`.
+#      from that comment on branch claude/issue-<n>-<slug>, cut from the base branch.
 #   4. The workflow runs the quality gates itself, then Claude pushes and opens
 #      the PR with the Claude GitHub App token, so the PR is authored by
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
-# To restart from scratch: remove and re-add the "Claude" label.
+# To restart from scratch: remove and re-add the trigger label. Add only ONE of
+# the two labels; with both present "claude:next" wins.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -32,8 +33,10 @@ env:
   TRIGGER_LABEL: Claude
   WAITING_LABEL: "claude:needs-input"
   PLANNED_LABEL: "claude:planned"
-  # Work branches start from, and PRs target, the integration branch (SETUP.md §7).
-  BASE_BRANCH: next
+  # Work branches start from, and PRs target, this branch: `next` when the issue
+  # carries "claude:next", otherwise `main` (D79). Resolved from the event payload,
+  # so every job and the resume path agree.
+  BASE_BRANCH: ${{ contains(github.event.issue.labels.*.name, 'claude:next') && 'next' || 'main' }}
 
 jobs:
   plan:
@@ -41,12 +44,12 @@ jobs:
     # Resume: the owner commented on an issue (not a PR) that is waiting on him.
     if: >-
       (github.event_name == 'issues'
-        && github.event.label.name == 'Claude'
+        && (github.event.label.name == 'Claude' || github.event.label.name == 'claude:next')
         && github.event.sender.login == 'juliolmuller')
       || (github.event_name == 'issue_comment'
         && !github.event.issue.pull_request
         && github.event.comment.user.login == 'juliolmuller'
-        && contains(github.event.issue.labels.*.name, 'Claude')
+        && (contains(github.event.issue.labels.*.name, 'Claude') || contains(github.event.issue.labels.*.name, 'claude:next'))
         && contains(github.event.issue.labels.*.name, 'claude:needs-input'))
     runs-on: ubuntu-24.04
     timeout-minutes: 30
@@ -60,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: next
+          ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 1
           persist-credentials: false
 
@@ -184,7 +187,7 @@ jobs:
       # workflow. The push happens later with the Claude App token.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: next
+          ref: ${{ env.BASE_BRANCH }}
           fetch-depth: 0
           persist-credentials: false
 

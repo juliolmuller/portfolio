@@ -35,18 +35,18 @@ Both run `anthropics/claude-code-action` (floating `@v1` tag: always the latest 
 1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository (it authors Claude's PRs and comments, and its token is what lets a Claude PR trigger the review).
 2. Locally run `claude setup-token` and copy the token it prints.
 3. GitHub → repository → Settings → Secrets and variables → Actions → New repository secret: `CLAUDE_CODE_OAUTH_TOKEN`.
-4. Create the `Claude` label (the workflows also create it, and `claude:needs-input` / `claude:planned`, on first use).
+4. Create the `Claude` and `claude:next` labels (the workflows also create `Claude`, `claude:needs-input` and `claude:planned` on first use; create `claude:next` yourself).
 
 Usage counts against the Claude subscription tied to the token. Rotate it like any secret (re-run `claude setup-token`, replace the repository secret).
 
 ### Issue to PR (`claude-issue.yml`)
 
-1. The owner adds the **Claude** label to an issue. The **planner** (Opus) reads the issue, the thread, `AGENTS.md` and the code. If a decision is genuinely the owner's, it posts numbered questions mentioning him, labels the issue `claude:needs-input` and stops.
+1. The owner adds **one** trigger label to an issue: **Claude** (work on `main`: quick changes, improvements, hot-fixes) or **claude:next** (work on `next`: bigger changes and manual testing). With both, `claude:next` wins. The **planner** (Opus) reads the issue, the thread, `AGENTS.md` and the code. If a decision is genuinely the owner's, it posts numbered questions mentioning him, labels the issue `claude:needs-input` and stops.
 2. The owner answers **in one comment**; that comment re-runs the same workflow and the planner resumes with the whole thread. Comments are ignored once the issue is no longer `claude:needs-input`.
-3. With nothing open, the planner posts the plan as an issue comment (`<!-- claude:plan -->`, label `claude:planned`). The **implementer** (Sonnet) builds it from that comment on `claude/issue-<n>-<slug>` (cut from `next`), loops on the gates and commits (hooks stay on).
-4. The workflow itself re-runs the gates (`lint`, `typecheck`, `test`, `i18n:check`, `icons:audit`, `build`, `check:bundle`, `check:seo`) and puts the results in the PR body. A short Claude step pushes and opens the PR against `next` with the App token: author `claude[bot]`, assignee the owner, label `Claude` plus fitting existing labels, `Closes #<n>`. Any failing gate → draft PR.
+3. With nothing open, the planner posts the plan as an issue comment (`<!-- claude:plan -->`, label `claude:planned`). The **implementer** (Sonnet) builds it from that comment on `claude/issue-<n>-<slug>` (cut from the base branch the label chose), loops on the gates and commits (hooks stay on).
+4. The workflow itself re-runs the gates (`lint`, `typecheck`, `test`, `i18n:check`, `icons:audit`, `build`, `check:bundle`, `check:seo`) and puts the results in the PR body. A short Claude step pushes and opens the PR against that same base branch (`main` or `next`) with the App token: author `claude[bot]`, assignee the owner, label `Claude` (always, even for `claude:next`, so the review runs) plus fitting existing labels, `Closes #<n>`. Any failing gate → draft PR.
 
-To restart an issue from scratch, remove and re-add the **Claude** label. Only the owner's label and comments trigger it.
+To restart an issue from scratch, remove and re-add the trigger label. Only the owner's label and comments trigger it.
 
 ### PR review (`claude-review.yml`)
 
