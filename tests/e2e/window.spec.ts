@@ -270,6 +270,18 @@ test.describe('desktop window', () => {
     await expect(windowOf(page)).toBeVisible();
   });
 
+  test('the dock chip appears from 640 px', async ({ page, browserName }) => {
+    test.skip(browserName !== 'chromium', 'one engine is enough for the breakpoint');
+
+    const chip = page.getByRole('button', { name: 'terminal', exact: true });
+
+    await page.setViewportSize({ width: 639, height: 800 });
+    await page.goto('/en', { waitUntil: 'domcontentloaded' });
+    await expect(chip).toBeHidden();
+    await page.setViewportSize({ width: 640, height: 800 });
+    await expect(chip).toBeVisible();
+  });
+
   test('the shortcut opens, minimizes and restores', async ({ page }) => {
     await openTerminal(page);
     await page.keyboard.press(SHORTCUT);
@@ -395,10 +407,29 @@ test.describe('mobile bottom sheet', () => {
     await openTerminal(page);
     await page.getByRole('button', { name: 'Minimize terminal' }).click();
     await expect(windowOf(page)).toBeHidden();
-    await page.getByRole('button', { name: 'terminal (minimized)' }).click();
+    await expect(page.getByRole('button', { name: 'terminal (minimized)' })).toBeHidden();
+    await page.getByRole('button', { name: 'Toggle terminal' }).click();
     await expect(windowOf(page)).toBeVisible();
+    await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
     await page.getByRole('button', { name: 'Close terminal' }).click();
     await expect(windowOf(page)).toBeHidden();
+  });
+
+  test('hides the dock chip in every state', async ({ page }) => {
+    const chip = page.getByRole('button', { name: 'terminal', exact: true });
+    const minimized = page.getByRole('button', { name: 'terminal (minimized)' });
+
+    await page.goto('/en', { waitUntil: 'domcontentloaded' });
+    await expect(chip).toBeHidden();
+    await openWithShortcut(page, windowOf(page));
+    await page.getByRole('button', { name: 'Minimize terminal' }).click();
+    await expect(windowOf(page)).toBeHidden();
+    await expect(minimized).toBeHidden();
+    await expect(chip).toBeHidden();
+    await page.getByRole('button', { name: 'Toggle terminal' }).click();
+    await page.getByRole('button', { name: 'Close terminal' }).click();
+    await expect(windowOf(page)).toBeHidden();
+    await expect(chip).toBeHidden();
   });
 
   test('has no axe violations as a sheet', async ({ page, browserName }) => {
