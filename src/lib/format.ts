@@ -50,3 +50,15 @@ export function truncateAtWord(text: string, limit: number): null | string {
 
   return (space > 0 ? head.slice(0, space) : text.slice(0, max)).replace(/[\s,.;:!?–—-]+$/, '');
 }
+
+/**
+ * Plain text split into paragraphs at blank lines; single line breaks stay
+ * inside a paragraph.
+ */
+export function splitParagraphs(text: string): string[] {
+  return text
+    .replaceAll(/\r\n?/g, '\n')
+    .split(/\n[^\S\n]*\n/)
+    .map((chunk) => chunk.trim())
+    .filter((chunk) => chunk.length > 0);
+}

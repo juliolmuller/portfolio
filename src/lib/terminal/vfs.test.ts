@@ -67,3 +67,24 @@ describe.each(['en', 'pt'] as const)('buildVfs (%s)', (locale) => {
     expect(vfs.tree('~/stack')[0]).toBe('~/stack');
   });
 });
+
+describe('buildVfs multi-paragraph summaries', () => {
+  it('keeps line breaks of a role summary in the experience file', async () => {
+    const snapshot = await fixtureSnapshot('en');
+    const entry = snapshot.experience[0]!;
+    const role = entry.roles[0]!;
+    const edited = {
+      ...snapshot,
+      experience: [
+        {
+          ...entry,
+          roles: [{ ...role, summary: 'Linha um\n\nLinha dois' }, ...entry.roles.slice(1)],
+        },
+        ...snapshot.experience.slice(1),
+      ],
+    };
+    const vfs = buildVfs(edited, translator('en'));
+
+    expect(vfs.read(`~/experience/${entry.slug}.md`)?.text).toContain('Linha um\n\nLinha dois');
+  });
+});
