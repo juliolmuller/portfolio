@@ -1,7 +1,7 @@
 /**
  * Pure math for the experience timeline rail. The rail tip eases toward an
  * anchor line (the cursor, or 60% of the viewport) with frame-time scaling so
- * the feel is identical at any refresh rate (D80, reusing D66).
+ * the feel is identical at any refresh rate (D81, reusing D66).
  */
 import { ease, frameScale } from '@/lib/tech-cloud/motion';
 

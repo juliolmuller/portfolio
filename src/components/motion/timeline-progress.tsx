@@ -10,7 +10,7 @@ const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 /**
  * Wraps the experience timeline: the rail draws with scroll (scaleY) and, with
  * a fine pointer over the resume section, its tip follows the cursor (eased,
- * D80). Each `[data-timeline-node]` pulses once when the tip passes it. Without
+ * D81). Each `[data-timeline-node]` pulses once when the tip passes it. Without
  * JS, or with reduced motion, the rail is simply drawn.
  */
 export function TimelineProgress({ children }: { children: ReactNode }): React.JSX.Element {
