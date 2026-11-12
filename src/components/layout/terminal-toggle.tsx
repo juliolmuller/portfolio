@@ -15,13 +15,14 @@ import { useShortcutLabel } from './use-shortcut-label';
 /**
  * The labelled terminal button in the header; its tooltip shows the shortcut.
  */
-export function TerminalToggle(): React.JSX.Element {
+export function TerminalToggle({ className }: { className?: string }): React.JSX.Element {
   const t = useTranslations('window');
   const shortcut = useShortcutLabel();
 
   return (
     <Tooltip
       side="bottom"
+      className={className}
       content={
         <span className="flex items-center gap-2">
           {t('toggle')} <Kbd>{shortcut}</Kbd>
@@ -33,7 +34,7 @@ export function TerminalToggle(): React.JSX.Element {
         aria-label={t('toggle')}
         aria-keyshortcuts="Control+/ Meta+/"
         onClick={() => {
-          track('terminal_open');
+          track('terminal_open', { source: 'header' });
           toggleTerminal();
         }}
         className={cn(buttonVariants({ variant: 'primary', size: 'sm' }), 'px-4')}

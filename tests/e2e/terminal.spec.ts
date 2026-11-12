@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
-import { openWithShortcut } from './hydration';
+import { openWithShortcut, waitForHydration } from './hydration';
 
 // Reduced motion keeps WebKit's actionability check from waiting on the hero
 // loops (D36) and makes the boot lines instant; one test covers the typing.
@@ -25,15 +25,46 @@ async function run(page: Page, line: string): Promise<void> {
 }
 
 test.describe('entry points', () => {
-  test('the dock chip and header toggle open the terminal', async ({ page }) => {
+  test('the dock chip and header toggle open the terminal', async ({ page }, testInfo) => {
     await page.goto('/en', { waitUntil: 'domcontentloaded' });
     await page.getByRole('button', { name: 'terminal', exact: true }).click();
     await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
     await page.getByRole('button', { name: 'Close terminal' }).click();
     await expect(windowOf(page)).toHaveAttribute('data-status', 'closed');
 
-    await page.getByRole('button', { name: 'Toggle terminal' }).click();
+    // The header button is hidden below md (D80).
+    const toggle = page.getByRole('button', { name: 'Toggle terminal' });
+
+    if (testInfo.project.name !== 'mobile' && (await toggle.isVisible())) {
+      await toggle.click();
+      await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
+    }
+  });
+
+  test('the menu item opens the terminal on phones', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/en', { waitUntil: 'domcontentloaded' });
+    await waitForHydration(page);
+    await expect(
+      page.getByRole('banner').getByRole('button', { name: 'Toggle terminal' }),
+    ).toBeHidden();
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Open terminal' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
     await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
+    await expect(inputOf(page)).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('');
+  });
+
+  test('the menu item keeps an already open terminal open', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/en', { waitUntil: 'domcontentloaded' });
+    await openWithShortcut(page, windowOf(page));
+    await page.getByRole('button', { name: 'Open menu' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Open terminal' }).click();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
+    await expect(inputOf(page)).toBeFocused();
   });
 
   test('the footer mentions the shortcut', async ({ page }) => {

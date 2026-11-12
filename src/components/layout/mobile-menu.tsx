@@ -1,18 +1,23 @@
 'use client';
 
-import { Menu, X } from 'lucide-react';
+import { Menu, Terminal, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { type CSSProperties, type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
+import { buttonVariants } from '@/components/ui/button';
+import { openTerminal } from '@/components/window-manager/terminal-controls';
 import { Link, usePathname } from '@/i18n/navigation';
+import { track } from '@/lib/analytics';
+import { cn } from '@/lib/cn';
 
-import { LanguageSwitcher } from './language-switcher';
 import { MotionToggle } from './motion-toggle';
 import { NAV_SECTIONS } from './nav-items';
 
 /**
  * Full-screen menu below 768px. A native modal `<dialog>` gives the focus trap,
- * Esc and inert background; the page scroll is locked only while open.
+ * Esc and inert background; the page scroll is locked only while open. The
+ * footer holds the terminal item (the header button is hidden below `md`,
+ * D80).
  */
 export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element {
   const t = useTranslations('header');
@@ -20,6 +25,7 @@ export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element 
   const [open, setOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const pendingTerminalRef = useRef(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -52,6 +58,17 @@ export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element 
 
   const close = (): void => setOpen(false);
 
+  // Open the terminal only once the dialog has left the top layer, otherwise
+  // the sheet would be inert behind it.
+  const onDialogClose = (): void => {
+    setOpen(false);
+
+    if (!pendingTerminalRef.current) return;
+
+    pendingTerminalRef.current = false;
+    requestAnimationFrame(() => openTerminal());
+  };
+
   return (
     <>
       <button
@@ -68,7 +85,7 @@ export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element 
       <dialog
         ref={dialogRef}
         aria-labelledby={titleId}
-        onClose={close}
+        onClose={onDialogClose}
         className="z-(--z-menu) m-0 h-dvh max-h-none w-full max-w-none bg-bg-0/95 p-0 text-text-2 backdrop-blur-xl backdrop:bg-transparent open:flex open:flex-col"
       >
         <div className="container-page flex h-(--header-height) shrink-0 items-center justify-between">
@@ -120,8 +137,19 @@ export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element 
         </nav>
 
         <div className="container-page flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-line py-5 safe-bottom">
+          <button
+            type="button"
+            onClick={() => {
+              track('terminal_open', { source: 'menu' });
+              pendingTerminalRef.current = true;
+              close();
+            }}
+            className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }))}
+          >
+            <Terminal aria-hidden="true" />
+            {t('openTerminal')}
+          </button>
           {links}
-          <LanguageSwitcher />
           <MotionToggle />
         </div>
       </dialog>
