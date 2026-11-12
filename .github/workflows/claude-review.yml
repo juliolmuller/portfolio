@@ -2,7 +2,7 @@ name: Claude PR review
 
 # Every same-repo PR is assigned to the owner. Claude reviews a PR only when:
 #   - it was opened by the owner (juliolmuller) or by claude[bot], AND
-#   - it carries the "Claude" label, AND
+#   - it carries the "claude" label, AND
 #   - it is not a draft.
 # Each finding is posted as an inline comment anchored to the exact lines it
 # refers to (one thread per finding); a short summary comment closes the review.
@@ -40,9 +40,9 @@ jobs:
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository
       && !github.event.pull_request.draft
-      && contains(github.event.pull_request.labels.*.name, 'Claude')
+      && contains(github.event.pull_request.labels.*.name, 'claude')
       && contains(fromJSON('["juliolmuller","claude[bot]"]'), github.event.pull_request.user.login)
-      && (github.event.action != 'labeled' || github.event.label.name == 'Claude')
+      && (github.event.action != 'labeled' || github.event.label.name == 'claude')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
@@ -97,7 +97,7 @@ jobs:
             5. Make sure the PR has fitting labels: add the ones that apply with
                `gh pr edit ${{ github.event.pull_request.number }} --add-label …`,
                choosing only from `gh label list --limit 200` and never removing
-               "Claude". Also run
+               "claude". Also run
                `gh pr edit ${{ github.event.pull_request.number }} --add-assignee juliolmuller`.
             6. Finish with ONE short summary comment in Portuguese
                (`gh pr comment ${{ github.event.pull_request.number }} --body …`):
