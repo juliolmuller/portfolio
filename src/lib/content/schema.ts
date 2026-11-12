@@ -226,11 +226,13 @@ export const linkKinds = ['social', 'site', 'other'] as const;
 export const linkPlacements = ['header', 'contact', 'footer'] as const;
 
 /**
- * `simple-icons:<slug>`, `lucide:<name>` or the generic `link`.
+ * `simple-icons:<slug>`, `devicon:<slug>` (plain set), `lucide:<name>` or the
+ * generic `link`.
  */
 export const linkIconSchema = z.union([
   z.literal('link'),
   z.string().regex(/^simple-icons:[a-z0-9]+$/),
+  z.string().regex(/^devicon:[a-z0-9]+(?:-[a-z0-9]+)*$/),
   z.string().regex(/^lucide:[a-z0-9]+(?:-[a-z0-9]+)*$/),
 ]);
 

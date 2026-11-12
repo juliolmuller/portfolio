@@ -2,15 +2,27 @@ import 'server-only';
 
 import { icons } from 'lucide-react';
 
-import { deviconCatalog, simpleIconCatalog } from '@/lib/content/icons/resolve';
+import {
+  deviconCatalog,
+  deviconPlainCatalog,
+  simpleIconCatalog,
+} from '@/lib/content/icons/resolve';
 
-export type IconSearchSource = 'devicon' | 'lucide' | 'simple-icons';
+export type IconSearchSource = 'devicon-plain' | 'devicon' | 'lucide' | 'simple-icons';
 export interface IconHit {
   label: string;
   slug: string;
 }
 
 const LIMIT = 24;
+
+const pascal = (name: string): string =>
+  name
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+
+export const lucideIconExists = (name: string): boolean => pascal(name) in icons;
 
 const kebab = (pascal: string): string =>
   pascal.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
@@ -28,10 +40,12 @@ export async function searchIcons(source: IconSearchSource, query: string): Prom
       ? await simpleIconCatalog()
       : source === 'devicon'
         ? await deviconCatalog()
-        : Object.keys(icons).map((name) => ({
-            slug: kebab(name),
-            label: kebab(name),
-          }));
+        : source === 'devicon-plain'
+          ? await deviconPlainCatalog()
+          : Object.keys(icons).map((name) => ({
+              slug: kebab(name),
+              label: kebab(name),
+            }));
   const hits = catalog.filter(
     (icon) => icon.slug.includes(needle) || icon.label.toLowerCase().includes(needle),
   );

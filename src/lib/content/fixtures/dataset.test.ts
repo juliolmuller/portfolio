@@ -85,6 +85,19 @@ describe('fixture dataset', () => {
     }
   });
 
+  it('references Devicon link icons that exist', async () => {
+    const { resolveLinkIcon } = await import('../icons/resolve');
+    const slugs = dataset.featuredLink
+      .map((link) => link.icon)
+      .filter((icon) => icon.startsWith('devicon:'));
+
+    expect(slugs.length).toBeGreaterThan(0);
+
+    for (const icon of slugs) {
+      expect((await resolveLinkIcon(icon)).type, icon).toBe('svg');
+    }
+  });
+
   it('covers every project kind and the Appendix A cases', () => {
     const projects = dataset.project;
 
