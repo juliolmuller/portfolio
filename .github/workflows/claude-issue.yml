@@ -161,6 +161,14 @@ jobs:
             echo "slug=$(jq -r '.slug' <<<"$RESULT")" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN o planejamento falhou. Veja a [execução]($RUN_URL). Para tentar de novo, remova e reaplique a label \`claude\`."
+
   implement:
     needs: plan
     if: needs.plan.outputs.ready == 'true'
@@ -204,7 +212,13 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - run: git switch -c "$BRANCH"
+      # Commits are authored by the Claude App bot (the action does not
+      # configure a git identity in automation mode).
+      - name: Create work branch
+        run: |
+          git config user.name "claude[bot]"
+          git config user.email "41898282+claude[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
 
       - name: Implement
         id: implementer
