@@ -93,10 +93,10 @@ jobs:
                code or the docs already answer. Never re-ask something answered.
             4. Return the structured result:
                - status "needs_input": `questions` holds numbered, self-contained
-                 questions in Portuguese (pt-BR), each with your recommended
+                 questions in English, each with your recommended
                  option, so he can answer "1: ok, 2: B". Leave `plan` empty.
                - status "ready": `plan` holds the full plan in Markdown, in
-                 Portuguese (pt-BR): goal, decisions taken (and which ones need a
+                 English: goal, decisions taken (and which ones need a
                  new D<n> entry in docs/DECISIONS.md), files to change with what
                  changes in each, i18n keys (en + pt), tests to add or update,
                  docs to update, acceptance criteria, and risks. Concrete enough
@@ -138,11 +138,11 @@ jobs:
             gh label create "$WAITING_LABEL" --color FBCA04 --description "Claude is waiting for the owner" 2>/dev/null || true
             {
               echo "<!-- claude:questions -->"
-              echo "@$OWNER_LOGIN, preciso de algumas decisões antes de planejar. Responda **em um único comentário** e eu retomo automaticamente."
+              echo "@$OWNER_LOGIN, I need a few decisions before planning. Please answer **in a single comment** and I will resume automatically."
               echo
               jq -r '.questions' <<<"$RESULT"
               echo
-              echo "<sub>[Execução do planejador]($RUN_URL)</sub>"
+              echo "<sub>[Planner run]($RUN_URL)</sub>"
             } > "$body"
             gh issue comment "$ISSUE" --body-file "$body"
             gh issue edit "$ISSUE" --add-label "$WAITING_LABEL"
@@ -151,11 +151,11 @@ jobs:
             gh label create "$PLANNED_LABEL" --color 0E8A16 --description "Claude posted a plan" 2>/dev/null || true
             {
               echo "<!-- claude:plan -->"
-              echo "## Plano de implementação"
+              echo "## Implementation plan"
               echo
               jq -r '.plan' <<<"$RESULT"
               echo
-              echo "<sub>[Execução do planejador]($RUN_URL) · a implementação começa em seguida.</sub>"
+              echo "<sub>[Planner run]($RUN_URL) · implementation starts next.</sub>"
             } > "$body"
             gh issue comment "$ISSUE" --body-file "$body"
             gh issue edit "$ISSUE" --remove-label "$WAITING_LABEL" 2>/dev/null || true
@@ -239,7 +239,7 @@ jobs:
                lint-staged and commitlint: fix the cause if they fail, never
                bypass them with --no-verify.
             5. Return the structured result. `pr_title` is a Conventional Commit
-               subject in English. `pr_body` is Markdown in Portuguese (pt-BR):
+               subject in English. `pr_body` is Markdown in English:
                what changed and why, decisions taken, how to test, and anything
                left out. Do not add "Closes #…" (the workflow adds it).
                `labels` come ONLY from `gh label list --limit 200`.
@@ -258,7 +258,7 @@ jobs:
           set -uo pipefail
           report="$RUNNER_TEMP/gates.md"
           ok=true
-          echo "| Rotina | Resultado |" > "$report"
+          echo "| Gate | Result |" > "$report"
           echo "| --- | --- |" >> "$report"
           for script in lint typecheck test i18n:check icons:audit build check:bundle check:seo; do
             if bun run "$script" > "$RUNNER_TEMP/gate-$script.log" 2>&1; then
@@ -283,7 +283,7 @@ jobs:
         run: |
           set -euo pipefail
           if [ "$COMMITS" = "0" ]; then
-            gh issue comment "$ISSUE" --body "@$OWNER_LOGIN o implementador terminou sem nenhum commit. Veja a [execução]($RUN_URL)."
+            gh issue comment "$ISSUE" --body "@$OWNER_LOGIN the implementer finished without any commit. See the [run]($RUN_URL)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -300,13 +300,13 @@ jobs:
           {
             jq -r '.pr_body' <<<"$RESULT"
             echo
-            echo "## Rotinas de qualidade"
+            echo "## Quality gates"
             echo
             cat "$RUNNER_TEMP/gates.md"
             echo
             if [ "$GATES_OK" != "true" ]; then
               echo "> [!WARNING]"
-              echo "> Alguma rotina falhou, por isso este PR foi aberto como rascunho. Detalhes na [execução]($RUN_URL)."
+              echo "> A gate failed, so this PR was opened as a draft. Details in the [run]($RUN_URL)."
               echo
             fi
             echo "Closes #$ISSUE"
@@ -352,4 +352,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN a implementação falhou antes de abrir o PR. Veja a [execução]($RUN_URL)."
+        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN the implementation failed before opening the PR. See the [run]($RUN_URL)."

@@ -7,17 +7,33 @@ import { useToastStore } from '@/stores/toast-store';
 
 const icons = { neutral: Info, success: CheckCircle2, error: CircleAlert };
 
+const positions = {
+  bottom: 'bottom-[calc(1rem+env(safe-area-inset-bottom))]',
+  top: 'top-[calc(1rem+env(safe-area-inset-top))] [--toast-from:-8px]',
+} as const;
+
 /**
  * Polite live region for toasts. Always mounted so announcements fire.
+ *
+ * `top` is used by the admin, whose sticky form action bar and mobile nav
+ * occupy the bottom of the viewport; the public site and /dev use the default
+ * `bottom`.
  */
-export function Toaster(): React.JSX.Element {
+export function Toaster({
+  position = 'bottom',
+}: { position?: 'bottom' | 'top' } = {}): React.JSX.Element {
   const toasts = useToastStore((state) => state.toasts);
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-(--z-toast) flex flex-col items-center gap-2 px-4"
+      data-toaster=""
+      data-position={position}
+      className={cn(
+        'pointer-events-none fixed inset-x-0 z-(--z-toast) flex flex-col items-center gap-2 px-4',
+        positions[position],
+      )}
     >
       {toasts.map((item) => {
         const Glyph = icons[item.tone];

@@ -25,17 +25,23 @@ async function run(page: Page, line: string): Promise<void> {
 }
 
 test.describe('entry points', () => {
-  test('the dock chip and header toggle open the terminal', async ({ page }, testInfo) => {
+  test('the dock chip and header toggle open the terminal', async ({ page, isMobile }) => {
     await page.goto('/en', { waitUntil: 'domcontentloaded' });
-    await page.getByRole('button', { name: 'terminal', exact: true }).click();
-    await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
-    await page.getByRole('button', { name: 'Close terminal' }).click();
-    await expect(windowOf(page)).toHaveAttribute('data-status', 'closed');
 
-    // The header button is hidden below md (D80).
+    if (isMobile) {
+      // The chip is desktop and tablet only (D80).
+      await expect(page.getByRole('button', { name: 'terminal', exact: true })).toBeHidden();
+    } else {
+      await page.getByRole('button', { name: 'terminal', exact: true }).click();
+      await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
+      await page.getByRole('button', { name: 'Close terminal' }).click();
+      await expect(windowOf(page)).toHaveAttribute('data-status', 'closed');
+    }
+
+    // The header button is hidden below md (D82).
     const toggle = page.getByRole('button', { name: 'Toggle terminal' });
 
-    if (testInfo.project.name !== 'mobile' && (await toggle.isVisible())) {
+    if (!isMobile && (await toggle.isVisible())) {
       await toggle.click();
       await expect(windowOf(page)).toHaveAttribute('data-status', 'open');
     }
@@ -73,7 +79,20 @@ test.describe('entry points', () => {
     await expect(page.locator('footer kbd')).toBeVisible();
   });
 
-  test('the dock hint appears once per session without motion preference', async ({ page }) => {
+  test('the dock hint never shows on narrow screens', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'narrow screens only');
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.goto('/en', { waitUntil: 'domcontentloaded' });
+    await page.waitForTimeout(2_500);
+    await expect(page.getByText('Try the terminal: type help')).toHaveCount(0);
+    expect(await page.evaluate(() => sessionStorage.getItem('jm.terminal.hint.v1'))).toBeNull();
+  });
+
+  test('the dock hint appears once per session without motion preference', async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(isMobile, 'the dock and its hint are desktop and tablet only (D80)');
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.goto('/en', { waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Try the terminal: type help')).toBeVisible({
@@ -312,7 +331,7 @@ test.describe('shell', () => {
     await expect(logOf(page)).toContainText('remembered');
 
     await page.getByRole('button', { name: 'Close terminal' }).click();
-    await page.getByRole('button', { name: 'terminal', exact: true }).click();
+    await page.getByRole('button', { name: 'Toggle terminal' }).click();
     await expect(logOf(page)).not.toContainText('remembered');
     await expect(logOf(page)).toContainText('Type help to get started.');
     await inputOf(page).press('ArrowUp');
@@ -329,7 +348,11 @@ test.describe('shell', () => {
 
     await run(page, 'minimize');
     await expect(windowOf(page)).toHaveAttribute('data-status', 'minimized');
-    await page.getByRole('button', { name: 'terminal (minimized)' }).click();
+    await page
+      .getByRole('button', {
+        name: isMobile ? 'Toggle terminal' : 'terminal (minimized)',
+      })
+      .click();
     await run(page, 'exit');
     await expect(windowOf(page)).toHaveAttribute('data-status', 'closed');
   });

@@ -19,7 +19,7 @@ export async function AdminShell({
     <div className="min-h-dvh md:grid md:grid-cols-[14rem_1fr]">
       <a
         href="#main"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded-md focus:bg-surface-2 focus:p-3"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-(--z-skip-link) focus:rounded-md focus:bg-surface-2 focus:p-3"
       >
         Skip to content
       </a>

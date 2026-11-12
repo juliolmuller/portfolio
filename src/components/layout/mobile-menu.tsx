@@ -17,7 +17,7 @@ import { NAV_SECTIONS } from './nav-items';
  * Full-screen menu below 768px. A native modal `<dialog>` gives the focus trap,
  * Esc and inert background; the page scroll is locked only while open. The
  * footer holds the terminal item (the header button is hidden below `md`,
- * D80).
+ * D82).
  */
 export function MobileMenu({ links }: { links?: ReactNode }): React.JSX.Element {
   const t = useTranslations('header');

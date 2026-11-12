@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 import { LinkIcon } from '@/components/content/link-icon';
 import { TimelineProgress } from '@/components/motion/timeline-progress';
 import { Chip } from '@/components/ui/chip';
+import { Paragraphs } from '@/components/ui/paragraphs';
 import { Reveal } from '@/components/ui/reveal';
 import { SectionHeader } from '@/components/ui/section-header';
 import { type AppLocale, localeTags, routing } from '@/i18n/routing';
@@ -86,11 +87,11 @@ function RoleSummary({
 }): React.JSX.Element {
   const preview = truncateAtWord(text, ROLE_SUMMARY_PREVIEW);
 
-  if (preview === null) return <p className="mt-3 text-text-2">{text}</p>;
+  if (preview === null) return <Paragraphs text={text} className="mt-3 text-text-2" />;
 
   return (
     <div className="group/summary mt-3 text-text-2">
-      <p className="group-has-open/summary:hidden">{preview}…</p>
+      <Paragraphs text={`${preview}…`} className="group-has-open/summary:hidden" />
       <details>
         <summary className="inline-flex min-h-11 w-fit cursor-pointer list-none items-center text-small text-accent-2 underline underline-offset-4 [&::-webkit-details-marker]:hidden">
           <span className="group-has-open/summary:hidden">{labels.more}</span>
@@ -98,7 +99,7 @@ function RoleSummary({
           {/* Tells several roles' toggles apart for screen readers (WCAG 2.4.6). */}
           <span className="sr-only">: {title}</span>
         </summary>
-        <p>{text}</p>
+        <Paragraphs text={text} />
       </details>
     </div>
   );
