@@ -39,6 +39,46 @@ async function fillBoth(page: Page, path: string, en: string, pt = en): Promise<
 const published = (page: Page): Promise<void> =>
   slow(page.getByText('Published · public pages refreshed').first()).toBeVisible();
 
+interface Box {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+}
+
+const intersects = (a: Box, b: Box): boolean =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+/**
+ * The post-save toast must sit at the top and never cover the form actions or
+ * the mobile nav.
+ */
+async function expectToastClear(page: Page): Promise<void> {
+  await expect(page.locator('[data-toaster]')).toHaveAttribute('data-position', 'top');
+  await page.evaluate(() => window.scrollTo(0, 0));
+
+  const toast = await page
+    .locator('[data-toaster] p', { hasText: 'Published · public pages refreshed' })
+    .first()
+    .boundingBox();
+
+  expect(toast).not.toBeNull();
+
+  const targets = [
+    page.getByRole('button', { name: 'Save and publish' }),
+    page.getByRole('button', { name: 'Discard changes' }),
+    page.getByRole('navigation', { name: 'Admin areas' }).last(),
+  ];
+
+  for (const target of targets) {
+    if (!(await target.isVisible())) continue;
+
+    const box = await target.boundingBox();
+
+    if (toast && box) expect(intersects(toast, box)).toBe(false);
+  }
+}
+
 /**
  * Public pages are regenerated lazily after a revalidation.
  */
@@ -159,6 +199,7 @@ test.describe('projects', () => {
     }
     await page.getByRole('button', { name: 'Save and publish' }).click();
     await published(page);
+    await expectToastClear(page);
     await expect(page).toHaveURL(/\/admin\/projects\/[0-9a-f-]{36}$/);
 
     await slow.poll(publicText(page, `/en/projects/${slug}`)).toContain('E2E Project');

@@ -78,6 +78,7 @@
   --z-dock: 70;
   --z-menu: 80;
   --z-toast: 90;
+  --z-skip-link: 100;
 
   --header-height: 56px;
   --container: min(1200px, 100% - 2 * clamp(1rem, 4vw, 2rem));
@@ -402,7 +403,7 @@ html[data-motion='reduced'] .route-fade {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.98);
+    transform: translateY(var(--toast-from, 8px)) scale(0.98);
   }
 }
 
