@@ -33,7 +33,7 @@ export function TerminalToggle(): React.JSX.Element {
         aria-label={t('toggle')}
         aria-keyshortcuts="Control+/ Meta+/"
         onClick={() => {
-          track('terminal_open');
+          track('terminal_open', { source: 'header' });
           toggleTerminal();
         }}
         className={cn(buttonVariants({ variant: 'primary', size: 'sm' }), 'px-4')}

@@ -22,7 +22,7 @@ const TerminalApp = dynamic(() => import('@/components/terminal/terminal-app'), 
   ssr: false,
 });
 
-// Below the sheet breakpoint (Tailwind `sm`, 640 px) the header button is the only entry (D80).
+// Below the sheet breakpoint (Tailwind `sm`, 640 px) the header button (from md) and the menu item are the entries (D80, D82).
 const DOCK_QUERY = `(min-width: ${SHEET_BREAKPOINT}px)`;
 const HINT_KEY = 'jm.terminal.hint.v1';
 const HINT_DELAY_MS = 1500;
@@ -174,7 +174,7 @@ export function TerminalWindow(): React.JSX.Element {
         ) : null}
       </div>
 
-      {/* Desktop and tablet only (≥ 640 px); on phones the header button is the entry (D80). */}
+      {/* Desktop and tablet only (≥ 640 px); on phones the menu item is the entry (D80, D82). */}
       {win?.status === 'open' ? null : (
         <button
           type="button"
