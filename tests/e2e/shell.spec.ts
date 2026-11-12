@@ -189,3 +189,8 @@ test('motion toggle persists the paused state', async ({ page }) => {
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduced');
 });
+
+test('the public toaster stays at the bottom', async ({ page }) => {
+  await page.goto('/en');
+  await expect(page.locator('[data-toaster]')).toHaveAttribute('data-position', 'bottom');
+});

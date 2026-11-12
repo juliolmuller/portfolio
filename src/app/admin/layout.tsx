@@ -38,7 +38,7 @@ export default async function AdminLayout({
     <html lang="en" className={`${fontVariables} ${titleFontVariables}`}>
       <body>
         <AdminShell expiresAt={session.exp * 1000}>{children}</AdminShell>
-        <Toaster />
+        <Toaster position="top" />
       </body>
     </html>
   );
