@@ -26,23 +26,23 @@ Known automation gap: axe cannot judge contrast under forced colors (it reads au
 
 Run once before launch and after any large UI change. Mark each cell with the date and ✓, or link an issue.
 
-| Flow                                                                                 | NVDA + Firefox | VoiceOver + Safari (macOS) | VoiceOver + Safari (iOS) | TalkBack + Chrome |
-| ------------------------------------------------------------------------------------ | -------------- | -------------------------- | ------------------------ | ----------------- |
-| Home: skip link, landmarks, heading outline (one `h1`)                               |                |                            |                          |                   |
-| Header nav: `aria-current`, language switch keeps route and hash                     |                |                            |                          |                   |
-| Mobile menu: opens as a modal, focus trapped, Esc closes and restores focus          |                |                            |                          |                   |
-| Tech stack: List view read as grouped lists; the sphere is silent                    |                |                            |                          |                   |
-| Project filter (radiogroup) and pagination, also with JavaScript off                 |                |                            |                          |                   |
-| Project card: "View details about {title}", "Visit app" as its own stop              |                |                            |                          |                   |
-| Project detail: breadcrumbs, gallery lightbox as a dialog with a label               |                |                            |                          |                   |
-| Résumé panes (Experience / Education) as radios                                      |                |                            |                          |                   |
-| Contact: obfuscated email revealed and copied, copy confirmation announced           |                |                            |                          |                   |
-| Terminal: label on the input, output announced after each command, not per character |                |                            |                          |                   |
-| Terminal secret flow: password prompt allows paste, nothing echoed                   |                |                            |                          |                   |
-| Admin: error summary takes focus, fields announce errors, session-expiry warning     |                |                            |                          |                   |
-| Pause animations toggle (footer and menu), reduced motion honored                    |                |                            |                          |                   |
-| 200% and 400% browser zoom, text-spacing bookmarklet                                 |                |                            |                          |                   |
-| Windows High Contrast / forced colors: focus rings and borders visible               |                |                            |                          |                   |
+| Flow                                                                                                                                                                        | NVDA + Firefox | VoiceOver + Safari (macOS) | VoiceOver + Safari (iOS) | TalkBack + Chrome |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------- | -------------------------- | ------------------------ | ----------------- |
+| Home: skip link, landmarks, heading outline (one `h1`)                                                                                                                      |                |                            |                          |                   |
+| Header nav: `aria-current`, language switch keeps route and hash                                                                                                            |                |                            |                          |                   |
+| Mobile menu: modal, focus trapped, Esc restores focus; terminal item closes it and focuses the terminal input; language switcher in the header at 320 px with 44 px targets |                |                            |                          |                   |
+| Tech stack: List view read as grouped lists; the sphere is silent                                                                                                           |                |                            |                          |                   |
+| Project filter (radiogroup) and pagination, also with JavaScript off                                                                                                        |                |                            |                          |                   |
+| Project card: "View details about {title}", "Visit app" as its own stop                                                                                                     |                |                            |                          |                   |
+| Project detail: breadcrumbs, gallery lightbox as a dialog with a label                                                                                                      |                |                            |                          |                   |
+| Résumé panes (Experience / Education) as radios                                                                                                                             |                |                            |                          |                   |
+| Contact: obfuscated email revealed and copied, copy confirmation announced                                                                                                  |                |                            |                          |                   |
+| Terminal: label on the input, output announced after each command, not per character                                                                                        |                |                            |                          |                   |
+| Terminal secret flow: password prompt allows paste, nothing echoed                                                                                                          |                |                            |                          |                   |
+| Admin: error summary takes focus, fields announce errors, session-expiry warning                                                                                            |                |                            |                          |                   |
+| Pause animations toggle (footer and menu), reduced motion honored                                                                                                           |                |                            |                          |                   |
+| 200% and 400% browser zoom, text-spacing bookmarklet                                                                                                                        |                |                            |                          |                   |
+| Windows High Contrast / forced colors: focus rings and borders visible                                                                                                      |                |                            |                          |                   |
 
 Tips:
 

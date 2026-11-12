@@ -60,14 +60,67 @@ test.describe('header', () => {
   test('on phones the icons move into the menu', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 800 });
     await page.goto('/en');
-    await expect(page.getByRole('banner').getByRole('link', { name: /^GitHub/ })).toBeHidden();
+
+    const banner = page.getByRole('banner');
+
+    await expect(banner.getByRole('link', { name: /^GitHub/ })).toBeHidden();
+    await expect(banner.getByRole('group', { name: 'Language' })).toBeVisible();
+    await expect(banner.getByRole('button', { name: 'Toggle terminal' })).toBeHidden();
     await page.getByRole('button', { name: 'Open menu' }).click();
 
     const menu = page.getByRole('dialog');
 
     await expect(menu.getByRole('link', { name: /^GitHub/ })).toBeVisible();
     await expect(menu.getByRole('link', { name: /^LinkedIn/ })).toBeVisible();
+    await expect(menu.getByRole('button', { name: 'Open terminal' })).toBeVisible();
+    await expect(menu.getByRole('group', { name: 'Language' })).toHaveCount(0);
   });
+
+  test('the switcher and menu fit at 320px with 44px targets', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 700 });
+    await page.goto('/en');
+
+    const banner = page.getByRole('banner');
+
+    await expect(banner.getByRole('group', { name: 'Language' })).toBeVisible();
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      ),
+    ).toBe(true);
+
+    const targets = [
+      ...(await banner.getByRole('group', { name: 'Language' }).getByRole('link').all()),
+      page.getByRole('button', { name: 'Open menu' }),
+    ];
+
+    for (const target of targets) {
+      const box = await target.boundingBox();
+
+      expect(box?.width).toBeGreaterThanOrEqual(43.5);
+      expect(box?.height).toBeGreaterThanOrEqual(43.5);
+    }
+  });
+
+  for (const [width, phone] of [
+    [767, true],
+    [768, false],
+  ] as const) {
+    test(`the terminal button and menu swap at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto('/en');
+
+      const banner = page.getByRole('banner');
+
+      await expect(banner.getByRole('group', { name: 'Language' })).toBeVisible();
+      await expect(banner.getByRole('button', { name: 'Toggle terminal' })).toBeVisible({
+        visible: !phone,
+      });
+      await expect(page.getByRole('button', { name: 'Open menu' })).toBeVisible({
+        visible: phone,
+      });
+    });
+  }
 
   test('the wordmark name hides while the hero is on screen', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });

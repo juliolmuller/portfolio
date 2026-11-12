@@ -326,6 +326,7 @@
   },
   "header": {
     "homeLabel": "{name}, voltar ao topo",
+    "openTerminal": "Abrir o terminal",
     "primaryNav": "Principal",
     "nav": {
       "about": "Sobre",

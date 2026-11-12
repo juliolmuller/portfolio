@@ -46,8 +46,10 @@ export async function Header(): Promise<React.JSX.Element> {
 
         <div className="flex items-center gap-2">
           {links ? <div className="hidden md:block">{links}</div> : null}
-          <LanguageSwitcher className="hidden xs:inline-flex" />
-          <TerminalToggle />
+          <LanguageSwitcher />
+          <div className="max-md:hidden">
+            <TerminalToggle />
+          </div>
           <MobileMenu links={links} />
         </div>
       </div>

@@ -146,14 +146,7 @@ test('language switch keeps the route and hash', async ({ page }) => {
   // The switcher adds the hash once hydrated; an earlier click drops it.
   await waitForHydration(page);
 
-  const menuButton = page.getByRole('button', { name: 'Open menu' });
-  const inMenu = await menuButton.isVisible();
-
-  if (inMenu) await menuButton.click();
-
-  const switcher = inMenu
-    ? page.getByRole('dialog').getByRole('group', { name: 'Language' })
-    : page.getByRole('banner').getByRole('group', { name: 'Language' });
+  const switcher = page.getByRole('banner').getByRole('group', { name: 'Language' });
 
   await switcher.getByRole('link', { name: /PT/ }).click({ force: true });
   await expect(page).toHaveURL(/\/pt#top$/);
