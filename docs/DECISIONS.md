@@ -16,7 +16,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
 | Home, hero, header          | D17, D46–D48, D67, D69                           |
-| Window manager and terminal | D49, D50, D52, D63, D64                          |
+| Window manager and terminal | D49, D50, D52, D63, D64, D80                     |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79 |
 | Analytics                   | D68                                              |
 
@@ -107,9 +107,10 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 ## Window manager and terminal
 
 - **D49 — Window manager** (entry-point rule superseded by D50). Pure geometry in `src/lib/window-manager/geometry.ts`; gestures write to the DOM in rAF and commit on release; `Esc`/`pointercancel` reverts (WCAG 2.5.2); open/minimize/close are CSS transitions (~280 ms); persistence in `sessionStorage['jm.window.<id>.v1']` (zod-validated; a closed window isn't persisted).
-- **D50 — Public terminal** (active). Live entry points: header button, footer hint, dock chip, one-time "type help" hint (1.5 s, once per session, never with reduced motion). Pure core in `src/lib/terminal`; the React shell is one `next/dynamic` chunk; big `terminal` namespace is a lazy catalog, small `window` namespace ships with the provider; unit tests use a translator that throws on missing keys. `execute()` is an async generator; unsupported shell syntax (`; & | > < * ? $`) comes back as output; Ctrl+C aborts cleanly. Session in `sessionStorage['jm.terminal.v1']` (≤ 300 blocks, 100 history lines). Tab never traps focus on an empty line. Multi-line paste runs the first line. `git log --oneline` hashes are FNV-1a of `slug:title:start`.
+- **D50 — Public terminal** (active; dock chip and hint ≥ 640 px only, see D80). Live entry points: header button, footer hint, dock chip, one-time "type help" hint (1.5 s, once per session, never with reduced motion). Pure core in `src/lib/terminal`; the React shell is one `next/dynamic` chunk; big `terminal` namespace is a lazy catalog, small `window` namespace ships with the provider; unit tests use a translator that throws on missing keys. `execute()` is an async generator; unsupported shell syntax (`; & | > < * ? $`) comes back as output; Ctrl+C aborts cleanly. Session in `sessionStorage['jm.terminal.v1']` (≤ 300 blocks, 100 history lines). Tab never traps focus on an empty line. Multi-line paste runs the first line. `git log --oneline` hashes are FNV-1a of `slug:title:start`.
 - **D63 — Snap preview** (active). One always-mounted `aria-hidden` element written straight to the DOM; hysteresis 8 px to arm / 32 px to release (`snapSideAt(pointer, viewport, armed)`); CSS transitions only.
 - **D64 — Easter eggs** (active). `fortune`, `cowsay`, `matrix` (4 s CSS rain behind `actions.effect`, skipped for reduced motion), `ping`, `ssh`, `sudo`, `rm`, `vim`/`vi`/`nano`/`emacs`. All local and harmless; none may mention the admin, `su`, sessions or passwords (unit-tested). Lives in the lazy terminal chunk (≤ 20 KB).
+- **D80 — Dock chip only from 640 px** (active; 2026-11-12, issue #32, amends D50). On phones the floating chip covers content. The chip and the "type help" hint use `max-sm:hidden` (Tailwind `sm` = 640 px = `SHEET_BREAKPOINT`), in every state including minimized; the hint is not even scheduled below that width (`matchMedia`: no timer, no `sessionStorage` write, so it can still show later on a wide screen). The header button is the entry on phones (`toggleTerminal` opens, restores and minimizes). Width rule, not `pointer: coarse`: a narrow desktop window already gets the sheet. The footer shortcut text is deliberately unchanged (devices with a keyboard have the shortcut). Consequence: no minimized indicator on phones; mobile tests restore through the header button.
 
 ## Quality, tests, CI
 

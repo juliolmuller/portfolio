@@ -9,6 +9,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { type AppLocale } from '@/i18n/routing';
 import { useReducedMotionPreference } from '@/lib/motion-preference';
 import { isTerminalShortcut } from '@/lib/shortcuts';
+import { SHEET_BREAKPOINT } from '@/lib/window-manager/geometry';
 import { useWindowStore } from '@/stores/window-store';
 
 import { SessionPill } from './session-pill';
@@ -21,6 +22,8 @@ const TerminalApp = dynamic(() => import('@/components/terminal/terminal-app'), 
   ssr: false,
 });
 
+// Below the sheet breakpoint (Tailwind `sm`, 640 px) the header button is the only entry (D80).
+const DOCK_QUERY = `(min-width: ${SHEET_BREAKPOINT}px)`;
 const HINT_KEY = 'jm.terminal.hint.v1';
 const HINT_DELAY_MS = 1500;
 const HINT_VISIBLE_MS = 6000;
@@ -41,6 +44,8 @@ function useDockHint(enabled: boolean): boolean {
 
   useEffect(() => {
     if (!enabled) return;
+
+    if (!window.matchMedia(DOCK_QUERY).matches) return;
 
     try {
       if (sessionStorage.getItem(HINT_KEY)) return;
@@ -163,18 +168,19 @@ export function TerminalWindow(): React.JSX.Element {
         className="pointer-events-none fixed right-6 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-(--z-dock)"
       >
         {hint ? (
-          <span className="block rounded-md border border-line-strong bg-surface-2 px-3 py-1.5 text-small text-text-1">
+          <span className="block rounded-md max-sm:hidden border border-line-strong bg-surface-2 px-3 py-1.5 text-small text-text-1">
             {t('hint')}
           </span>
         ) : null}
       </div>
 
+      {/* Desktop and tablet only (≥ 640 px); on phones the header button is the entry (D80). */}
       {win?.status === 'open' ? null : (
         <button
           type="button"
           aria-keyshortcuts="Control+/ Meta+/"
           onClick={toggleTerminal}
-          className="fixed right-6 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-(--z-dock) inline-flex min-h-11 items-center gap-2 rounded-full border border-line-strong bg-surface-1 px-4 font-mono text-small text-text-1"
+          className="fixed right-6 bottom-[calc(1.5rem+env(safe-area-inset-bottom))] z-(--z-dock) inline-flex min-h-11 max-sm:hidden items-center gap-2 rounded-full border border-line-strong bg-surface-1 px-4 font-mono text-small text-text-1"
         >
           <span aria-hidden="true">&gt;_</span>
           {t('dock')}
