@@ -52,7 +52,7 @@ To restart an issue from scratch, remove and re-add the trigger label. Only the 
 
 - Every same-repo PR is assigned to the owner when opened.
 - Claude (Sonnet) reviews when the PR is opened by the owner or `claude[bot]`, carries the **Claude** label and is not a draft; adding the label later starts it too. New commits trigger a re-review limited to what changed.
-- Each finding is an inline comment on the exact lines (one thread each), in Portuguese; the reviewer adds fitting existing labels and ends with one summary comment.
+- Each finding is an inline comment on the exact lines (one thread each), in English; the reviewer adds fitting existing labels and ends with one summary comment.
 
 ## Local agent settings
 
