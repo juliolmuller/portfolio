@@ -12,7 +12,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | --------------------------- | -------------------------------------------------- |
 | Toolchain and versions      | D5, D6, D15, D20, D24                              |
 | Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62   |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77       |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70, D72–D74 |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66, D75                   |
 | Home, hero, header          | D17, D46–D48, D67, D69                             |
