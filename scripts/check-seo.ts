@@ -355,6 +355,46 @@ async function extras(): Promise<void> {
   }
 }
 
+/**
+ * `/llms.txt` is Markdown with one H1 and absolute links that all resolve, and
+ * never the 404 HTML or any private detail (D81).
+ */
+async function checkLlmsTxt(): Promise<void> {
+  const { response, text } = await fetchText('/llms.txt');
+  const type = response.headers.get('content-type') ?? '';
+
+  if (response.status !== 200) return fail(`llms.txt is ${response.status}, expected 200`);
+
+  if (!/^text\/(?:plain|markdown)/.test(type)) fail(`llms.txt content-type is "${type}"`);
+
+  if (text.trimStart().startsWith('<') || /<html/i.test(text)) fail('llms.txt serves HTML');
+
+  const h1 = text.match(/^# \S.*$/gm) ?? [];
+  const firstLine = text.split('\n').find((line) => line.trim() !== '');
+
+  if (h1.length !== 1 || firstLine !== h1[0]) fail('llms.txt must start with exactly one H1');
+
+  if (ADMIN_LEAK.test(text)) fail('llms.txt leaks the admin path');
+
+  if (/mailto:|tel:|\S@\S|scratch-pad/.test(text)) fail('llms.txt leaks private or hidden data');
+
+  const urls = all(text, /\[[^\]]+\]\((https?:\/\/[^)\s]+)\)/g);
+
+  if (urls.length === 0) fail('llms.txt has no links');
+
+  for (const url of urls) {
+    const path = toFetch(url);
+    let status = linkStatus.get(path);
+
+    if (status === undefined) {
+      status = (await fetchText(path)).response.status;
+      linkStatus.set(path, status);
+    }
+
+    if (status >= 400) fail(`llms.txt link ${url} → ${status}`);
+  }
+}
+
 async function main(): Promise<void> {
   const child = await startServer();
 
@@ -363,6 +403,7 @@ async function main(): Promise<void> {
     for (const loc of locs) await checkPage(loc);
     await extras();
     await checkPrivateHeaders();
+    await checkLlmsTxt();
   } finally {
     child?.kill('SIGTERM');
   }

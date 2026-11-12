@@ -30,7 +30,7 @@ src/
     admin/           own root layout; [area]/ (list, new, [id]) driven by areas config; api/upload/route.ts
     api/             terminal-content (snapshot), revalidate (Sanity webhook)
     tech-icons/      content-hashed, immutable SVG logos
-    sitemap.ts robots.ts manifest.ts icon.* global-not-found.tsx dev/ui (404 in production)
+    sitemap.ts robots.ts llms.txt/ manifest.ts icon.* global-not-found.tsx dev/ui (404 in production)
   proxy.ts           canonical URLs, admin gate, locale negotiation for "/", admin nonce CSP
   components/        layout/ sections/ portfolio/ tech-cloud/ window-manager/ terminal/ admin/ ui/ seo/ markdown/
   lib/

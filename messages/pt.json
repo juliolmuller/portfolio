@@ -548,5 +548,15 @@
   },
   "devUi": {
     "title": "Componentes de UI"
+  },
+  "llms": {
+    "intro": "Site pessoal e portfólio, em inglês e português do Brasil. Todas as páginas são renderizadas no servidor e funcionam sem JavaScript.",
+    "heading": "Páginas em português",
+    "home": "Início",
+    "homeDescription": "Quem sou, com o que trabalho, projetos em destaque, currículo e contato",
+    "projects": "Projetos",
+    "projectsDescription": "Todos os projetos públicos, com contexto, abordagem e resultado",
+    "accessibility": "Declaração de acessibilidade",
+    "accessibilityDescription": "Como este site atende à WCAG 2.2 AA e como relatar um problema"
   }
 }

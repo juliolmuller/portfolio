@@ -27,6 +27,7 @@ const ROOT_PASSTHROUGH = new Set([
   'fixtures',
   'icon',
   'icon.svg',
+  'llms.txt',
   'manifest.webmanifest',
   'robots.txt',
   'sitemap.xml',

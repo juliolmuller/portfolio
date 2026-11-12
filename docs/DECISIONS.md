@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                        |
-| --------------------------- | ------------------------------------------------ |
-| Toolchain and versions      | D5, D6, D15, D20, D24                            |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77     |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70        |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                      |
-| Home, hero, header          | D17, D46–D48, D67, D69                           |
-| Window manager and terminal | D49, D50, D52, D63, D64, D80                     |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79 |
-| Analytics                   | D68                                              |
+| Topic                       | Decisions                                             |
+| --------------------------- | ----------------------------------------------------- |
+| Toolchain and versions      | D5, D6, D15, D20, D24                                 |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D81 |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77          |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70             |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66                           |
+| Home, hero, header          | D17, D46–D48, D67, D69                                |
+| Window manager and terminal | D49, D50, D52, D63, D64, D80                          |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79      |
+| Analytics                   | D68                                                   |
 
 ## Toolchain and versions
 
@@ -50,6 +50,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D35 — `/projects` is request-rendered** (active). Awaiting `searchParams` makes it dynamic (`ƒ`); first hit after a deploy pays a render, then 24 h cache.
 - **D57 — Precompiled messages** (active). next-intl `experimental.messages` precompiles ICU at build (~8 KB gzip off first load). Read messages through a translator, never raw JSON; `global-not-found.tsx` uses `createTranslator`; scripts under Bun still read source JSON.
 - **D62 — Card → detail cover morph** (active). `CoverTransition` wraps the cover in React `<ViewTransition name="project-cover-<slug>" share="project-cover" default="none">`; only shared pairs animate; each slug at most once per page; CSS kills the pseudo-elements for reduced motion / Pause animations. `<html data-scroll-behavior="smooth">` is required so Next disables smooth scrolling during route changes (without it the pair never formed). Plays only if the detail page is prefetched.
+- **D81 — `/llms.txt` is opt-in, static and facts-only** (active; 2026-11-12, issue #11). Lighthouse 13.6 Agentic Browsing scores `llms-txt` 0 when the file is missing; without it the proxy served the global 404 HTML. We opt in. `src/app/llms.txt/route.ts` is a force-static Route Handler (`text/plain; charset=utf-8`, `X-Robots-Tag: noindex`) built by `src/lib/seo/llms.ts` from `src/config/site.ts` and the message catalogs (`llms` namespace, read through `createTranslator` as in D57). One root URL means one file for both locales: H1 with `owner.name`, a blockquote with the English `meta.siteDescription`, then link sections to Home, Projects and the Accessibility statement in `en`, then `pt`. It reads no repository content, so hidden items, email, phone and fictional seed data can't leak and admin writes need no revalidation. The résumé is left out because it 404s without a PDF. `llms.txt` joins the proxy's `ROOT_PASSTHROUGH`. Consequence: a new public top-level page must be added to `llms.ts`; `check:seo` verifies the file shape, privacy and that every link resolves.
 
 ## Content and Sanity
 
