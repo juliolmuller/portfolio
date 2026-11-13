@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                                 |
-| --------------------------- | --------------------------------------------------------- |
-| Toolchain and versions      | D5, D6, D15, D20, D24                                     |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87         |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                 |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                               |
-| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82                          |
-| Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                         |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79, D83     |
-| Analytics                   | D68                                                       |
+| Topic                       | Decisions                                                      |
+| --------------------------- | -------------------------------------------------------------- |
+| Toolchain and versions      | D5, D6, D15, D20, D24                                          |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86, D88 |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87              |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                      |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66                                    |
+| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82                               |
+| Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                              |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79, D83          |
+| Analytics                   | D68                                                            |
 
 ## Toolchain and versions
 
@@ -53,6 +53,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D84 — Global 404 rewrite target is a non-prerendered path** (active; 2026-11-12, issue #13, amends D19). Context: on Vercel, a proxy rewrite to `/404` serves the prerendered not-found file as a static asset with status 200 (soft 404, `content-disposition: filename="404"`); `next start` was unaffected, so e2e missed it. Decision: the proxy rewrites to the fixed path `/__not-found`, which has no build output and falls into `[locale]`, where the root layout guard calls `notFound()` and Next renders `global-not-found.tsx` with a real 404. One fixed target (not the original URL) keeps random and anonymous admin paths identical (D3) and caps ISR at one 404 entry. It must never be `/404`, `/_not-found` or any path with an output. Consequence: `check:seo` asserts real 404s on top-level unknown paths and, with `SEO_BASE_URL`, catches this on production. Vercel-side confirmation is pending; if production still answers 200, add `{ status: 404 }` to the rewrite and update this entry.
 - **D85 — `/llms.txt` is opt-in, static and facts-only** (active; 2026-11-13, issue #11, PR #42). Lighthouse 13.6 Agentic Browsing scores `llms-txt` 0 when the file is missing; without it the proxy served the global 404 HTML. We opt in. `src/app/llms.txt/route.ts` is a force-static Route Handler (`text/plain; charset=utf-8`, `X-Robots-Tag: noindex`) built by `src/lib/seo/llms.ts` from `src/config/site.ts` and the message catalogs (`llms` namespace, read through `createTranslator` as in D57). One root URL means one file for both locales: H1 with `owner.name`, a blockquote with the English `meta.siteDescription`, then link sections to Home, Projects and the Accessibility statement in `en`, then `pt`. It reads no repository content, so hidden items, email, phone and fictional seed data can't leak and admin writes need no revalidation. The résumé is left out because it 404s without a PDF. `llms.txt` joins the proxy's `ROOT_PASSTHROUGH`. Consequence: a new public top-level page must be added to `llms.ts`; `check:seo` verifies the file shape, privacy and that every link resolves.
 - **D86 — No ARD manifest** (active; 2026-11-13, issue #12). Context: Lighthouse 13.6 Agentic Browsing `ard-schema` failed because `/.well-known/ard.json` returned the soft-404 HTML. Agentic Resource Discovery (agenticresourcediscovery.org) lists agentic resources: MCP servers, A2A agents, agent skills and plugins, each entry with a `urn:air:` identifier, a media `type` and a `url` or inline `data`. This site exposes none: it is a read-only portfolio whose machine-readable surface is the sitemap, JSON-LD and `/llms.txt` (D85). An empty or invented entry would be noise, and the category is not a CI gate (D60). Decision: non-goal. `/.well-known/ard.json` is a real 404 (D84), which `check:seo` and an e2e assert. Consequence: the `ard-schema` audit stays unscored or failing by choice; revisit only if the site ever ships an MCP server or another agent-facing tool.
+- **D88 — The root redirect stays a 307; "Page with redirect" for `/` is expected** (active; 2026-11-13, issue #46, amends D3/D18). Context: Search Console reports `/` as "Page with redirect". Decision: keep the per-visitor 307 (`Vary: Accept-Language, Cookie`, `private, no-store`). Googlebot sends no `Accept-Language` and no cookie, so it always lands on `/en`, which is also `x-default`. A 301/308 would make caches remember one language for everybody; serving `/` as a page or adding a selector page would duplicate content or create a thin page; skipping the redirect by user agent risks cloaking. The bare root is advertised nowhere: not in the sitemap, canonicals, hreflang (`x-default` → `/en`, because hreflang targets must answer 200), internal links or JSON-LD URLs. The site-wide `author` link is name-only, `WebSite.url` is the locale home and `WebSite.@id` stays `${SITE_URL}/#website`. Consequence: `check:seo` asserts the crawler-like 307 to `/en` and the root's absence from those signals. Never use "Validate fix" on this item. Open: whether `WebSite.url` should be the bare root; revert only the `websiteNode` change if so.
 
 ## Content and Sanity
 

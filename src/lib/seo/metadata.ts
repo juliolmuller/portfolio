@@ -68,7 +68,7 @@ export function siteMetadata(description: string): Metadata {
     title: { default: owner.name, template: `%s${TEMPLATE_SUFFIX}` },
     description,
     applicationName: owner.name,
-    authors: [{ name: owner.name, url: absoluteUrl('/') }],
+    authors: [{ name: owner.name }],
     creator: owner.name,
     publisher: owner.name,
     category: 'technology',

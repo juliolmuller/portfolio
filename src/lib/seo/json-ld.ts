@@ -25,7 +25,7 @@ import {
 } from '@/lib/content';
 
 import { plainText } from './text';
-import { absoluteUrl, localizedPath, PERSON_ID, SITE_URL, WEBSITE_ID } from './urls';
+import { absoluteUrl, localizedPath, PERSON_ID, WEBSITE_ID } from './urls';
 
 /**
  * JSON for a `<script type="application/ld+json">`. Escapes `<`, `>`, `&` and
@@ -89,12 +89,16 @@ export function personNode({
   };
 }
 
-export function websiteNode(): WebSite {
+/**
+ * `url` is the locale home because the bare root redirects (D88); the `@id`
+ * stays the same in both locales so the graph is stable.
+ */
+export function websiteNode(locale: AppLocale): WebSite {
   return {
     '@type': 'WebSite',
     '@id': WEBSITE_ID,
     'name': owner.name,
-    'url': SITE_URL,
+    'url': absoluteUrl(localizedPath(locale)),
     'inLanguage': Object.values(localeTags),
     'publisher': ref(PERSON_ID),
   };

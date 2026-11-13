@@ -30,7 +30,7 @@ async function homeGraph(): Promise<Graph> {
   if (!profile) throw new Error('fixture profile missing');
 
   return graph(
-    websiteNode(),
+    websiteNode('en'),
     personNode({ locale: 'en', profile, links, technologies, practices }),
     profilePageNode('en', profile.updatedAt),
     projectListNode('en', projects, `${SITE_URL}/en#work`),
@@ -73,6 +73,23 @@ describe('serializeJsonLd', () => {
 
     expect(json).not.toMatch(/[<>&]/);
     expect(JSON.parse(json)['@graph'][0].name).toBe('</script><script>alert(1)</script>&');
+  });
+});
+
+describe('websiteNode', () => {
+  it.each(['en', 'pt'] as const)('points url at the %s home with a stable @id', (locale) => {
+    const node = websiteNode(locale);
+
+    expect(node.url).toBe(`${SITE_URL}/${locale}`);
+    expect(node['@id']).toBe(`${SITE_URL}/#website`);
+  });
+
+  it('never uses the redirecting bare root as a URL value', async () => {
+    const urls: string[] = [];
+
+    collectUrls(await homeGraph(), urls);
+    expect(urls).not.toContain(SITE_URL);
+    expect(urls).not.toContain(`${SITE_URL}/`);
   });
 });
 
