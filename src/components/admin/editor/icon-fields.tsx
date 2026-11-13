@@ -301,11 +301,10 @@ export function LinkIconField({ path }: { path: string }): React.JSX.Element {
             </select>
           </div>
         </div>
-        {preview && name.trim() && !preview.found ? (
-          <p role="status" className="text-small text-danger">
-            No icon with this name
-          </p>
-        ) : preview ? (
+        <p role="status" aria-live="polite" className="text-small text-danger empty:hidden">
+          {preview && name.trim() && !preview.found ? 'No icon with this name' : ''}
+        </p>
+        {preview && !(name.trim() && !preview.found) ? (
           <span
             role="img"
             aria-label="Icon preview"
