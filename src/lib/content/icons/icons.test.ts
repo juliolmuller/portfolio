@@ -1,5 +1,11 @@
 import { monogramFor } from './monogram';
-import { resolveLinkIcon, resolveTechIcon } from './resolve';
+import {
+  deviconPlainCatalog,
+  deviconPlainIcon,
+  resolveLinkIcon,
+  resolveLinkIconDetailed,
+  resolveTechIcon,
+} from './resolve';
 import { svgBodyToPaths } from './svg-geometry';
 
 describe('svgBodyToPaths', () => {
@@ -119,5 +125,38 @@ describe('resolveLinkIcon', () => {
       type: 'lucide',
       name: 'link',
     });
+  });
+});
+
+describe('devicon link icons (plain set only)', () => {
+  it('resolves devicon:linkedin to a real mark', async () => {
+    const icon = await resolveLinkIcon('devicon:linkedin');
+
+    if (icon.type !== 'svg') throw new Error('expected svg');
+
+    expect(icon.viewBox).not.toBe('');
+    expect(icon.paths.length).toBeGreaterThan(0);
+  });
+
+  it('falls back to the generic link for an unknown slug', async () => {
+    expect(await resolveLinkIcon('devicon:nope-x')).toEqual({ type: 'lucide', name: 'link' });
+  });
+
+  it('never resolves a name that only exists in the original set', async () => {
+    const plain = new Set((await deviconPlainCatalog()).map((hit) => hit.slug));
+    const original = (await import('@iconify-json/devicon')).icons;
+    const only = Object.keys(original.icons).find((slug) => !plain.has(slug));
+
+    expect(only).toBeDefined();
+    expect(await deviconPlainIcon(only ?? '')).toBeNull();
+    expect(await resolveLinkIcon(`devicon:${only}`)).toEqual({ type: 'lucide', name: 'link' });
+  });
+
+  it('reports whether a named icon exists', async () => {
+    expect((await resolveLinkIconDetailed('devicon:linkedin')).found).toBe(true);
+    expect((await resolveLinkIconDetailed('devicon:nope-x')).found).toBe(false);
+    expect((await resolveLinkIconDetailed('simple-icons:github')).found).toBe(true);
+    expect((await resolveLinkIconDetailed('simple-icons:nope-x')).found).toBe(false);
+    expect((await resolveLinkIconDetailed('link')).found).toBe(true);
   });
 });

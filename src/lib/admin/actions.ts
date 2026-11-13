@@ -7,11 +7,11 @@ import {
   type FlagOutcome,
   type SaveOutcome,
 } from '@/lib/content/admin/service';
-import { resolveLinkIcon, resolveTechIcon } from '@/lib/content/icons/resolve';
+import { resolveLinkIconDetailed, resolveTechIcon } from '@/lib/content/icons/resolve';
 import { type DocumentType, documentTypes } from '@/lib/content/schema';
 
 import { revalidateEverything } from './hooks';
-import { type IconHit, type IconSearchSource, searchIcons } from './icons';
+import { type IconHit, type IconSearchSource, lucideIconExists, searchIcons } from './icons';
 import { getAdminService } from './service';
 import { sanitizeSvg, type SvgResult } from './upload/svg';
 
@@ -79,11 +79,15 @@ export async function parseSvgAction(source: string): Promise<SvgResult> {
   return sanitizeSvg(String(source).slice(0, 100_000));
 }
 
+const SEARCH_SOURCES = new Set<string>(['devicon', 'devicon-plain', 'lucide', 'simple-icons']);
+
 export async function searchIconsAction(
   source: IconSearchSource,
   query: string,
 ): Promise<IconHit[]> {
   await requireAdmin();
+
+  if (!SEARCH_SOURCES.has(source)) return [];
 
   return searchIcons(source, String(query).slice(0, 64));
 }
@@ -105,8 +109,15 @@ export async function previewTechIconAction(input: {
   };
 }
 
-export async function previewLinkIconAction(icon: string): Promise<LinkIcon> {
+export async function previewLinkIconAction(
+  icon: string,
+): Promise<{ found: boolean; icon: LinkIcon }> {
   await requireAdmin();
 
-  return resolveLinkIcon(String(icon).slice(0, 80));
+  const value = String(icon).slice(0, 80);
+  const result = await resolveLinkIconDetailed(value);
+
+  return value.startsWith('lucide:')
+    ? { ...result, found: lucideIconExists(value.slice('lucide:'.length)) }
+    : result;
 }

@@ -4,6 +4,7 @@ import {
   featuredLinkSchema,
   hasNoRawHtml,
   httpsUrlSchema,
+  linkIconSchema,
   profileSchema,
   projectSchema,
   slugSchema,
@@ -67,6 +68,22 @@ describe('content schema', () => {
     expect(experienceSchema.safeParse(noLocation).success).toBe(true);
     expect(experienceSchema.safeParse(withSummary(1000)).success).toBe(true);
     expect(experienceSchema.safeParse(withSummary(5001)).success).toBe(false);
+  });
+
+  it('validates devicon link icons', () => {
+    for (const ok of ['devicon:linkedin', 'devicon:linkedin-wordmark']) {
+      expect(linkIconSchema.safeParse(ok).success, ok).toBe(true);
+    }
+
+    for (const bad of [
+      'devicon:',
+      'devicon:LinkedIn',
+      'devicon:linked in',
+      'devicon:-x',
+      'devicon:x-',
+    ]) {
+      expect(linkIconSchema.safeParse(bad).success, bad).toBe(false);
+    }
   });
 
   it('rejects the retired hero link placement', () => {

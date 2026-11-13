@@ -142,20 +142,63 @@ export async function resolveTechIcon(
 }
 
 /**
- * `simple-icons:<slug>` → brand path; `lucide:<name>` and `link` → Lucide.
+ * Single-colour Devicon only: the original set is multi-colour and turns into a
+ * solid blob under `currentColor`.
  */
-export async function resolveLinkIcon(icon: string): Promise<LinkIcon> {
-  if (icon.startsWith('simple-icons:')) {
-    const svg = await simpleIcon(icon.slice('simple-icons:'.length));
+export async function deviconPlainIcon(slug: string): Promise<null | SvgData> {
+  const [plain] = await loadDevicon();
 
-    if (svg) return { type: 'svg', ...svg };
+  return plain ? iconifyIcon(plain, slug) : null;
+}
 
-    return { type: 'lucide', name: 'link' };
+let deviconPlainNames: Promise<Array<{ label: string; slug: string }>> | undefined;
+
+/**
+ * Plain-set Devicon names that actually render, for the link picker.
+ */
+export function deviconPlainCatalog(): Promise<Array<{ label: string; slug: string }>> {
+  deviconPlainNames ??= loadDevicon().then(([plain]) => {
+    if (!plain) return [];
+
+    return [...new Set([...Object.keys(plain.icons), ...Object.keys(plain.aliases ?? {})])]
+      .filter((slug) => iconifyIcon(plain, slug) !== null)
+      .sort()
+      .map((slug) => ({ slug, label: slug }));
+  });
+
+  return deviconPlainNames;
+}
+
+const GENERIC_LINK: LinkIcon = { type: 'lucide', name: 'link' };
+
+/**
+ * Like `resolveLinkIcon`, also reporting whether a named icon exists. Lucide
+ * names are checked by the admin action (this module stays free of lucide).
+ */
+export async function resolveLinkIconDetailed(
+  icon: string,
+): Promise<{ found: boolean; icon: LinkIcon }> {
+  if (icon.startsWith('simple-icons:') || icon.startsWith('devicon:')) {
+    const isSimple = icon.startsWith('simple-icons:');
+    const slug = icon.slice(icon.indexOf(':') + 1);
+    const svg = isSimple ? await simpleIcon(slug) : await deviconPlainIcon(slug);
+
+    return svg
+      ? { found: true, icon: { type: 'svg', ...svg } }
+      : { found: false, icon: GENERIC_LINK };
   }
 
   if (icon.startsWith('lucide:')) {
-    return { type: 'lucide', name: icon.slice('lucide:'.length) };
+    return { found: true, icon: { type: 'lucide', name: icon.slice('lucide:'.length) } };
   }
 
-  return { type: 'lucide', name: 'link' };
+  return { found: true, icon: GENERIC_LINK };
+}
+
+/**
+ * `simple-icons:<slug>` / `devicon:<slug>` (plain set) → brand path;
+ * `lucide:<name>` and `link` → Lucide.
+ */
+export async function resolveLinkIcon(icon: string): Promise<LinkIcon> {
+  return (await resolveLinkIconDetailed(icon)).icon;
 }

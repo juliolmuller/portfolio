@@ -474,6 +474,48 @@ test.describe('singletons and lists', () => {
     await expect(page).toHaveURL(/\/admin\/technologies$/);
   });
 
+  test('a link with a Devicon icon: searched, previewed, flagged when unknown, saved, deleted', async ({
+    page,
+  }) => {
+    const label = `E2E Link ${Math.random().toString(36).slice(2, 6)}`;
+
+    await signIn(page);
+    await openEditor(page, '/admin/links/new');
+    await fillBoth(page, 'label', label);
+    await field(page, 'url').fill('https://example.com/e2e');
+    await page.locator('#link-icon-mode').selectOption('devicon');
+
+    const name = page.locator('#icon-name');
+    const preview = page.getByRole('img', { name: 'Icon preview' });
+
+    await name.fill('linked');
+    await page
+      .getByRole('list', { name: 'Matching icons' })
+      .getByRole('button', { name: 'linkedin', exact: true })
+      .click();
+    await expect(preview.locator('svg')).toBeVisible();
+
+    await name.fill('nope-x');
+    await expect(page.getByText('No icon with this name')).toBeVisible();
+
+    await name.fill('linked');
+    await page
+      .getByRole('list', { name: 'Matching icons' })
+      .getByRole('button', { name: 'linkedin', exact: true })
+      .click();
+    await expect(preview.locator('svg')).toBeVisible();
+
+    await page.getByLabel('Footer').check();
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+    await slow.poll(publicText(page, '/en')).toContain(label);
+
+    await openDeleteDialog(page);
+    await page.getByLabel('Confirmation text').fill(label);
+    await page.getByRole('button', { name: 'Delete permanently' }).click();
+    await expect(page).toHaveURL(/\/admin\/links$/);
+  });
+
   test('the dashboard lists content and refreshes the public pages', async ({ page }) => {
     await signIn(page);
     await expect(page.getByRole('heading', { name: 'Needs attention' })).toBeVisible();

@@ -180,7 +180,7 @@ const documents: SchemaType[] = [
       field('url', 'string', { description: 'https: or mailto:' }),
       field('kind', 'string', { options: list(['social', 'site', 'other']) }),
       field('icon', 'string', {
-        description: 'simple-icons:<slug>, lucide:<name> or link',
+        description: 'simple-icons:<slug>, devicon:<slug>, lucide:<name> or link',
       }),
       field('placements', 'array', {
         of: [{ type: 'string' }],

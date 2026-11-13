@@ -247,18 +247,20 @@ export function TechIconFields(): React.JSX.Element {
 const LINK_MODES = [
   { value: 'link', label: 'Generic link' },
   { value: 'simple-icons', label: 'Brand (Simple Icons)' },
+  { value: 'devicon', label: 'Brand (Devicon)' },
   { value: 'lucide', label: 'Lucide icon' },
 ];
 
 /**
- * `link`, `simple-icons:<slug>` or `lucide:<name>`, with search and preview.
+ * `link`, `simple-icons:<slug>`, `devicon:<slug>` or `lucide:<name>`, with
+ * search and preview.
  */
 export function LinkIconField({ path }: { path: string }): React.JSX.Element {
   const form = useForm();
   const value = String(form.get(path) ?? 'link');
   const mode = value === 'link' ? 'link' : (value.split(':')[0] ?? 'link');
   const name = value.includes(':') ? value.slice(value.indexOf(':') + 1) : '';
-  const [preview, setPreview] = useState<LinkIconData | null>(null);
+  const [preview, setPreview] = useState<{ found: boolean; icon: LinkIconData } | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -299,13 +301,16 @@ export function LinkIconField({ path }: { path: string }): React.JSX.Element {
             </select>
           </div>
         </div>
-        {preview ? (
+        <p role="status" aria-live="polite" className="text-small text-danger empty:hidden">
+          {preview && name.trim() && !preview.found ? 'No icon with this name' : ''}
+        </p>
+        {preview && !(name.trim() && !preview.found) ? (
           <span
             role="img"
             aria-label="Icon preview"
             className="inline-flex size-14 items-center justify-center rounded-lg border border-line bg-surface-1 text-text-1"
           >
-            <LinkIcon icon={preview} className="size-7" />
+            <LinkIcon icon={preview.icon} className="size-7" />
           </span>
         ) : null}
       </div>
@@ -321,12 +326,18 @@ export function LinkIconField({ path }: { path: string }): React.JSX.Element {
               disabled={form.disabled}
               autoComplete="off"
               onChange={(event) => form.set(path, `${mode}:${event.target.value}`)}
+              aria-describedby={mode === 'lucide' ? undefined : `${path}-hint`}
               className={`${inputClass} font-mono`}
             />
+            {mode !== 'lucide' ? (
+              <p id={`${path}-hint`} className={hintClass}>
+                LinkedIn is in Devicon, not in Simple Icons.
+              </p>
+            ) : null}
             {form.error(path) ? <p className="text-small text-danger">{form.error(path)}</p> : null}
           </div>
           <IconSearch
-            source={mode as IconSearchSource}
+            source={mode === 'devicon' ? 'devicon-plain' : (mode as IconSearchSource)}
             query={name}
             onPick={(pick) => form.set(path, `${mode}:${pick}`)}
           />

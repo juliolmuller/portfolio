@@ -12,12 +12,12 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | --------------------------- | --------------------------------------------------------- |
 | Toolchain and versions      | D5, D6, D15, D20, D24                                     |
 | Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86 |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77              |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87         |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                 |
 | Tech cloud                  | D13, D22, D37–D45, D59, D66                               |
 | Home, hero, header          | D17, D46–D48, D67, D69, D81, D82                          |
 | Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                         |
-| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79          |
+| Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79, D83     |
 | Analytics                   | D68                                                       |
 
 ## Toolchain and versions
@@ -70,6 +70,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D65 — Studio-ready schemas** (active; extends D29). `sanity/studio.ts` exports `studioSchemaTypes` (previews, "Display order" orderings, `validation` built from the zod field schemas via a two-method structural `Rule`) and `singletonTypes`. Cross-field/cross-document rules aren't repeated. Studio-created docs get random ids the admin can't open (D55). Setup in SANITY.md.
 - **D76 — Experience location optional, role summary soft limit** (active; 2026-11-09, owner request #20, overrides the spec's 400-character cap). Remote jobs have no meaningful location, so `experience.location` is optional; the résumé and terminal omit the line when it is absent. A role summary may run to 5000 characters per language (a safety cap, not an editorial limit). Past `ROLE_SUMMARY_PREVIEW` (400, `src/lib/format.ts`) the admin counter warns without blocking the save, and the résumé shows the text cut at a word boundary plus a native `<details>` "More"/"Less" toggle, so the full text stays reachable without JavaScript. The terminal always prints the full summary.
 - **D77 — Technologies are picked, never created, in other forms** (active; 2026-11-09, owner request #20). Experience and project forms list the documents of the **Technologies** area; there is no inline creation, so name, category, priority and icon have one editor. Only the Experience form links to Technologies (new tab) and offers **Refresh the list**, which re-reads technologies with `router.refresh()` and keeps unsaved edits; the Project form keeps its step-1 workflow in USAGE.
+- **D87 — Devicon (plain) link icons, unknown-name feedback** (active; 2026-11-12, owner request #43). Context: Simple Icons removed LinkedIn in v14 and Lucide has no brands, so the LinkedIn link had no real mark. Decision: featured links accept `devicon:<slug>`, resolved only from `@iconify-json/devicon-plain` (never the multi-colour original set, which turns into a solid blob under `currentColor`). The picker lists only plain names that `iconifyIcon` can turn into paths. The editor keeps separate modes (Generic link, Brand (Simple Icons), Brand (Devicon), Lucide icon) because the stored value names its source; a hint says LinkedIn is in Devicon. The admin preview shows "No icon with this name" (polite status) for unknown Simple Icons, Devicon and Lucide names; public rendering keeps the silent generic fallback. Consequence: no new dependency or licence. Rejected: the Iconify mirror of Simple Icons, Font Awesome brands (CC BY 4.0 attribution), other libraries and per-link custom SVG. Marks are not altered beyond colour (trademark).
 
 ## Security and admin
 

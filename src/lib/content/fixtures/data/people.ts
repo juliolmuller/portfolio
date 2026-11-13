@@ -18,7 +18,7 @@ export const featuredLinks: Array<DocumentInput<'featuredLink'>> = [
     label: L('LinkedIn', 'LinkedIn'),
     url: 'https://example.com/linkedin',
     kind: 'social',
-    icon: 'lucide:briefcase-business',
+    icon: 'devicon:linkedin',
     placements: ['header', 'contact'],
     isOwnProfile: true,
     order: 20,
