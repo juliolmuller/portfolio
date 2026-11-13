@@ -97,7 +97,7 @@ export default async function ProjectPage({
   const url = absoluteUrl(localizedPath(locale, `/projects/${project.slug}`));
 
   const jsonLd = graph(
-    websiteNode(),
+    websiteNode(locale),
     ...(profile ? [personNode({ locale, profile, links, technologies, practices })] : []),
     projectNode(locale, project, technologies),
     breadcrumbNode(locale, crumbs, `${url}#crumbs`),

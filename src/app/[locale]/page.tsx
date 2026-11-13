@@ -97,7 +97,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
   const nextSection = profile ? 'about' : 'stack';
 
   const jsonLd = graph(
-    websiteNode(),
+    websiteNode(locale),
     ...(profile
       ? [
           personNode({ locale, profile, links, technologies, practices }),

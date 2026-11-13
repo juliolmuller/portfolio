@@ -101,7 +101,7 @@ export default async function ProjectsPage({
   const breadcrumbId = `${url}#crumbs`;
 
   const jsonLd = graph(
-    websiteNode(),
+    websiteNode(locale),
     ...(profile ? [personNode({ locale, profile, links, technologies, practices })] : []),
     collectionPageNode(locale, path, t('title'), t('intro'), {
       breadcrumbId,
