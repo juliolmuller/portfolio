@@ -9,9 +9,9 @@ What the site emits for search engines, how it is verified, and what to do at la
 - Open Graph + Twitter (`summary_large_image`). Dynamic `opengraph-image` / `twitter-image` (1200×630) per page via `next/og`.
 - JSON-LD: Home = WebSite + Person + ProfilePage + featured ItemList. Index = CollectionPage + ItemList + BreadcrumbList. Detail = CreativeWork or SoftwareApplication + BreadcrumbList. Email and phone are never included.
 - `sitemap.xml`: every public URL in both locales, `lastModified` from content, cover images, no hidden items, no admin, no `changefreq`/`priority`.
-- `llms.txt`: Markdown (`text/plain`, `noindex`), H1 = display name, summary from `site.ts`, links to Home, Projects and Accessibility in both locales; no repository content (D84).
+- `llms.txt`: Markdown (`text/plain`, `noindex`), H1 = display name, summary from `site.ts`, links to Home, Projects and Accessibility in both locales; no repository content (D85).
 - `robots.txt`: allow `/`, `Disallow: /api/`, absolute sitemap. The admin path is not mentioned.
-- Filtered listings (`?kind=`) are `noindex, follow` with a canonical to `/projects`. Paginated URLs self-canonicalize. `previousSlugs` answer 308. Unknown slugs answer 404. Unknown top-level paths answer a real 404 (D83); `/.well-known/ard.json` is one of them on purpose (no ARD manifest, D85).
+- Filtered listings (`?kind=`) are `noindex, follow` with a canonical to `/projects`. Paginated URLs self-canonicalize. `previousSlugs` answer 308. Unknown slugs answer 404. Unknown top-level paths answer a real 404 (D84); `/.well-known/ard.json` is one of them on purpose (no ARD manifest, D86).
 
 ## Verification
 

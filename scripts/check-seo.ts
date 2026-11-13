@@ -370,7 +370,7 @@ async function checkNotFound(): Promise<void> {
 
     if (result.response.headers.has('location')) fail(`${path} redirects instead of 404`);
 
-    // Vercel served the prerendered 404 file as a 200 download (D83).
+    // Vercel served the prerendered 404 file as a 200 download (D84).
     if (result.response.headers.has('content-disposition')) {
       fail(`${path} is served as a download (content-disposition)`);
     }
@@ -394,7 +394,7 @@ async function checkNotFound(): Promise<void> {
 
 /**
  * `/llms.txt` is Markdown with one H1 and absolute links that all resolve, and
- * never the 404 HTML or any private detail (D84).
+ * never the 404 HTML or any private detail (D85).
  */
 async function checkLlmsTxt(): Promise<void> {
   const { response, text } = await fetchText('/llms.txt');
