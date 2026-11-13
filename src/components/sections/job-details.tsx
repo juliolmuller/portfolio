@@ -3,7 +3,9 @@
 import { type ReactNode, type ToggleEvent, useState } from 'react';
 
 /**
- * Uncontrolled-feeling `<details>` that can start open (D46).
+ * Native `<details>` whose initial state comes from the experience's
+ * `collapsedByDefault` (D89). Visitors toggle it freely; the prop is not
+ * resynced after mount.
  */
 export function JobDetails({
   openByDefault,

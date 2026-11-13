@@ -32,7 +32,11 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
         <TextField path="company" label="Company" maxLength={80} />
         <TextField path="companyUrl" label="Company website (optional)" type="url" />
         <LocalizedField path="location" label="Location (optional)" max={80} />
-        <ToggleField path="collapsedByDefault" label="Collapsed by default on the site" />
+        <ToggleField
+          path="collapsedByDefault"
+          label="Collapsed by default on the site"
+          hint="Unchecked: the job starts expanded. Checked: it starts collapsed. Visitors can always open or close it."
+        />
         <ToggleField path="visible" label="Visible on the site" />
       </Section>
 
