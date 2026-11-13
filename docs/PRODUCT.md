@@ -32,7 +32,7 @@ Public routes under `/{locale}` (`en`, `pt`):
 - `/` → negotiated 307 to a locale (cookie → `Accept-Language` → `en`).
 - `/{locale}` Home: Hero → About (bio + up to 4 metrics) → Stack → Work (featured, max six) → Résumé (Experience | Education tabs, PDF, LinkedIn) → Contact → Worth following. Nav: About · Stack · Work · Résumé · Contact (D46, D48).
 - `/{locale}/projects` (kind filter, 12 per page, crawlable `?page=`), `/{locale}/projects/{slug}` (gallery lightbox; known slugs prerendered; old slugs 308; unknown 404), `/{locale}/accessibility`, `/{locale}/resume` (307 to the PDF).
-- `sitemap.xml`, `robots.txt`, manifest, icons, per-page OG images, `/api/terminal-content`, `/api/revalidate`.
+- `sitemap.xml`, `robots.txt`, `llms.txt`, manifest, icons, per-page OG images, `/api/terminal-content`, `/api/revalidate`.
 - `/admin/**` gated; no link anywhere.
 
 ## Content and copy rules

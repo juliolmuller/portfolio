@@ -58,7 +58,7 @@ test.describe('global 404', () => {
   test('unmatched top-level files and the rewrite target are real 404s', async ({ request }) => {
     const random = await (await request.get('/definitely-not-here')).text();
 
-    for (const path of ['/llms.txt', '/.well-known/ard.json', '/__not-found']) {
+    for (const path of ['/.well-known/ard.json', '/__not-found']) {
       const response = await request.get(path);
 
       expect(response.status(), path).toBe(404);

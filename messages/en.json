@@ -549,5 +549,15 @@
   },
   "devUi": {
     "title": "UI components"
+  },
+  "llms": {
+    "intro": "Personal site and portfolio, in English and Brazilian Portuguese. Every page is server-rendered and readable without JavaScript.",
+    "heading": "Pages",
+    "home": "Home",
+    "homeDescription": "Who I am, what I work with, featured projects, résumé and contact",
+    "projects": "Projects",
+    "projectsDescription": "Every public project with its context, approach and outcome",
+    "accessibility": "Accessibility statement",
+    "accessibilityDescription": "How this site meets WCAG 2.2 AA and how to report a problem"
   }
 }
