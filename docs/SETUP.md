@@ -259,16 +259,16 @@ Admin edits on staging already refresh staging. A `development` webhook only mat
 
 ## 7. Ongoing operations
 
-| Task                        | How                                                                                                        |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Ship a change               | Branch from `next`, PR to `next` (preview build; CI runs on the push), merge `next` → `main` to release    |
-| Dependency updates          | Dependabot PRs on Mondays |
-| Rotate the admin password   | `bun run admin:hash`, update `ADMIN_PASSWORD_HASH` in Vercel, redeploy                                     |
-| Sign everyone out           | Change `SESSION_SECRET`, redeploy                                                                          |
-| Rotate a Sanity token       | Create the new token, update Vercel, redeploy, then delete the old token                                   |
-| Change the Sanity schema    | See [SANITY.md → Schema](./SANITY.md#schema)                                                               |
-| Regenerate visual baselines | Actions → _Visual baselines_                                                                               |
-| Debug production            | Vercel → Deployments → Runtime Logs. Content warnings log document paths, never values                     |
+| Task                        | How                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Ship a change               | Branch from `next`, PR to `next` (preview build; CI runs on the push), merge `next` → `main` to release |
+| Dependency updates          | Dependabot PRs on Mondays                                                                               |
+| Rotate the admin password   | `bun run admin:hash`, update `ADMIN_PASSWORD_HASH` in Vercel, redeploy                                  |
+| Sign everyone out           | Change `SESSION_SECRET`, redeploy                                                                       |
+| Rotate a Sanity token       | Create the new token, update Vercel, redeploy, then delete the old token                                |
+| Change the Sanity schema    | See [SANITY.md → Schema](./SANITY.md#schema)                                                            |
+| Regenerate visual baselines | Actions → _Visual baselines_                                                                            |
+| Debug production            | Vercel → Deployments → Runtime Logs. Content warnings log document paths, never values                  |
 
 Self-hosting works with `bun run build && bun run start` behind a reverse proxy that terminates TLS, compresses responses and **overwrites** `X-Forwarded-For` (the login rate limiter trusts its first entry). If the proxy rewrites the host, set `serverActions.allowedOrigins`.
 
