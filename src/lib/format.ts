@@ -32,26 +32,6 @@ export function formatList(locale: AppLocale, items: readonly string[]): string 
 }
 
 /**
- * Role summaries longer than this are collapsed behind a "more" control (D76).
- */
-export const ROLE_SUMMARY_PREVIEW = 400;
-
-/**
- * The text cut at the last word boundary within `max` characters, without
- * trailing punctuation, or `null` when it already fits.
- */
-export function truncateAtWord(text: string, limit: number): null | string {
-  const max = Math.max(0, limit);
-
-  if (text.length <= max) return null;
-
-  const head = text.slice(0, max + 1);
-  const space = head.search(/\s\S*$/);
-
-  return (space > 0 ? head.slice(0, space) : text.slice(0, max)).replace(/[\s,.;:!?–—-]+$/, '');
-}
-
-/**
  * Plain text split into paragraphs at blank lines; single line breaks stay
  * inside a paragraph.
  */

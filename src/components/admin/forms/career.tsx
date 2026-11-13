@@ -3,8 +3,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { ROLE_SUMMARY_PREVIEW } from '@/lib/format';
-
 import {
   CheckboxGroup,
   LocalizedField,
@@ -72,13 +70,7 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
                   maxLength={7}
                 />
               </div>
-              <LocalizedField
-                path={`${itemPath}.summary`}
-                label="Summary"
-                max={ROLE_SUMMARY_PREVIEW}
-                overMaxNote={`over ${ROLE_SUMMARY_PREVIEW}: the site shows the start and a "More" link`}
-                multiline
-              />
+              <LocalizedField path={`${itemPath}.summary`} label="Summary" max={5000} multiline />
               <ListEditor
                 path={`${itemPath}.bullets`}
                 label="Highlights"

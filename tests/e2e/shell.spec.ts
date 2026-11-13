@@ -1,5 +1,5 @@
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { waitForHydration } from './hydration';
 
@@ -157,27 +157,132 @@ test('language switch keeps the route and hash', async ({ page }) => {
   expect(cookies.find((c) => c.name === 'NEXT_LOCALE')?.value).toBe('pt');
 });
 
-test('long role summaries are server-rendered in full and expand on demand', async ({
+const SUMMARY_ENDING = 'before the next release train leaves';
+
+// The box that clamps a role summary: the element the toggle controls.
+function summaryBox(page: Page): Locator {
+  return page.locator('#experience li').first().locator('[data-summary]');
+}
+
+function boxLines(box: Locator): Promise<number> {
+  return box.evaluate(
+    (el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight),
+  );
+}
+
+test('role summaries are in the HTML once and clamp to four lines with an inline toggle', async ({
   page,
   request,
 }) => {
-  const ending = 'rather than the exception';
+  // Crawlers and no-JS visitors get the whole text, once, never hidden (D90).
+  // The RSC payload in <script> tags carries the props again; the markup holds it once.
+  const html = (await (await request.get('/en')).text()).replaceAll(
+    /<script[\s\S]*?<\/script>/g,
+    '',
+  );
 
-  // Crawlers and no-JS visitors get the whole text in the HTML (D76).
-  expect(await (await request.get('/en')).text()).toContain(ending);
+  expect(html.split(SUMMARY_ENDING)).toHaveLength(2);
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/en#experience');
 
   const role = page.locator('#experience li').first();
-  const more = role.getByText('More', { exact: true });
+  const box = summaryBox(page);
+  const more = role.getByRole('button', { name: /^More/ });
 
-  await expect(role.getByText(ending, { exact: false })).toBeHidden();
+  await expect(more).toBeVisible();
+  await expect(more).toHaveAccessibleName(/^More\s*: Senior Full Stack Engineer$/);
+  expect(await boxLines(box)).toBeLessThanOrEqual(4.1);
+
+  // On the last line of the clamped box, with a hit area of at least 44 × 44.
+  const boxRect = (await box.boundingBox())!;
+  const moreRect = (await more.boundingBox())!;
+
+  expect(Math.abs(moreRect.y + moreRect.height - (boxRect.y + boxRect.height))).toBeLessThanOrEqual(
+    2,
+  );
+
+  const hit = await more.evaluate((el) => {
+    const after = getComputedStyle(el, '::after');
+
+    return { height: parseFloat(after.height), width: parseFloat(after.width) };
+  });
+
+  expect(hit.height).toBeGreaterThanOrEqual(44);
+  expect(hit.width + 0).toBeGreaterThan(0);
+
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+
   await more.click();
-  await expect(role.getByText(ending, { exact: false })).toBeVisible();
-  await expect(more).toBeHidden();
-  await role.getByText('Less', { exact: true }).click();
-  await expect(role.getByText(ending, { exact: false })).toBeHidden();
+  await expect(role.getByText(SUMMARY_ENDING)).toBeVisible();
+
+  const less = role.getByRole('button', { name: /^Less/ });
+
+  await expect(less).toHaveAttribute('aria-expanded', 'true');
+  await expect(less).toBeFocused();
+  expect(Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore)).toBeLessThan(40);
+
+  await less.click();
+  await expect(more).toBeFocused();
+  expect(await boxLines(box)).toBeLessThanOrEqual(4.1);
+});
+
+test('a short role summary has no toggle', async ({ page }) => {
+  await page.goto('/en#experience');
+  await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
+
+  const roles = page.locator('#experience li');
+  const last = roles.last();
+
+  await expect(last.getByRole('button', { name: /^(More|Less)/ })).toHaveCount(0);
+});
+
+test('nothing below the summary moves when the toggle appears', async ({ page }) => {
+  await page.goto('/en#experience', { waitUntil: 'domcontentloaded' });
+
+  const role = page.locator('#experience li').first();
+  const bullets = role.locator('ul').first();
+  // Distance from the summary box to the highlights: unaffected by anything above.
+  const gap = (): Promise<number> =>
+    bullets.evaluate(
+      (el, selector) =>
+        el.getBoundingClientRect().top
+        - document.querySelector(selector)!.getBoundingClientRect().top,
+      '#experience li [data-summary]',
+    );
+  const before = await gap();
+
+  await expect(role.getByRole('button', { name: /^More/ })).toBeVisible();
+  expect(Math.abs((await gap()) - before)).toBeLessThanOrEqual(1);
+});
+
+test('the summary is clamped on first paint, before scripts run', async ({ page }) => {
+  await page.route('**/_next/static/chunks/**/*.js', (route) => route.abort());
+  await page.goto('/en', { waitUntil: 'domcontentloaded' });
+  await page.locator('#experience').scrollIntoViewIfNeeded();
+  expect(await boxLines(summaryBox(page))).toBeLessThanOrEqual(4.1);
+});
+
+test('without JavaScript the full text shows and there is no dead toggle', async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+
+  await page.goto('/en');
+  await expect(page.getByText(SUMMARY_ENDING)).toBeVisible();
+  await expect(
+    page.locator('#experience').getByRole('button', { name: /^(More|Less)/ }),
+  ).toHaveCount(0);
+  await context.close();
+});
+
+test('the toggle is measured again after a language switch and at 320 px', async ({ page }) => {
+  await page.goto('/pt#experience');
+  await expect(page.getByRole('button', { name: /^Mais/ }).first()).toBeVisible();
+
+  await page.setViewportSize({ width: 320, height: 800 });
+  await page.goto('/en#experience');
+  await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
+  expect(await boxLines(summaryBox(page))).toBeLessThanOrEqual(4.1);
 });
 
 test('motion toggle persists the paused state', async ({ page }) => {
