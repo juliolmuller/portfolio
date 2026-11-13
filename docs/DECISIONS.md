@@ -131,7 +131,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Analytics
 
-- **D68 — Vercel Web Analytics** (active; 2026-11-02, previously an unnumbered section). `@vercel/analytics` is mounted in `src/app/[locale]/layout.tsx`; cookieless, served from `/_vercel/insights/*` on the site origin (CSP unchanged, no banner); `beforeSend` drops `/admin` URLs. `src/lib/analytics.ts` wraps `track` with a typed event list: `email_click`, `resume_open` (locale), `external_link` (host) via the delegated `ClickTracker`; `email_copy`, `language_switch` (to), `terminal_open` directly. Properties are never user input; terminal commands are never tracked. **Owner step:** enable Web Analytics on the Vercel project.
+- **D68 — Vercel Web Analytics** (active; 2026-11-02, previously an unnumbered section). `@vercel/analytics` is mounted in `src/app/[locale]/layout.tsx`; cookieless, served from `/_vercel/insights/*` on the site origin (CSP unchanged, no banner); Admin never reports because `/admin` has its own root layout that doesn't mount it (a `beforeSend` filter would ship the admin path in a public chunk). `src/lib/analytics.ts` wraps `track` with a typed event list: `email_click`, `resume_open` (locale), `external_link` (host) via the delegated `ClickTracker`; `email_copy`, `language_switch` (to), `terminal_open` directly. Properties are never user input; terminal commands are never tracked. **Owner step:** enable Web Analytics on the Vercel project.
 
 ## Spec contradictions and how they were resolved
 

@@ -40,6 +40,6 @@ export function ClickTracker(): React.JSX.Element {
     return (): void => document.removeEventListener('click', onClick);
   }, []);
 
-  // Client-side so the admin filter (a function) can be passed as a prop.
-  return <Analytics beforeSend={(event) => (event.url.includes('/admin') ? null : event)} />;
+  // No admin filter: /admin has its own root layout, which never mounts this.
+  return <Analytics />;
 }
