@@ -125,3 +125,52 @@ test.describe('timeline rail', () => {
     expect(await railScale(page)).toBeNull();
   });
 });
+
+test.describe('experience initial state (D89)', () => {
+  const JOBS = '#experience li details.group\\/details';
+
+  for (const locale of ['en', 'pt']) {
+    test(`jobs follow collapsedByDefault in ${locale}`, async ({ page }) => {
+      await page.goto(`/${locale}`);
+      await waitForHydration(page);
+
+      const jobs = page.locator(JOBS);
+
+      await expect(jobs).toHaveCount(3);
+      await expect(jobs.nth(0)).toHaveAttribute('open', '');
+      await expect(jobs.nth(1)).toHaveAttribute('open', '');
+      await expect(jobs.nth(2)).not.toHaveAttribute('open');
+    });
+  }
+
+  test('server HTML and no-JS render carry the same state', async ({ browser, request }) => {
+    const html = await (await request.get('/en')).text();
+    const tags = [...html.matchAll(/<details[^>]*group\/details[^>]*>/g)].map((m) => m[0]);
+
+    expect(tags.map((tag) => /\sopen[=\s>]/.test(tag))).toEqual([true, true, false]);
+
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+
+    await page.goto('/en');
+
+    const jobs = page.locator(JOBS);
+
+    await expect(jobs.nth(1)).toHaveAttribute('open', '');
+    await expect(jobs.nth(2)).not.toHaveAttribute('open');
+    await context.close();
+  });
+
+  test('visitors can toggle every job', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/en');
+    await waitForHydration(page);
+
+    const jobs = page.locator(JOBS);
+
+    await jobs.nth(2).locator('summary').first().click();
+    await expect(jobs.nth(2)).toHaveAttribute('open', '');
+    await jobs.nth(0).locator('summary').first().click();
+    await expect(jobs.nth(0)).not.toHaveAttribute('open');
+  });
+});

@@ -162,7 +162,6 @@ export async function Resume({
               const stack = entry.techIds
                 .map((id) => names.get(id))
                 .filter((name): name is string => Boolean(name));
-              const current = Boolean(first && !first.end);
               const details = (
                 <>
                   {first ? <RoleBody role={first} labels={labels} /> : null}
@@ -200,7 +199,7 @@ export async function Resume({
                     aria-hidden="true"
                     className="absolute top-[0.85rem] left-0 size-[15px] rounded-full border-2 border-bg-0 bg-surface-2 ring-1 ring-line-strong"
                   />
-                  <JobDetails openByDefault={current} className="group/details">
+                  <JobDetails openByDefault={!entry.collapsedByDefault} className="group/details">
                     <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-x-6 gap-y-1 rounded-md py-1 [&::-webkit-details-marker]:hidden">
                       <h3 className="min-w-0 flex-1 text-h3">
                         {first?.title}
