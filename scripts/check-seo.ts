@@ -111,6 +111,40 @@ async function startServer(): Promise<ChildProcess | undefined> {
   return child;
 }
 
+let siteOrigin: string | undefined;
+
+/**
+ * True for the redirecting bare root (`/`, `/?x`, `/#x`, origin, origin + `/`)
+ * on this server or on the build-time site origin; external hosts never match.
+ */
+function isBareRoot(value: string, from: string = BASE): boolean {
+  let url: URL;
+
+  try {
+    url = new URL(value.replaceAll('&amp;', '&'), from);
+  } catch {
+    return false;
+  }
+
+  if (url.pathname !== '/') return false;
+
+  return url.origin === new URL(BASE).origin || url.origin === siteOrigin;
+}
+
+const URL_KEYS = new Set(['item', 'mainEntityOfPage', 'sameAs', 'url']);
+
+function bareRootInJsonLd(value: unknown, key = ''): boolean {
+  if (typeof value === 'string') return URL_KEYS.has(key) && isBareRoot(value);
+
+  if (Array.isArray(value)) return value.some((item) => bareRootInJsonLd(item, key));
+
+  if (value && typeof value === 'object') {
+    return Object.entries(value).some(([k, v]) => bareRootInJsonLd(v, k));
+  }
+
+  return false;
+}
+
 async function checkRobotsAndSitemap(): Promise<string[]> {
   const robots = await fetchText('/robots.txt');
 
@@ -141,6 +175,12 @@ async function checkRobotsAndSitemap(): Promise<string[]> {
   const locs = all(sitemap.text, /<loc>([^<]+)<\/loc>/g);
 
   if (locs.length < 8) fail(`sitemap is too small (${locs.length} URLs)`);
+
+  const first = locs[0];
+
+  if (first) siteOrigin = new URL(first).origin;
+
+  if (locs.some((loc) => isBareRoot(loc))) fail('sitemap lists the bare root');
 
   return locs;
 }
@@ -186,7 +226,23 @@ async function checkPage(loc: string): Promise<void> {
 
   if (canonical !== loc) fail(`${path}: canonical is ${canonical}`);
 
+  if (canonical && isBareRoot(canonical)) fail(`${path}: canonical is the bare root`);
+
   const hreflang = all(text, /<link[^>]*rel="alternate"[^>]*hreflang="([^"]+)"/gi);
+  const alternates = [...text.matchAll(/<link\s[^>]*rel="alternate"[^>]*>/gi)].map((m) => m[0]);
+
+  for (const tag of alternates) {
+    const href = tag.match(/\bhref="([^"]+)"/i)?.[1];
+
+    if (href && isBareRoot(href)) fail(`${path}: hreflang ${href} points at the bare root`);
+  }
+
+  const ogUrl =
+    text.match(/<meta[^>]*property="og:url"[^>]*content="([^"]*)"/i)?.[1]
+    ?? text.match(/<meta[^>]*content="([^"]*)"[^>]*property="og:url"/i)?.[1];
+
+  if (ogUrl && isBareRoot(ogUrl)) fail(`${path}: og:url is the bare root`);
+
   for (const tag of ['en', 'pt-BR', 'x-default']) {
     if (!hreflang.includes(tag)) fail(`${path}: missing hreflang ${tag}`);
   }
@@ -201,7 +257,7 @@ async function checkPage(loc: string): Promise<void> {
   const jsonLd = all(text, /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi);
   for (const block of jsonLd) {
     try {
-      JSON.parse(block);
+      if (bareRootInJsonLd(JSON.parse(block))) fail(`${path}: JSON-LD URL is the bare root`);
     } catch {
       fail(`${path}: JSON-LD is not parseable`);
     }
@@ -245,6 +301,10 @@ async function checkPage(loc: string): Promise<void> {
     if (!result.startsWith('200 image/png')) {
       fail(`${path}: og:image ${imagePath} → ${result}`);
     }
+  }
+
+  for (const href of all(text, /\shref="([^"]*)"/gi)) {
+    if (isBareRoot(href, `${BASE}${path}`)) fail(`${path}: link to the bare root (${href})`);
   }
 
   // Every internal link on every page, each URL fetched once (§13.10).
@@ -355,6 +415,31 @@ async function extras(): Promise<void> {
   }
 }
 
+/**
+ * `/` redirects per visitor (D88). A crawler sends no cookie and no
+ * `Accept-Language` (Googlebot), so it must land on `/en`.
+ */
+async function checkRootRedirect(): Promise<void> {
+  const { response } = await fetchText('/', { headers: { 'Accept-Language': '' } });
+
+  if (response.status !== 307) fail(`/ returned ${response.status} (want 307)`);
+
+  const location = response.headers.get('location') ?? '';
+
+  if (new URL(location || '/', BASE).pathname !== '/en')
+    fail(`/ redirects to "${location}" (want /en)`);
+
+  const vary = (response.headers.get('vary') ?? '').toLowerCase();
+
+  if (!vary.includes('accept-language') || !vary.includes('cookie')) {
+    fail(`/ Vary is "${vary}" (want Accept-Language and Cookie)`);
+  }
+
+  if (!/no-store/i.test(response.headers.get('cache-control') ?? '')) {
+    fail('/ is missing Cache-Control no-store');
+  }
+}
+
 async function checkNotFound(): Promise<void> {
   const paths = ['/zz-nope-123', '/.well-known/ard.json', '/__not-found', '/admin'];
   const results = new Map<string, { response: Response; text: string }>();
@@ -439,6 +524,7 @@ async function main(): Promise<void> {
     const locs = await checkRobotsAndSitemap();
     for (const loc of locs) await checkPage(loc);
     await extras();
+    await checkRootRedirect();
     await checkNotFound();
     await checkPrivateHeaders();
     await checkLlmsTxt();
