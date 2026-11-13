@@ -95,6 +95,7 @@ test.describe('anonymous access', () => {
       '/en',
       '/pt',
       '/robots.txt',
+      '/llms.txt',
       '/sitemap.xml',
       '/manifest.webmanifest',
       '/api/terminal-content?locale=en',

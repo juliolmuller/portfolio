@@ -9,8 +9,9 @@ What the site emits for search engines, how it is verified, and what to do at la
 - Open Graph + Twitter (`summary_large_image`). Dynamic `opengraph-image` / `twitter-image` (1200×630) per page via `next/og`.
 - JSON-LD: Home = WebSite + Person + ProfilePage + featured ItemList. Index = CollectionPage + ItemList + BreadcrumbList. Detail = CreativeWork or SoftwareApplication + BreadcrumbList. Email and phone are never included.
 - `sitemap.xml`: every public URL in both locales, `lastModified` from content, cover images, no hidden items, no admin, no `changefreq`/`priority`.
+- `llms.txt`: Markdown (`text/plain`, `noindex`), H1 = display name, summary from `site.ts`, links to Home, Projects and Accessibility in both locales; no repository content (D85).
 - `robots.txt`: allow `/`, `Disallow: /api/`, absolute sitemap. The admin path is not mentioned.
-- Filtered listings (`?kind=`) are `noindex, follow` with a canonical to `/projects`. Paginated URLs self-canonicalize. `previousSlugs` answer 308. Unknown slugs answer 404.
+- Filtered listings (`?kind=`) are `noindex, follow` with a canonical to `/projects`. Paginated URLs self-canonicalize. `previousSlugs` answer 308. Unknown slugs answer 404. Unknown top-level paths answer a real 404 (D84); `/.well-known/ard.json` is one of them on purpose (no ARD manifest, D86).
 
 ## Verification
 
@@ -20,7 +21,7 @@ bun run check:seo          # starts next start unless SEO_BASE_URL is set
 
 The home H1 is the display name; the job title is not in the H1 but stays visible and in the `<title>` and JSON-LD. The lead is under 70 characters, so the home meta description falls back to `meta.siteDescription` (D67).
 
-CI runs it after `build` with `CONTENT_SOURCE=fixtures`. With JavaScript disabled it fetches every sitemap URL and asserts: status 200; exactly one `h1`; title ≤ 60 and description 70–160 characters; a self-referencing canonical; reciprocal hreflang (`en`, `pt-BR`, `x-default`); parseable JSON-LD without contact details; `alt` on every `img`; no `noindex`; no admin path in the HTML; `html-validate` clean; a 200 PNG behind every `og:image`; and **every** internal link resolving (each URL fetched once). Extras: robots and sitemap shape, the hidden project is 404, a previous slug answers 308 to the current one, the résumé answers 307, the filtered listing is `noindex` with a canonical to `/projects`, an unknown slug is 404, the API sends `X-Robots-Tag: noindex`, and, when `SESSION_SECRET` is set, `/admin` with a freshly signed test session answers 200 with `X-Robots-Tag: noindex`, `Cache-Control: no-store` and a robots meta `noindex`.
+CI runs it after `build` with `CONTENT_SOURCE=fixtures`. With JavaScript disabled it fetches every sitemap URL and asserts: status 200; exactly one `h1`; title ≤ 60 and description 70–160 characters; a self-referencing canonical; reciprocal hreflang (`en`, `pt-BR`, `x-default`); parseable JSON-LD without contact details; `alt` on every `img`; no `noindex`; no admin path in the HTML; `html-validate` clean; a 200 PNG behind every `og:image`; and **every** internal link resolving (each URL fetched once). Extras: robots and sitemap shape, `/llms.txt` (one H1, no HTML, no private data, every link resolves), the hidden project is 404, a previous slug answers 308 to the current one, the résumé answers 307, the filtered listing is `noindex` with a canonical to `/projects`, an unknown slug is 404, unknown top-level paths (`/zz-nope-123`, `/.well-known/ard.json`) and anonymous `/admin` are real 404s with identical bodies, the API sends `X-Robots-Tag: noindex`, and, when `SESSION_SECRET` is set, `/admin` with a freshly signed test session answers 200 with `X-Robots-Tag: noindex`, `Cache-Control: no-store` and a robots meta `noindex`.
 
 Unit tests cover the JSON-LD builders (required properties, resolvable `@id`s, absolute URLs) and the OG image renderer. Lighthouse SEO = 100 is enforced on Home, `/projects` and a detail page in both locales (D60).
 

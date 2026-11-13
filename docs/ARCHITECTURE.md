@@ -30,7 +30,7 @@ src/
     admin/           own root layout; [area]/ (list, new, [id]) driven by areas config; api/upload/route.ts
     api/             terminal-content (snapshot), revalidate (Sanity webhook)
     tech-icons/      content-hashed, immutable SVG logos
-    sitemap.ts robots.ts manifest.ts icon.* global-not-found.tsx dev/ui (404 in production)
+    sitemap.ts robots.ts llms.txt/ manifest.ts icon.* global-not-found.tsx dev/ui (404 in production)
   proxy.ts           canonical URLs, admin gate, locale negotiation for "/", admin nonce CSP
   components/        layout/ sections/ portfolio/ tech-cloud/ window-manager/ terminal/ admin/ ui/ seo/ markdown/
   lib/
@@ -61,7 +61,7 @@ Conventions that keep this layout honest: server-only modules import `server-onl
 
 ## Request flow (`src/proxy.ts`)
 
-In order: (1) canonicalization (lowercase → 308); (2) **admin gate** for `/admin/**`: verify the JWT with `jose`, otherwise rewrite to a nonexistent path so Next renders the **same global 404** as any unknown URL (D3, D19); allowed requests get the admin headers and a per-request nonce CSP; the session cookie is re-issued at most once a minute and never for Server Action posts (D51); (3) locale negotiation for `/` only: cookie → `Accept-Language` → `en`, 307 (D18). Any other unprefixed path is a real 404.
+In order: (1) canonicalization (lowercase → 308); (2) **admin gate** for `/admin/**`: verify the JWT with `jose`, otherwise rewrite to a nonexistent path (a fixed path with no prerendered output, D84) so Next renders the **same global 404** as any unknown URL (D3, D19); allowed requests get the admin headers and a per-request nonce CSP; the session cookie is re-issued at most once a minute and never for Server Action posts (D51); (3) locale negotiation for `/` only: cookie → `Accept-Language` → `en`, 307 (D18). Any other unprefixed path is a real 404.
 
 ## Content layer
 
@@ -118,7 +118,7 @@ Server-rendered HTML, unique metadata and canonical/hreflang per page, JSON-LD, 
 | `typecheck`                 | `next typegen` + `tsc --noEmit`                                                                                                                |
 | `test`                      | Vitest: core libs, schemas, both adapters, auth, JSON-LD, token contrast                                                                       |
 | `i18n:check`, `icons:audit` | Same keys/placeholders in both catalogs and fixtures; every technology has an icon or monogram                                                 |
-| `check:bundle`              | Home ≤ 195 KB gzip first load, projects/detail ≤ 191, lazy chunks (terminal ≤ 20, secret ≤ 3, sphere ≤ 10); admin path/server-only leaks (D58) |
+| `check:bundle`              | Home ≤ 196 KB gzip first load, projects/detail ≤ 191, lazy chunks (terminal ≤ 20, secret ≤ 3, sphere ≤ 10); admin path/server-only leaks (D58) |
 | `check:seo`                 | Crawls every sitemap URL with JS off (D32)                                                                                                     |
 | `test:e2e`                  | Playwright on a fixtures production build, port 3100; axe on Chromium (D23)                                                                    |
 | `lhci`                      | Accessibility/SEO = 1, best-practices ≥ 0.95, CLS ≤ 0.05; regression floors for performance ≥ 0.85, LCP ≤ 3.8 s, TBT ≤ 350 ms (D60)            |

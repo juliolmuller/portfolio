@@ -14,9 +14,11 @@ import { adminCsp, isHttpsSite } from '@/lib/security/headers';
 
 /**
  * Rewrite target for every request that must produce the global 404. Its first
- * segment is not a locale, so the `[locale]` root layout rejects it.
+ * segment is not a locale, so the `[locale]` root layout guard calls
+ * `notFound()`. It must never be `/404` (or any path with a build output): on
+ * Vercel a rewrite to the prerendered file serves it with status 200 (D84).
  */
-const NOT_FOUND_PATH = '/404';
+const NOT_FOUND_PATH = '/__not-found';
 
 /**
  * Root-level files and route trees that are not localized.
@@ -27,6 +29,7 @@ const ROOT_PASSTHROUGH = new Set([
   'fixtures',
   'icon',
   'icon.svg',
+  'llms.txt',
   'manifest.webmanifest',
   'robots.txt',
   'sitemap.xml',
