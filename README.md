@@ -6,7 +6,7 @@ The initial content is fictional demo data; [docs/USAGE.md](docs/USAGE.md) expla
 
 ## Features
 
-- **Public site:** Home (hero, about, stack, selected work, résumé, contact, recommended people), `/projects` with a crawlable filter and pagination, project pages with a gallery lightbox, a résumé PDF route and an accessibility statement, all in `/en` and `/pt`.
+- **Public site:** Home (hero, about, stack, selected work, resume, contact, recommended people), `/projects` with a crawlable filter and pagination, project pages with a gallery lightbox, a resume PDF route and an accessibility statement, all in `/en` and `/pt`.
 - **Terminal:** a windowed shell (`Ctrl/Cmd + /`) that knows the site (`help`, `ls`, `cd`, `cat`, `open`, `goto`, `lang`, `projects`, `resume`, `neofetch`, `git log`, a few harmless easter eggs…), with history and Tab completion. It can be moved, resized, snapped, minimized and maximized, and becomes a bottom sheet on phones.
 - **Technology cloud:** a rotating geoid of logos with category filters; the List view is the no-JS, reduced-motion and screen-reader equivalent.
 - **Admin:** `su julio` in the terminal opens a session for `/admin`, where every piece of content is edited. Anonymous requests get the same 404 as any unknown URL.

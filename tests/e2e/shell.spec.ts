@@ -88,7 +88,7 @@ for (const locale of ['en', 'pt'] as const) {
       expect(html).toContain('href="#main"');
     });
 
-    test('home sections follow the résumé-after-work order', async ({ request }) => {
+    test('home sections follow the resume-after-work order', async ({ request }) => {
       const response = await request.get(`/${locale}`);
 
       expect(response.status()).toBe(200);

@@ -8,7 +8,7 @@ Personal site of **Julio L. Muller**, Senior Full Stack Software Engineer in Cur
 
 **Audience.** Recruiters and hiring managers (skim in under a minute), engineering leaders (depth and judgment), prospective clients and collaborators.
 
-**Success.** In 10 seconds a visitor knows who he is, what he does and where to click next. Résumé and contact are one click away. Modern and alive without gimmicks, excellent on phones, fast, accessible, crawlable. The owner changes every piece of public content without touching code.
+**Success.** In 10 seconds a visitor knows who he is, what he does and where to click next. Resume and contact are one click away. Modern and alive without gimmicks, excellent on phones, fast, accessible, crawlable. The owner changes every piece of public content without touching code.
 
 ## Signature features (non-negotiable)
 
@@ -30,7 +30,7 @@ No light theme, theme toggle, `prefers-color-scheme` branching or `dark:` varian
 Public routes under `/{locale}` (`en`, `pt`):
 
 - `/` → negotiated 307 to a locale (cookie → `Accept-Language` → `en`).
-- `/{locale}` Home: Hero → About (bio + up to 4 metrics) → Stack → Work (featured, max six) → Résumé (Experience | Education tabs, PDF, LinkedIn) → Contact → Worth following. Nav: About · Stack · Work · Résumé · Contact (D46, D48).
+- `/{locale}` Home: Hero → About (bio + up to 4 metrics) → Stack → Work (featured, max six) → Resume (Experience | Education tabs, PDF, LinkedIn) → Contact → Worth following. Nav: About · Stack · Work · Resume · Contact (D46, D48).
 - `/{locale}/projects` (kind filter, 12 per page, crawlable `?page=`), `/{locale}/projects/{slug}` (gallery lightbox; known slugs prerendered; old slugs 308; unknown 404), `/{locale}/accessibility`, `/{locale}/resume` (307 to the PDF).
 - `sitemap.xml`, `robots.txt`, `llms.txt`, manifest, icons, per-page OG images, `/api/terminal-content`, `/api/revalidate`.
 - `/admin/**` gated; no link anywhere.
@@ -40,6 +40,7 @@ Public routes under `/{locale}` (`en`, `pt`):
 - **Data policy.** All seed content is fictional (`isFixture`, `example.com`, invented companies, people and metrics). The only real facts are the owner's name, title and city (`src/config/site.ts`) and owner-supplied photos. Never present anything else as a real claim. No lorem ipsum or TODO in rendered text; no employer logos; the phone number is opt-in and never in metadata, structured data or the terminal.
 - **Voice.** First person singular, confident, direct, warm; short sentences; concrete outcomes over adjectives; no "passionate", "rockstar", "guru", "ninja"; no emoji; sentence case; no exclamation marks.
 - **English** is the source language; **Brazilian Portuguese** is written natively (natural syntax, first-person verbs, keep terms like deploy, backend, frontend, framework, pipeline, commit), never a literal translation. Every localized field exists in both languages (`i18n:check`).
+- **Spelling.** Write "resume" without accents in copy, admin, docs, comments and tests (`scripts/spelling.test.ts` enforces it; `docs/archive/` is exempt).
 - **Imagery.** The layout works without a profile photo (monogram) and without project covers (generated covers).
 - Code, identifiers, comments, commit messages and docs are in English.
 
