@@ -4,7 +4,6 @@ import { getTranslations } from 'next-intl/server';
 import { LinkIcon } from '@/components/content/link-icon';
 import { TimelineProgress } from '@/components/motion/timeline-progress';
 import { Chip } from '@/components/ui/chip';
-import { Paragraphs } from '@/components/ui/paragraphs';
 import { Reveal } from '@/components/ui/reveal';
 import { SectionHeader } from '@/components/ui/section-header';
 import { type AppLocale, localeTags, routing } from '@/i18n/routing';
@@ -16,11 +15,12 @@ import {
   type Resume as ResumeFiles,
   type Technology,
 } from '@/lib/content';
-import { formatPartialDate, ROLE_SUMMARY_PREVIEW, truncateAtWord } from '@/lib/format';
+import { formatPartialDate } from '@/lib/format';
 
 import { JobDetails } from './job-details';
 import { externalRel } from './links';
 import { ResumePanes } from './resume-panes';
+import { RoleSummary, type ToggleLabels } from './role-summary';
 
 interface ResumeProps {
   education: Education[];
@@ -64,44 +64,6 @@ function DateRange({
       {start && showEnd ? ' – ' : null}
       {end ? <time dateTime={end}>{formatPartialDate(locale, end)}</time> : presentLabel}
     </span>
-  );
-}
-
-interface ToggleLabels {
-  less: string;
-  more: string;
-}
-
-/**
- * Long summaries collapse behind a native `<details>`, so the full text stays
- * reachable without JavaScript (D76).
- */
-function RoleSummary({
-  text,
-  title,
-  labels,
-}: {
-  labels: ToggleLabels;
-  text: string;
-  title: string;
-}): React.JSX.Element {
-  const preview = truncateAtWord(text, ROLE_SUMMARY_PREVIEW);
-
-  if (preview === null) return <Paragraphs text={text} className="mt-3 text-text-2" />;
-
-  return (
-    <div className="group/summary mt-3 text-text-2">
-      <Paragraphs text={`${preview}…`} className="group-has-open/summary:hidden" />
-      <details>
-        <summary className="inline-flex min-h-11 w-fit cursor-pointer list-none items-center text-small text-accent-2 underline underline-offset-4 [&::-webkit-details-marker]:hidden">
-          <span className="group-has-open/summary:hidden">{labels.more}</span>
-          <span className="hidden group-has-open/summary:inline">{labels.less}</span>
-          {/* Tells several roles' toggles apart for screen readers (WCAG 2.4.6). */}
-          <span className="sr-only">: {title}</span>
-        </summary>
-        <Paragraphs text={text} />
-      </details>
-    </div>
   );
 }
 

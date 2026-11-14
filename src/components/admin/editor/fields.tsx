@@ -382,7 +382,6 @@ interface LocalizedProps {
   /**
    * Appended to the counter once the text passes `max` (only zod blocks saves).
    */
-  overMaxNote?: string;
   path: string;
   /**
    * Recommended length range (SEO), shown as guidance.
@@ -487,7 +486,6 @@ export function LocalizedField({
   markdown,
   range,
   gallery,
-  overMaxNote,
 }: LocalizedProps): React.JSX.Element {
   const form = useForm();
   const [tab, setTab] = useState<'en' | 'pt'>('en');
@@ -601,7 +599,6 @@ export function LocalizedField({
               >
                 {value.length}/{max}
                 {range ? ` · aim for ${range[0]}–${range[1]}` : ''}
-                {overMaxNote && value.length > max ? ` · ${overMaxNote}` : ''}
               </p>
               {error ? (
                 <p id={`${id}-error`} className="text-small text-danger">
