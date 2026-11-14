@@ -254,7 +254,7 @@ interface PdfValue {
 }
 
 /**
- * A PDF per language (the résumé).
+ * A PDF per language (the resume).
  */
 export function PdfField({ path, label }: { label: string; path: string }): React.JSX.Element {
   const form = useForm();

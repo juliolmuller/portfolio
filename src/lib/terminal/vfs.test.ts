@@ -44,7 +44,7 @@ describe.each(['en', 'pt'] as const)('buildVfs (%s)', (locale) => {
     expect(vfs.stat('~/nope')).toBeNull();
   });
 
-  it('localizes file contents and marks the résumé binary', async () => {
+  it('localizes file contents and marks the resume binary', async () => {
     const snapshot = await fixtureSnapshot(locale);
     const vfs = buildVfs(snapshot, translator(locale));
 

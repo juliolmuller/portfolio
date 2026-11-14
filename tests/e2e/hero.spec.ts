@@ -16,7 +16,7 @@ test.describe('hero', () => {
     await expect(h1).toHaveCount(1);
     await expect(h1).toHaveText(NAME);
     await expect(h1).toHaveCSS('font-family', /Kaushan Script/);
-    await expect(page.locator('#top')).not.toContainText('Résumé (PDF)');
+    await expect(page.locator('#top')).not.toContainText('Resume (PDF)');
     await expect(page.locator('#top')).not.toContainText('Open the terminal');
     await expect(page.locator('#top')).not.toContainText('Now:');
   });

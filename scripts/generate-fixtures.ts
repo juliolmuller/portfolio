@@ -1,5 +1,5 @@
 /**
- * Renders the fictional placeholder images and sample résumé PDFs into
+ * Renders the fictional placeholder images and sample resume PDFs into
  * `public/fixtures/` and writes their manifest. Deterministic: the same specs
  * always produce the same files. Run after changing `image-specs.ts`:
  *
@@ -222,9 +222,9 @@ interface PdfLine {
 
 const RESUME_LINES: Record<'en' | 'pt', { lines: PdfLine[]; title: string }> = {
   en: {
-    title: 'Sample résumé (fictional)',
+    title: 'Sample resume (fictional)',
     lines: [
-      { text: 'Sample résumé (fictional)', size: 22, bold: true },
+      { text: 'Sample resume (fictional)', size: 22, bold: true },
       {
         text: `${owner.name} — ${owner.jobTitle} — ${owner.city}, ${owner.country}`,
         size: 11,

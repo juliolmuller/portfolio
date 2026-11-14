@@ -117,7 +117,7 @@ export function ResumeForm(): React.JSX.Element {
 
   return (
     <Section
-      title="Résumé files"
+      title="Resume files"
       description="One PDF per language. Visitors get the file that matches the site language."
     >
       <PdfField path="file.en" label="English PDF" />

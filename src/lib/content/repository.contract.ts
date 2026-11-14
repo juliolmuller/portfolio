@@ -70,7 +70,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       expect((await shown.repository.getContact('en'))?.phone).toBe('+5541999990000');
     });
 
-    it('returns both résumé files', async () => {
+    it('returns both resume files', async () => {
       const { repository } = setup();
       const resume = await repository.getResume();
 

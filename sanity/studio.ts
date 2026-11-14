@@ -37,7 +37,7 @@ export const singletonTypes = ['profile', 'contact', 'resume'] as const;
 
 /**
  * Storage fields that have no field-level twin in the zod contract:
- * `technologies` are references (zod checks `techIds` exist), and résumé files
+ * `technologies` are references (zod checks `techIds` exist), and resume files
  * are assets that the read path resolves to URLs.
  */
 export const UNVALIDATED_FIELDS: Readonly<Record<string, readonly string[]>> = {
@@ -218,7 +218,7 @@ function preview(type: DocumentType): {
   return {
     select,
     prepare: ({ title, subtitle, media, visible }: PreviewValues) => ({
-      title: title || (type === 'resume' ? 'Résumé' : 'Untitled'),
+      title: title || (type === 'resume' ? 'Resume' : 'Untitled'),
       subtitle: [subtitle, visible === false ? 'hidden' : null].filter(Boolean).join(' · '),
       media,
     }),

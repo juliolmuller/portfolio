@@ -57,7 +57,7 @@ export const AREA_CONFIG: Record<string, AreaConfig> = {
   resume: {
     columns: [],
     cells: () => [],
-    name: () => 'Résumé',
+    name: () => 'Resume',
     defaults: () => ({ file: {} }),
     Form: ResumeForm,
   },

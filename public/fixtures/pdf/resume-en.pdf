@@ -10,9 +10,9 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>
 endobj
 4 0 obj
-<< /Length 755 >>
+<< /Length 749 >>
 stream
-BT /F2 22 Tf 56 780 Td (Sample r\351sum\351 \(fictional\)) Tj ET
+BT /F2 22 Tf 56 780 Td (Sample resume \(fictional\)) Tj ET
 BT /F1 11 Tf 56 758 Td (Julio L. Muller \227 Senior Full Stack Software Engineer \227 Curitiba, Brazil) Tj ET
 BT /F1 9 Tf 56 740 Td (Placeholder document for development. Every company, metric and project below is invented.) Tj ET
 BT /F2 13 Tf 56 710 Td (Experience) Tj ET
@@ -30,7 +30,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
 endobj
 7 0 obj
-<< /Title (Sample r\351sum\351 \(fictional\)) /Producer (juliolmuller.com fixtures) >>
+<< /Title (Sample resume \(fictional\)) /Producer (juliolmuller.com fixtures) >>
 endobj
 xref
 0 8
@@ -39,11 +39,11 @@ xref
 0000000064 00000 n 
 0000000121 00000 n 
 0000000257 00000 n 
-0000001063 00000 n 
-0000001160 00000 n 
-0000001262 00000 n 
+0000001057 00000 n 
+0000001154 00000 n 
+0000001256 00000 n 
 trailer
 << /Size 8 /Root 1 0 R /Info 7 0 R >>
 startxref
-1364
+1352
 %%EOF

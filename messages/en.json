@@ -83,7 +83,7 @@
       "empty": "(empty)"
     },
     "open": {
-      "resume": "Downloading the résumé…",
+      "resume": "Downloading the resume…",
       "project": "Opening {title}…",
       "external": "Opening {label} in a new tab…",
       "unknown": "open: nothing called {target}. Try a project slug, a section or resume.pdf."
@@ -94,7 +94,7 @@
       "available": "Available: {list}"
     },
     "resume": {
-      "unavailable": "The résumé is not available yet.",
+      "unavailable": "The resume is not available yet.",
       "latest": "Latest role: {title} at {company}",
       "counts": "{companies, plural, one {# company} other {# companies}} · {education, plural, one {# education entry} other {# education entries}}",
       "download": "Get the PDF:"
@@ -153,7 +153,7 @@
         "usage": "tree [path]"
       },
       "open": {
-        "summary": "Open a project, section, link or the résumé.",
+        "summary": "Open a project, section, link or the resume.",
         "usage": "open project-slug | section | resume.pdf"
       },
       "goto": {
@@ -197,7 +197,7 @@
         "usage": "projects [--kind kind] [--featured] | projects open slug"
       },
       "resume": {
-        "summary": "Résumé summary, or download the PDF.",
+        "summary": "Resume summary, or download the PDF.",
         "usage": "resume [--download]"
       },
       "lang": {
@@ -332,7 +332,7 @@
       "about": "About",
       "stack": "Stack",
       "work": "Work",
-      "resume": "Résumé",
+      "resume": "Resume",
       "contact": "Contact"
     },
     "backToWork": "Back to work",
@@ -370,10 +370,10 @@
     "title": "Who I am and how I work"
   },
   "resume": {
-    "eyebrow": "Résumé",
+    "eyebrow": "Resume",
     "title": "Work and education",
     "lead": "The short version of where I have worked and studied. Download the PDF or open LinkedIn for the rest.",
-    "tablist": "Résumé sections",
+    "tablist": "Resume sections",
     "experienceTab": "Experience",
     "educationTab": "Education",
     "present": "Present",
@@ -386,7 +386,7 @@
     },
     "viewCredential": "View credential",
     "viewCredentialLabel": "{title}: view credential (opens in a new tab)",
-    "download": "Download résumé (PDF)",
+    "download": "Download resume (PDF)",
     "downloadOther": "Also in {language} (PDF)"
   },
   "stack": {
@@ -498,7 +498,7 @@
     "copyFailed": "Could not copy. Select the address instead.",
     "emailAt": "at",
     "emailDot": "dot",
-    "resume": "Download résumé (PDF)",
+    "resume": "Download resume (PDF)",
     "resumeOther": "Also in <lang>{language}</lang> (PDF)",
     "booking": "Book a call",
     "bookingLabel": "Book a call (opens in a new tab)",
@@ -554,7 +554,7 @@
     "intro": "Personal site and portfolio, in English and Brazilian Portuguese. Every page is server-rendered and readable without JavaScript.",
     "heading": "Pages",
     "home": "Home",
-    "homeDescription": "Who I am, what I work with, featured projects, résumé and contact",
+    "homeDescription": "Who I am, what I work with, featured projects, resume and contact",
     "projects": "Projects",
     "projectsDescription": "Every public project with its context, approach and outcome",
     "accessibility": "Accessibility statement",

@@ -310,7 +310,7 @@ test.describe('shell', () => {
 
     await run(page, 'resume --download');
     await popup;
-    await expect(logOf(page)).toContainText('Downloading the résumé');
+    await expect(logOf(page)).toContainText('Downloading the resume');
   });
 
   test('git log, neofetch and skills show only snapshot data', async ({ page }) => {
