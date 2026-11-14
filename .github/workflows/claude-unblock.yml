@@ -45,8 +45,12 @@ jobs:
             fi
             open=$(jq -s 'add // [] | map(select(.state != "closed" or .state_reason != "completed")) | length' "$RUNNER_TEMP/blockers.json")
             if [ "$open" = "0" ]; then
+              # Dispatch first: if it fails the label stays and the next sweep retries.
+              if ! gh workflow run claude-issue.yml --ref main -f issue="$n"; then
+                echo "::warning::Could not dispatch the gate for #$n"
+                continue
+              fi
               gh issue edit "$n" --remove-label "claude:blocked"
-              gh workflow run claude-issue.yml --ref main -f issue="$n"
               echo "Released #$n"
             fi
           done
