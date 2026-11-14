@@ -11,15 +11,12 @@ export interface ToggleLabels {
   more: string;
 }
 
-const toggleClass =
-  'relative text-small text-accent-2 underline underline-offset-4 after:absolute after:-inset-x-2 after:top-1/2 after:h-11 after:-translate-y-1/2 after:content-[""]';
-
 /**
  * A role summary clamped to four lines by CSS from the first paint; the full
- * text is in the HTML once (D90). "More" is rendered only after a measurement
- * says the text is cut, so nothing shifts and no-JS visitors see all the text
- * (the clamp is lifted with `(scripting: none)`, since the CSP forbids inline
- * `<noscript><style>`).
+ * text is in the HTML once (D90). The "Show more" button sits beneath the text
+ * and is rendered only after a measurement says the text is cut; no-JS visitors
+ * see all the text (the clamp is lifted with `(scripting: none)`, since the CSP
+ * forbids inline `<noscript><style>`).
  */
 export function RoleSummary({
   text,
@@ -32,8 +29,7 @@ export function RoleSummary({
 }): React.JSX.Element {
   const id = useId();
   const boxRef = useRef<HTMLDivElement>(null);
-  const moreRef = useRef<HTMLButtonElement>(null);
-  const lessRef = useRef<HTMLButtonElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const handoffRef = useRef(false);
   const [clamped, setClamped] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -66,18 +62,14 @@ export function RoleSummary({
 
     handoffRef.current = false;
 
-    if (expanded) {
-      lessRef.current?.focus({ preventScroll: true });
-      // Keep the focused control visible when the expanded text runs below the viewport.
-      lessRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-    } else {
-      const box = boxRef.current;
-      // `clamped` is stale after an expanded resize: if the text now fits, More will vanish.
-      const target = box && !isClamped(box.scrollHeight, box.clientHeight) ? box : moreRef.current;
+    const box = boxRef.current;
+    // `clamped` is stale after an expanded resize: if the text now fits, the button vanishes.
+    const target =
+      !expanded && box && !isClamped(box.scrollHeight, box.clientHeight) ? box : buttonRef.current;
 
-      target?.focus({ preventScroll: true });
-      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
-    }
+    target?.focus({ preventScroll: true });
+    // Keep the focused control visible when the text above it grew or shrank.
+    target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
   }, [expanded]);
 
   const toggle = (event: React.MouseEvent<HTMLButtonElement>): void => {
@@ -85,11 +77,8 @@ export function RoleSummary({
     setExpanded((value) => !value);
   };
 
-  // Tells several roles' toggles apart for screen readers (WCAG 2.4.6).
-  const suffix = <span className="sr-only">: {title}</span>;
-
   return (
-    <div className="relative mt-3 text-text-2">
+    <div className="mt-3 text-text-2">
       <div
         id={id}
         data-summary
@@ -97,40 +86,20 @@ export function RoleSummary({
         ref={boxRef}
         className={cn(!expanded && 'line-clamp-4 noscript:line-clamp-none')}
       >
-        <Paragraphs
-          text={text}
-          after={
-            expanded ? (
-              <button
-                ref={lessRef}
-                type="button"
-                aria-expanded
-                aria-controls={id}
-                className={toggleClass}
-                onClick={toggle}
-              >
-                {labels.less}
-                {suffix}
-              </button>
-            ) : null
-          }
-        />
+        <Paragraphs text={text} />
       </div>
-      {clamped && !expanded ? (
+      {clamped || expanded ? (
         <button
-          ref={moreRef}
+          ref={buttonRef}
           type="button"
-          aria-expanded={false}
+          aria-expanded={expanded}
           aria-controls={id}
-          className={cn(
-            toggleClass,
-            'absolute right-0 bottom-0 bg-bg-0 pl-1 forced-colors:bg-[Canvas]',
-            'before:pointer-events-none before:absolute before:inset-y-0 before:right-full before:w-8 before:bg-linear-to-r before:from-transparent before:to-bg-0 forced-colors:before:hidden',
-          )}
+          className="inline-flex min-h-11 min-w-11 cursor-pointer items-center text-small text-accent-2 underline underline-offset-4"
           onClick={toggle}
         >
-          {labels.more}
-          {suffix}
+          {expanded ? labels.less : labels.more}
+          {/* Tells several roles' toggles apart for screen readers (WCAG 2.4.6). */}
+          <span className="sr-only">: {title}</span>
         </button>
       ) : null}
     </div>

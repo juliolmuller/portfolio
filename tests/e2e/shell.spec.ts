@@ -170,7 +170,7 @@ function boxLines(box: Locator): Promise<number> {
   );
 }
 
-test('role summaries are in the HTML once and clamp to four lines with an inline toggle', async ({
+test('role summaries are in the HTML once and clamp to four lines with a toggle beneath', async ({
   page,
   request,
 }) => {
@@ -188,33 +188,25 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
 
   const role = page.locator('#experience li').first();
   const box = summaryBox(page);
-  const more = role.getByRole('button', { name: /^More/ });
+  const more = role.getByRole('button', { name: /^Show more/ });
 
   await expect(more).toBeVisible();
-  await expect(more).toHaveAccessibleName(/^More\s*: Senior Full Stack Engineer$/);
+  await expect(more).toHaveAccessibleName(/^Show more\s*: Senior Full Stack Engineer$/);
   expect(await boxLines(box)).toBeLessThanOrEqual(4.1);
 
-  // On the last line of the clamped box, with a hit area of at least 44 × 44.
+  // Beneath the clamped text, never over it, with a target of at least 44 × 44.
   const boxRect = (await box.boundingBox())!;
   const moreRect = (await more.boundingBox())!;
 
-  expect(Math.abs(moreRect.y + moreRect.height - (boxRect.y + boxRect.height))).toBeLessThanOrEqual(
-    2,
-  );
-
-  const hit = await more.evaluate((el) => {
-    const after = getComputedStyle(el, '::after');
-
-    return { height: parseFloat(after.height), width: parseFloat(after.width) };
-  });
-
-  expect(hit.height).toBeGreaterThanOrEqual(44);
-  expect(hit.width).toBeGreaterThanOrEqual(44);
+  expect(moreRect.y).toBeGreaterThanOrEqual(boxRect.y + boxRect.height - 1);
+  expect(moreRect.height).toBeGreaterThanOrEqual(44);
+  expect(moreRect.width).toBeGreaterThanOrEqual(44);
+  expect(await more.evaluate((el) => getComputedStyle(el).cursor)).toBe('pointer');
 
   await more.click();
   await expect(role.getByText(SUMMARY_ENDING)).toBeVisible();
 
-  const less = role.getByRole('button', { name: /^Less/ });
+  const less = role.getByRole('button', { name: /^Show less/ });
 
   await expect(less).toHaveAttribute('aria-expanded', 'true');
   await expect(less).toBeFocused();
@@ -227,7 +219,7 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
 
 test('a short role summary has no toggle', async ({ page }) => {
   await page.goto('/en#experience');
-  await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Show more/ }).first()).toBeVisible();
   // Open every collapsed role so the last summary is laid out and measured.
   await page.locator('#experience details').evaluateAll((all) => {
     for (const d of all) (d as HTMLDetailsElement).open = true;
@@ -242,25 +234,6 @@ test('a short role summary has no toggle', async ({ page }) => {
   );
   expect(await box.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
   await expect(box.locator('xpath=..').getByRole('button')).toHaveCount(0);
-});
-
-test('nothing below the summary moves when the toggle appears', async ({ page }) => {
-  await page.goto('/en#experience', { waitUntil: 'domcontentloaded' });
-
-  const role = page.locator('#experience li').first();
-  const bullets = role.locator('ul').first();
-  // Distance from the summary box to the highlights: unaffected by anything above.
-  const gap = (): Promise<number> =>
-    bullets.evaluate(
-      (el, selector) =>
-        el.getBoundingClientRect().top
-        - document.querySelector(selector)!.getBoundingClientRect().top,
-      '#experience li [data-summary]',
-    );
-  const before = await gap();
-
-  await expect(role.getByRole('button', { name: /^More/ })).toBeVisible();
-  expect(Math.abs((await gap()) - before)).toBeLessThanOrEqual(1);
 });
 
 test('the summary is clamped on first paint, before scripts run', async ({ page }) => {
@@ -284,24 +257,27 @@ test('without JavaScript the full text shows and there is no dead toggle', async
       .evaluate((el) => el.scrollHeight - el.clientHeight),
   ).toBeLessThanOrEqual(1);
   await expect(
-    page.locator('#experience').getByRole('button', { name: /^(More|Less)/ }),
+    page.locator('#experience').getByRole('button', { name: /^Show (more|less)/ }),
   ).toHaveCount(0);
   await context.close();
 });
 
 test('the toggle is measured again after a language switch and at 320 px', async ({ page }) => {
   await page.goto('/pt#experience');
-  await expect(page.getByRole('button', { name: /^Mais/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Mostrar mais/ }).first()).toBeVisible();
 
   await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/en#experience');
-  await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Show more/ }).first()).toBeVisible();
   expect(await boxLines(summaryBox(page))).toBeLessThanOrEqual(4.1);
 
   // Expanding at 320 px keeps Less reachable, and collapsing after widening keeps focus on the page.
-  await page.getByRole('button', { name: /^More/ }).first().click();
+  await page
+    .getByRole('button', { name: /^Show more/ })
+    .first()
+    .click();
 
-  const less = page.getByRole('button', { name: /^Less/ }).first();
+  const less = page.getByRole('button', { name: /^Show less/ }).first();
 
   await expect(less).toBeInViewport();
   await page.setViewportSize({ width: 1440, height: 900 });
