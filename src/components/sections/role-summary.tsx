@@ -71,8 +71,12 @@ export function RoleSummary({
       // Keep the focused control visible when the expanded text runs below the viewport.
       lessRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     } else {
-      moreRef.current?.focus({ preventScroll: true });
-      moreRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+      const box = boxRef.current;
+      // `clamped` is stale after an expanded resize: if the text now fits, More will vanish.
+      const target = box && !isClamped(box.scrollHeight, box.clientHeight) ? box : moreRef.current;
+
+      target?.focus({ preventScroll: true });
+      target?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   }, [expanded]);
 
@@ -89,6 +93,7 @@ export function RoleSummary({
       <div
         id={id}
         data-summary
+        tabIndex={-1}
         ref={boxRef}
         className={cn(!expanded && 'line-clamp-4 noscript:line-clamp-none')}
       >

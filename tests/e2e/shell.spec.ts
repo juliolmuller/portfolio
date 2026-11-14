@@ -209,7 +209,7 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
   });
 
   expect(hit.height).toBeGreaterThanOrEqual(44);
-  expect(hit.width + 0).toBeGreaterThan(0);
+  expect(hit.width).toBeGreaterThanOrEqual(44);
 
   await more.click();
   await expect(role.getByText(SUMMARY_ENDING)).toBeVisible();
@@ -236,6 +236,10 @@ test('a short role summary has no toggle', async ({ page }) => {
   const box = page.locator('#experience [data-summary]').last();
 
   await expect(box).toBeVisible();
+  // Let ResizeObserver measure the newly opened summary before asserting.
+  await page.evaluate(
+    () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))),
+  );
   expect(await box.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
   await expect(box.locator('xpath=..').getByRole('button')).toHaveCount(0);
 });
@@ -272,6 +276,13 @@ test('without JavaScript the full text shows and there is no dead toggle', async
 
   await page.goto('/en');
   await expect(page.getByText(SUMMARY_ENDING)).toBeVisible();
+  // Visible is not enough: the clamp must be lifted, so nothing overflows.
+  expect(
+    await page
+      .locator('#experience [data-summary]')
+      .first()
+      .evaluate((el) => el.scrollHeight - el.clientHeight),
+  ).toBeLessThanOrEqual(1);
   await expect(
     page.locator('#experience').getByRole('button', { name: /^(More|Less)/ }),
   ).toHaveCount(0);
@@ -286,6 +297,16 @@ test('the toggle is measured again after a language switch and at 320 px', async
   await page.goto('/en#experience');
   await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
   expect(await boxLines(summaryBox(page))).toBeLessThanOrEqual(4.1);
+
+  // Expanding at 320 px keeps Less reachable, and collapsing after widening keeps focus on the page.
+  await page.getByRole('button', { name: /^More/ }).first().click();
+
+  const less = page.getByRole('button', { name: /^Less/ }).first();
+
+  await expect(less).toBeInViewport();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await less.click();
+  expect(await page.evaluate(() => document.activeElement === document.body)).toBe(false);
 });
 
 test('motion toggle persists the paused state', async ({ page }) => {
