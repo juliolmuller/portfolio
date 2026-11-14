@@ -211,8 +211,6 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
   expect(hit.height).toBeGreaterThanOrEqual(44);
   expect(hit.width + 0).toBeGreaterThan(0);
 
-  const scrollBefore = await page.evaluate(() => window.scrollY);
-
   await more.click();
   await expect(role.getByText(SUMMARY_ENDING)).toBeVisible();
 
@@ -220,7 +218,7 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
 
   await expect(less).toHaveAttribute('aria-expanded', 'true');
   await expect(less).toBeFocused();
-  expect(Math.abs((await page.evaluate(() => window.scrollY)) - scrollBefore)).toBeLessThan(40);
+  await expect(less).toBeInViewport();
 
   await less.click();
   await expect(more).toBeFocused();
@@ -230,11 +228,16 @@ test('role summaries are in the HTML once and clamp to four lines with an inline
 test('a short role summary has no toggle', async ({ page }) => {
   await page.goto('/en#experience');
   await expect(page.getByRole('button', { name: /^More/ }).first()).toBeVisible();
+  // Open every collapsed role so the last summary is laid out and measured.
+  await page.locator('#experience details').evaluateAll((all) => {
+    for (const d of all) (d as HTMLDetailsElement).open = true;
+  });
 
-  const roles = page.locator('#experience li');
-  const last = roles.last();
+  const box = page.locator('#experience [data-summary]').last();
 
-  await expect(last.getByRole('button', { name: /^(More|Less)/ })).toHaveCount(0);
+  await expect(box).toBeVisible();
+  expect(await box.evaluate((el) => el.scrollHeight - el.clientHeight)).toBeLessThanOrEqual(1);
+  await expect(box.locator('xpath=..').getByRole('button')).toHaveCount(0);
 });
 
 test('nothing below the summary moves when the toggle appears', async ({ page }) => {

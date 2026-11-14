@@ -43,8 +43,10 @@ export function RoleSummary({
 
     if (!box || expanded) return;
 
+    let active = true;
+    // A stale callback (e.g. fonts resolving after the user expanded) must not measure.
     const measure = (): void => {
-      setClamped(isClamped(box.scrollHeight, box.clientHeight));
+      if (active) setClamped(isClamped(box.scrollHeight, box.clientHeight));
     };
 
     // The observer fires once on observe, which does the first measurement.
@@ -54,6 +56,7 @@ export function RoleSummary({
     document.fonts.ready.then(measure).catch(() => undefined);
 
     return (): void => {
+      active = false;
       observer.disconnect();
     };
   }, [text, expanded]);
@@ -65,6 +68,8 @@ export function RoleSummary({
 
     if (expanded) {
       lessRef.current?.focus({ preventScroll: true });
+      // Keep the focused control visible when the expanded text runs below the viewport.
+      lessRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     } else {
       moreRef.current?.focus({ preventScroll: true });
       moreRef.current?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
