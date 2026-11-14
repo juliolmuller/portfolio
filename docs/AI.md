@@ -52,7 +52,7 @@ To restart an issue from scratch, remove and re-add the trigger label. Only the 
 
 ### Unblock (`claude-unblock.yml`)
 
-Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `claude:blocked` issue: if all blockers are completed it removes the label and starts `claude-issue.yml` with `workflow_dispatch` (input `issue`). It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
+Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `claude:blocked` issue: if all blockers are completed it starts `claude-issue.yml` with `workflow_dispatch` (input `issue`); the gate run removes the label after its own check passes. It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
 
 ### PR review (`claude-review.yml`)
 
