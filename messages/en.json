@@ -378,8 +378,8 @@
     "educationTab": "Education",
     "present": "Present",
     "technologies": "Technologies",
-    "more": "More",
-    "less": "Less",
+    "more": "Show more",
+    "less": "Show less",
     "kinds": {
       "degree": "Degree",
       "certification": "Certification"
