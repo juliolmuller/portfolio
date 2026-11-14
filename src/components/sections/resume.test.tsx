@@ -33,7 +33,7 @@ function entry(id: string, end: string | undefined, collapsedByDefault: boolean)
   } as unknown as Experience;
 }
 
-describe('Resume experience initial state (D89)', () => {
+describe('Resume experience initial state (D91)', () => {
   it('follows collapsedByDefault, whatever the dates', async () => {
     const html = renderToStaticMarkup(
       await Resume({

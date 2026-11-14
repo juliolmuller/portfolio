@@ -4,7 +4,7 @@ import { type ReactNode, type ToggleEvent, useState } from 'react';
 
 /**
  * Native `<details>` whose initial state comes from the experience's
- * `collapsedByDefault` (D89). Visitors toggle it freely; the prop is not
+ * `collapsedByDefault` (D91). Visitors toggle it freely; the prop is not
  * resynced after mount.
  */
 export function JobDetails({
