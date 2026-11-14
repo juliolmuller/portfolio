@@ -158,7 +158,7 @@ const documents: SchemaType[] = [
   },
   {
     name: 'resume',
-    title: 'Résumé',
+    title: 'Resume',
     type: 'document',
     fields: [
       field('file', 'object', {

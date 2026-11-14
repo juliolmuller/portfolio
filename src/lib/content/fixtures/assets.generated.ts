@@ -92,7 +92,7 @@ export const fixtureImageAssets: Record<FixtureImageKey, ImageAsset> = {
 export const fixtureFileAssets: Record<FixturePdfKey, FileAsset> = {
   'resume-en': {
     url: '/fixtures/pdf/resume-en.pdf',
-    size: 1600,
+    size: 1588,
     mimeType: 'application/pdf',
   },
   'resume-pt': {

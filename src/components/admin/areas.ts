@@ -63,8 +63,8 @@ export const AREAS: AreaMeta[] = [
   },
   {
     slug: 'resume',
-    label: 'Résumé',
-    singular: 'résumé',
+    label: 'Resume',
+    singular: 'resume',
     type: 'resume',
     singleton: true,
   },

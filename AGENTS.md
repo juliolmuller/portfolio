@@ -66,7 +66,7 @@ Run the relevant gates before saying something works. For UI work, run the dev s
 
 - Locales `en` (default) and `pt`; `pt-BR` for `<html lang>`, hreflang and `Intl`; `pt_BR` for Open Graph (`src/i18n/routing.ts`).
 - No hard-coded user-facing string in public components (text, `aria-label`, `alt`, tooltips, toasts, terminal output): use `messages/{en,pt}.json` via next-intl. Exceptions: the admin UI (English) and the lazy secret-command module.
-- Add every key to both files in the same commit. Write Portuguese natively (first person, natural syntax; keep deploy, backend, framework, pipeline, commit), never literally translated. No exclamation marks, no emoji, sentence case. Proper nouns aren't translated.
+- Add every key to both files in the same commit. Write Portuguese natively (first person, natural syntax; keep deploy, backend, framework, pipeline, commit), never literally translated. No exclamation marks, no emoji, sentence case. Write "resume" without accents. Proper nouns aren't translated.
 - Repository content arrives resolved to one locale; components never receive `{ en, pt }`. Format dates/numbers/lists with `Intl`/next-intl. Server Actions and Route Handlers can't read root params: pass the locale explicitly.
 - Only `/` negotiates a locale; `NEXT_LOCALE` is written only on an explicit switch.
 
