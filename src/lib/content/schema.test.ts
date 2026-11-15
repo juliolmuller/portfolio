@@ -1,5 +1,6 @@
 import { createFixtureDataset } from './fixtures/dataset';
 import {
+  documentSchemas,
   experienceSchema,
   featuredLinkSchema,
   hasNoRawHtml,
@@ -7,7 +8,10 @@ import {
   linkIconSchema,
   profileSchema,
   projectSchema,
+  skillCategories,
+  skillSchema,
   slugSchema,
+  techCategories,
   technologySchema,
 } from './schema';
 
@@ -154,5 +158,84 @@ describe('content schema', () => {
       }).success,
     ).toBe(false);
     expect(technologySchema.safeParse({ ...tech, iconSource: 'custom-svg' }).success).toBe(false);
+  });
+});
+
+describe('skill schema', () => {
+  const svg = { viewBox: '0 0 24 24', paths: ['M0 0L24 24'] };
+  const baseSkill = {
+    id: 'skill.test-1',
+    updatedAt: '2026-11-15T00:00:00Z',
+    name: { en: 'Domain-driven design', pt: 'Domain-driven design' },
+    categories: ['engineering'],
+    order: 0,
+  };
+  const issuePaths = (input: unknown): unknown[] => {
+    const result = skillSchema.safeParse(input);
+
+    return result.success ? [] : result.error.issues.map((issue) => issue.path);
+  };
+
+  it('parses a minimal skill with defaults', () => {
+    const result = skillSchema.safeParse(baseSkill);
+
+    expect(result.success).toBe(true);
+    expect(result.data).toMatchObject({ showInCloud: false, priority: 2, visible: true });
+    expect(result.data?.iconSource).toBeUndefined();
+  });
+
+  it.each([
+    [{ iconSource: 'simple-icons', iconSlug: 'react' }],
+    [{ iconSource: 'devicon', iconSlug: 'react' }],
+    [{ iconSource: 'custom-svg', customSvg: svg }],
+    [{ iconSource: 'monogram' }],
+    [{ iconSource: 'monogram', monogram: 'DD' }],
+  ])('accepts icon source %j', (icon) => {
+    expect(skillSchema.safeParse({ ...baseSkill, ...icon }).success).toBe(true);
+  });
+
+  it('requires the slug or the svg of the chosen source', () => {
+    expect(issuePaths({ ...baseSkill, iconSource: 'simple-icons' })).toEqual([['iconSlug']]);
+    expect(issuePaths({ ...baseSkill, iconSource: 'devicon' })).toEqual([['iconSlug']]);
+    expect(issuePaths({ ...baseSkill, iconSource: 'custom-svg' })).toEqual([['customSvg']]);
+  });
+
+  it('validates categories', () => {
+    expect(skillSchema.safeParse({ ...baseSkill, categories: [] }).success).toBe(false);
+    expect(skillSchema.safeParse({ ...baseSkill, categories: ['skills'] }).success).toBe(false);
+
+    const dup = skillSchema.safeParse({ ...baseSkill, categories: ['data', 'data'] });
+
+    expect(dup.success).toBe(false);
+    expect(dup.error?.issues[0]?.message).toBe('Duplicate category');
+    expect(skillSchema.safeParse({ ...baseSkill, categories: [...skillCategories] }).success).toBe(
+      true,
+    );
+  });
+
+  it('validates the bilingual name', () => {
+    const name = (value: unknown): boolean =>
+      skillSchema.safeParse({ ...baseSkill, name: value }).success;
+
+    expect(name({ en: 'X', pt: '' })).toBe(false);
+    expect(name({ en: 'X' })).toBe(false);
+    expect(name({ en: 'x'.repeat(61), pt: 'x' })).toBe(false);
+  });
+
+  it('accepts showInCloud without an icon', () => {
+    const result = skillSchema.safeParse({ ...baseSkill, showInCloud: true });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.showInCloud).toBe(true);
+  });
+
+  it('rejects a bad priority and a non-https url', () => {
+    expect(skillSchema.safeParse({ ...baseSkill, priority: 4 }).success).toBe(false);
+    expect(skillSchema.safeParse({ ...baseSkill, url: 'http://example.com' }).success).toBe(false);
+  });
+
+  it('is not registered yet and extends the technology categories', () => {
+    expect('skill' in documentSchemas).toBe(false);
+    expect(skillCategories).toEqual([...techCategories, 'engineering']);
   });
 });

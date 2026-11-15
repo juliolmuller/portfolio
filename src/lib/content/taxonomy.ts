@@ -15,6 +15,13 @@ export const techCategories = [
 export type TechCategory = (typeof techCategories)[number];
 
 /**
+ * Skill categories: the technology categories plus `engineering` (D93).
+ */
+export const skillCategories = [...techCategories, 'engineering'] as const;
+
+export type SkillCategory = (typeof skillCategories)[number];
+
+/**
  * Hero title fonts, alphabetical; the module that loads them is
  * `styles/title-fonts.ts`.
  */
