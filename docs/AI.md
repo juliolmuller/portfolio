@@ -35,7 +35,7 @@ Both run `anthropics/claude-code-action` (floating `@v1` tag: always the latest 
 1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository (it authors Claude's PRs and comments, and its token is what lets a Claude PR trigger the review).
 2. Locally run `claude setup-token` and copy the token it prints.
 3. GitHub → repository → Settings → Secrets and variables → Actions → New repository secret: `CLAUDE_CODE_OAUTH_TOKEN`.
-4. Create the `Claude` and `claude:next` labels (the workflows also create `Claude`, `claude:needs-input` and `claude:planned` on first use; create `claude:next` yourself).
+4. Create the `Claude` and `claude:next` labels (the workflows also create `Claude`, `claude:needs-input`, `claude:planned` and `claude:blocked` on first use; create `claude:next` yourself).
 
 Usage counts against the Claude subscription tied to the token. Rotate it like any secret (re-run `claude setup-token`, replace the repository secret).
 
@@ -46,7 +46,13 @@ Usage counts against the Claude subscription tied to the token. Rotate it like a
 3. With nothing open, the planner posts the plan as an issue comment (`<!-- claude:plan -->`, label `claude:planned`). The **implementer** (Sonnet) builds it from that comment on `claude/issue-<n>-<slug>` (cut from the base branch the label chose), loops on the gates and commits (hooks stay on).
 4. The workflow itself re-runs the gates (`lint`, `typecheck`, `test`, `i18n:check`, `icons:audit`, `build`, `check:bundle`, `check:seo`) and puts the results in the PR body. A short Claude step pushes and opens the PR against that same base branch (`main` or `next`) with the App token: author `claude[bot]`, assignee the owner, label `Claude` (always, even for `claude:next`, so the review runs) plus fitting existing labels, `Closes #<n>`. Any failing gate → draft PR.
 
+**Blocked issues (D92).** Before planning, the `gate` job reads the issue's `blocked_by` dependencies. With any blocker not closed as **completed** it labels the issue `claude:blocked`, comments once and stops; `not planned` and `duplicate` closures don't release, so remove the dependency instead. Blockers worked on `next` stay open until closed by hand. Removing `claude:blocked` manually does nothing. Issues released together run in parallel on separate branches.
+
 To restart an issue from scratch, remove and re-add the trigger label. Only the owner's label and comments trigger it.
+
+### Unblock (`claude-unblock.yml`)
+
+Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `claude:blocked` issue: if all blockers are completed it starts `claude-issue.yml` with `workflow_dispatch` (input `issue`); the gate run removes the label after its own check passes. It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
 
 ### PR review (`claude-review.yml`)
 

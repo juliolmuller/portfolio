@@ -1,6 +1,11 @@
 name: Claude issue to PR
 
 # Flow:
+#   0. A gate job reads the issue's `blocked_by` dependencies. With any blocker
+#      not closed as completed it labels the issue "claude:blocked", comments
+#      once and stops. claude-unblock.yml re-dispatches this workflow
+#      (workflow_dispatch, input `issue`) once every blocker is completed; a
+#      dispatch re-reads the labels from the API (D92).
 #   1. The owner adds the "Claude" label (work on `main`) or "claude:next" (work
 #      on `next`) to an issue → the planner (Opus) reads the issue and the code. If anything needs a decision it posts the
 #      questions mentioning the owner and stops (label claude:needs-input).
@@ -14,7 +19,8 @@ name: Claude issue to PR
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
 # To restart from scratch: remove and re-add the trigger label. Add only ONE of
-# the two labels; with both present "claude:next" wins.
+# the two labels; with both present "claude:next" wins. Removing "claude:blocked"
+# by hand does nothing: resolve or remove the dependency instead.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -23,9 +29,15 @@ on:
     types: [labeled]
   issue_comment:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number to plan (used by claude-unblock.yml)
+        required: true
+        type: number
 
 concurrency:
-  group: claude-issue-${{ github.event.issue.number }}
+  group: claude-issue-${{ github.event.issue.number || inputs.issue }}
   cancel-in-progress: false
 
 env:
@@ -33,17 +45,17 @@ env:
   TRIGGER_LABEL: Claude
   WAITING_LABEL: "claude:needs-input"
   PLANNED_LABEL: "claude:planned"
-  # Work branches start from, and PRs target, this branch: `next` when the issue
-  # carries "claude:next", otherwise `main` (D79). Resolved from the event payload,
-  # so every job and the resume path agree.
-  BASE_BRANCH: ${{ contains(github.event.issue.labels.*.name, 'claude:next') && 'next' || 'main' }}
+  BLOCKED_LABEL: "claude:blocked"
 
 jobs:
-  plan:
+  gate:
     # Start: the owner added the trigger label.
     # Resume: the owner commented on an issue (not a PR) that is waiting on him.
+    # Dispatch: claude-unblock.yml released an issue (or the owner ran it).
     if: >-
-      (github.event_name == 'issues'
+      (github.event_name == 'workflow_dispatch'
+        && (github.actor == 'juliolmuller' || github.actor == 'github-actions[bot]'))
+      || (github.event_name == 'issues'
         && (github.event.label.name == 'Claude' || github.event.label.name == 'claude:next')
         && github.event.sender.login == 'juliolmuller')
       || (github.event_name == 'issue_comment'
@@ -52,11 +64,75 @@ jobs:
         && (contains(github.event.issue.labels.*.name, 'Claude') || contains(github.event.issue.labels.*.name, 'claude:next'))
         && contains(github.event.issue.labels.*.name, 'claude:needs-input'))
     runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    outputs:
+      issue: ${{ steps.check.outputs.issue }}
+      base: ${{ steps.check.outputs.base }}
+      proceed: ${{ steps.check.outputs.proceed }}
+    steps:
+      - name: Check blocking issues
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
+          # Labels come from the API, so every path (label, comment, dispatch) agrees.
+          info=$(gh issue view "$ISSUE" --json state,labels)
+          labels=$(jq -r '.labels[].name' <<<"$info")
+          base=main
+          grep -Fxq 'claude:next' <<<"$labels" && base=next
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+
+          if [ "$(jq -r '.state' <<<"$info")" != "OPEN" ] \
+            || ! grep -Fxq -e "$TRIGGER_LABEL" -e 'claude:next' <<<"$labels"; then
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # A failing API call fails the job: never read it as "no blockers".
+          gh api --paginate -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/issues/$ISSUE/dependencies/blocked_by" > "$RUNNER_TEMP/blockers.json"
+          open=$(jq -s 'add // [] | map(select(.state != "closed" or .state_reason != "completed"))' "$RUNNER_TEMP/blockers.json")
+
+          if [ "$(jq 'length' <<<"$open")" != "0" ]; then
+            if ! grep -Fxq "$BLOCKED_LABEL" <<<"$labels"; then
+              gh label create "$BLOCKED_LABEL" --color D97757 --description "Claude waits for blocking issues to close" 2>/dev/null || true
+              {
+                echo "<!-- claude:blocked -->"
+                echo "This issue is blocked, so planning waits until these issues are closed as completed:"
+                echo
+                jq -r '.[] | "- \(.html_url) — \(.title) (\(.state)\(if .state_reason then ", " + .state_reason else "" end))"' <<<"$open"
+                echo
+                echo "Planning starts automatically when the last one closes. <sub>[Gate run]($RUN_URL)</sub>"
+              } > "$RUNNER_TEMP/blocked.md"
+              gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/blocked.md"
+              gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"
+            fi
+            echo "proceed=false" >> "$GITHUB_OUTPUT"
+          else
+            gh issue edit "$ISSUE" --remove-label "$BLOCKED_LABEL" 2>/dev/null || true
+            echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  plan:
+    needs: gate
+    if: needs.gate.outputs.proceed == 'true'
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
       issues: write
       id-token: write
+    env:
+      ISSUE: ${{ needs.gate.outputs.issue }}
+      BASE_BRANCH: ${{ needs.gate.outputs.base }}
     outputs:
       ready: ${{ steps.publish.outputs.ready }}
       slug: ${{ steps.publish.outputs.slug }}
@@ -73,12 +149,12 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
-            You are the PLANNER for ${{ github.repository }}, issue #${{ github.event.issue.number }}.
+            You are the PLANNER for ${{ github.repository }}, issue #${{ env.ISSUE }}.
             You do not write code. Your output is a plan that another agent (the
             implementer) will follow without seeing this conversation.
 
             1. Read the issue and the WHOLE comment thread:
-               `gh issue view ${{ github.event.issue.number }} --comments`
+               `gh issue view ${{ env.ISSUE }} --comments`
                Earlier comments from github-actions[bot] are your own previous
                questions or plans; replies from @juliolmuller are the owner's answers
                and they override anything else.
@@ -119,7 +195,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ steps.planner.outputs.structured_output }}
-          ISSUE: ${{ github.event.issue.number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           set -euo pipefail
@@ -165,7 +240,7 @@ jobs:
           fi
 
   implement:
-    needs: plan
+    needs: [gate, plan]
     if: needs.plan.outputs.ready == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -174,8 +249,9 @@ jobs:
       issues: write
       id-token: write
     env:
-      ISSUE: ${{ github.event.issue.number }}
-      BRANCH: claude/issue-${{ github.event.issue.number }}-${{ needs.plan.outputs.slug }}
+      ISSUE: ${{ needs.gate.outputs.issue }}
+      BASE_BRANCH: ${{ needs.gate.outputs.base }}
+      BRANCH: claude/issue-${{ needs.gate.outputs.issue }}-${{ needs.plan.outputs.slug }}
       # Same environment as ci.yml, so builds and tests behave identically.
       CONTENT_SOURCE: fixtures
       NEXT_PUBLIC_SITE_URL: http://localhost:3100
