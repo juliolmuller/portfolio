@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
-import { techCategories, titleFonts } from './taxonomy';
+import { skillCategories, techCategories, titleFonts } from './taxonomy';
 
 export {
+  skillCategories,
+  type SkillCategory,
   techCategories,
   type TechCategory,
   type TitleFont,
@@ -269,6 +271,53 @@ export const recommendedProfileSchema = z.object({
 });
 
 export const iconSources = ['simple-icons', 'devicon', 'custom-svg', 'monogram'] as const;
+export type IconSource = (typeof iconSources)[number];
+
+/**
+ * Icon fields shared by technologies and skills (D93).
+ */
+const techIconFields = {
+  iconSlug: z
+    .string()
+    .max(64)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+    .optional(),
+  customSvg: svgDataSchema.optional(),
+  /**
+   * Overrides the generated monogram (1–3 letters or digits).
+   */
+  monogram: z
+    .string()
+    .regex(/^[A-Z0-9]{1,3}$/)
+    .optional(),
+};
+
+function checkTechIcon(
+  doc: {
+    customSvg?: SvgData | undefined;
+    iconSlug?: string | undefined;
+    iconSource?: IconSource | undefined;
+  },
+  ctx: z.RefinementCtx,
+): void {
+  const needsSlug = doc.iconSource === 'simple-icons' || doc.iconSource === 'devicon';
+
+  if (needsSlug && !doc.iconSlug) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['iconSlug'],
+      message: `Required for ${doc.iconSource}`,
+    });
+  }
+
+  if (doc.iconSource === 'custom-svg' && !doc.customSvg) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['customSvg'],
+      message: 'Required for custom-svg',
+    });
+  }
+}
 
 export const technologySchema = z
   .object({
@@ -276,19 +325,7 @@ export const technologySchema = z
     name: text(40),
     category: z.enum(techCategories),
     iconSource: z.enum(iconSources),
-    iconSlug: z
-      .string()
-      .max(64)
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
-      .optional(),
-    customSvg: svgDataSchema.optional(),
-    /**
-     * Overrides the generated monogram (1–3 letters or digits).
-     */
-    monogram: z
-      .string()
-      .regex(/^[A-Z0-9]{1,3}$/)
-      .optional(),
+    ...techIconFields,
     brandColor: hexColorSchema.optional(),
     url: httpsUrlSchema.optional(),
     priority: z.union([z.literal(1), z.literal(2), z.literal(3)]),
@@ -296,23 +333,7 @@ export const technologySchema = z
     visible: visibleSchema,
   })
   .superRefine((tech, ctx) => {
-    const needsSlug = tech.iconSource === 'simple-icons' || tech.iconSource === 'devicon';
-
-    if (needsSlug && !tech.iconSlug) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['iconSlug'],
-        message: `Required for ${tech.iconSource}`,
-      });
-    }
-
-    if (tech.iconSource === 'custom-svg' && !tech.customSvg) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['customSvg'],
-        message: 'Required for custom-svg',
-      });
-    }
+    checkTechIcon(tech, ctx);
   });
 
 export const practiceSchema = z.object({
@@ -321,6 +342,43 @@ export const practiceSchema = z.object({
   order: orderSchema,
   visible: visibleSchema,
 });
+
+/**
+ * D93: skills replace technologies and practices. Not registered in
+ * `documentSchemas` yet; the repository, Sanity and the admin adopt it in the
+ * follow-up tasks of epic #54.
+ */
+export const skillSchema = z
+  .object({
+    ...documentMeta,
+    name: localized(60),
+    /**
+     * The first entry is the primary category.
+     */
+    categories: z
+      .array(z.enum(skillCategories))
+      .min(1)
+      .max(skillCategories.length)
+      .refine(isUnique, { message: 'Duplicate category' }),
+    iconSource: z.enum(iconSources).optional(),
+    ...techIconFields,
+    /**
+     * Only matters with an icon. Not a refine (a read would skip the whole
+     * document); the repository computes `inCloud` and the admin disables it.
+     */
+    showInCloud: z.boolean().default(false),
+    brandColor: hexColorSchema.optional(),
+    url: httpsUrlSchema.optional(),
+    priority: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),
+    order: orderSchema,
+    visible: visibleSchema,
+  })
+  .superRefine((skill, ctx) => {
+    checkTechIcon(skill, ctx);
+  });
+
+export type SkillDocument = z.infer<typeof skillSchema>;
+export type SkillInput = z.input<typeof skillSchema>;
 
 export const projectKinds = [
   'web',
