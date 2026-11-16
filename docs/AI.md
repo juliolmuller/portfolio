@@ -49,16 +49,19 @@ Usage counts against the Claude subscription tied to the token. Rotate it like a
 
 **Blocked issues (D92).** Before planning, the `gate` job reads the issue's `blocked_by` dependencies. With any blocker not closed as **completed** it labels the issue `@claude:blocked`, comments once and stops; `not planned` and `duplicate` closures don't release, so remove the dependency instead. Blockers worked on `next` stay open until closed by hand. Removing `@claude:blocked` manually does nothing. Issues released together run in parallel on separate branches.
 
+**Bot actors (D93).** The three `claude-code-action` steps set `allowed_bots: "github-actions[bot],coderabbitai[bot]"`. Unblock dispatches run as `github-actions[bot]`, and without the entry the action fails with "Workflow initiated by non-human actor". CodeRabbit is accepted at the owner's request. `'*'` is never used, and the job gates still decide who may start a run.
+
 To restart an issue from scratch, remove and re-add the trigger label. Only the owner's label and comments trigger it.
 
 ### Unblock (`claude-unblock.yml`)
 
-Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `@claude:blocked` issue: if all blockers are completed it starts `claude-issue.yml` with `workflow_dispatch` (input `issue`); the gate run removes the label after its own check passes. It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
+Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `@claude:blocked` issue: if all blockers are completed it starts `claude-issue.yml` with `workflow_dispatch` (input `issue`); the gate run removes the label after its own check passes. The dispatched run's actor is `github-actions[bot]`, which is why that bot is allow-listed in `claude-issue.yml` (D93). It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
 
 ### PR review (`claude-review.yml`)
 
 - Every same-repo PR is assigned to the owner when opened.
 - Claude (Sonnet) reviews when the PR is opened by the owner or `claude[bot]`, carries the `@claude` label and is not a draft; adding the label later starts it too. New commits trigger a re-review limited to what changed.
+- The action accepts `claude[bot]` (author of pipeline PRs) and `coderabbitai[bot]` (it may cause PR events); the review still requires an owner- or `claude[bot]`-authored PR with `@claude` (D93).
 - Each finding is an inline comment on the exact lines (one thread each), in English; the reviewer adds fitting existing labels and ends with one summary comment.
 
 ## Local agent settings

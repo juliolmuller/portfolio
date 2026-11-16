@@ -60,8 +60,10 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # PRs opened by the issue workflow are authored by the Claude App.
-          allowed_bots: "claude[bot]"
+          # claude[bot]: the issue workflow opens PRs as the Claude App.
+          # coderabbitai[bot]: CodeRabbit may be the actor of PR events (labels,
+          # autofix pushes). The job `if:` still limits which PRs are reviewed (D93).
+          allowed_bots: "claude[bot],coderabbitai[bot]"
           # Post every inline finding as written; do not let a classifier drop any.
           classify_inline_comments: false
           prompt: |
