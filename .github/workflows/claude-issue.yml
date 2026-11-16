@@ -150,6 +150,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # claude-unblock.yml dispatches this workflow as github-actions[bot];
+          # CodeRabbit may be the actor of events too. The job gates above still
+          # decide who may start a run; this only lets the action accept them.
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             You are the PLANNER for ${{ github.repository }}, issue #${{ env.ISSUE }}.
             You do not write code. Your output is a plan that another agent (the
@@ -292,6 +296,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Same allow-list as the Plan step (D94).
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             You are the IMPLEMENTER for ${{ github.repository }}, issue #${{ env.ISSUE }}.
             You are on branch ${{ env.BRANCH }}. Do not push and do not open a PR:
@@ -417,6 +423,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Same allow-list as the Plan step (D94).
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             Run exactly this command once and report its output. Do nothing else.
             bash ${{ runner.temp }}/publish.sh
