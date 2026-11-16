@@ -2,13 +2,13 @@ name: Claude issue to PR
 
 # Flow:
 #   0. A gate job reads the issue's `blocked_by` dependencies. With any blocker
-#      not closed as completed it labels the issue "claude:blocked", comments
+#      not closed as completed it labels the issue `@claude:blocked`, comments
 #      once and stops. claude-unblock.yml re-dispatches this workflow
 #      (workflow_dispatch, input `issue`) once every blocker is completed; a
 #      dispatch re-reads the labels from the API (D92).
-#   1. The owner adds the "Claude" label (work on `main`) or "claude:next" (work
+#   1. The owner adds the `@claude` label (work on `main`) or `@claude:next` (work
 #      on `next`) to an issue → the planner (Opus) reads the issue and the code. If anything needs a decision it posts the
-#      questions mentioning the owner and stops (label claude:needs-input).
+#      questions mentioning the owner and stops (label `@claude:needs-input`).
 #   2. The owner answers in ONE comment → this same workflow runs again
 #      (issue_comment trigger) and the planner resumes with the whole thread.
 #   3. With no open questions the planner posts the plan as an issue comment
@@ -19,7 +19,7 @@ name: Claude issue to PR
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
 # To restart from scratch: remove and re-add the trigger label. Add only ONE of
-# the two labels; with both present "claude:next" wins. Removing "claude:blocked"
+# the two labels; with both present `@claude:next` wins. Removing `@claude:blocked`
 # by hand does nothing: resolve or remove the dependency instead.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
@@ -42,10 +42,12 @@ concurrency:
 
 env:
   OWNER_LOGIN: juliolmuller
-  TRIGGER_LABEL: Claude
-  WAITING_LABEL: "claude:needs-input"
-  PLANNED_LABEL: "claude:planned"
-  BLOCKED_LABEL: "claude:blocked"
+  # GitHub label names are case-insensitive: every label comparison below ignores
+  # case (grep -i, ${var,,}, ascii_downcase). Keep the names lowercase with the @ prefix.
+  TRIGGER_LABEL: "@claude"
+  WAITING_LABEL: "@claude:needs-input"
+  PLANNED_LABEL: "@claude:planned"
+  BLOCKED_LABEL: "@claude:blocked"
 
 jobs:
   gate:
@@ -56,13 +58,13 @@ jobs:
       (github.event_name == 'workflow_dispatch'
         && (github.actor == 'juliolmuller' || github.actor == 'github-actions[bot]'))
       || (github.event_name == 'issues'
-        && (github.event.label.name == 'Claude' || github.event.label.name == 'claude:next')
+        && (github.event.label.name == '@claude' || github.event.label.name == '@claude:next')
         && github.event.sender.login == 'juliolmuller')
       || (github.event_name == 'issue_comment'
         && !github.event.issue.pull_request
         && github.event.comment.user.login == 'juliolmuller'
-        && (contains(github.event.issue.labels.*.name, 'Claude') || contains(github.event.issue.labels.*.name, 'claude:next'))
-        && contains(github.event.issue.labels.*.name, 'claude:needs-input'))
+        && (contains(github.event.issue.labels.*.name, '@claude') || contains(github.event.issue.labels.*.name, '@claude:next'))
+        && contains(github.event.issue.labels.*.name, '@claude:needs-input'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -87,11 +89,11 @@ jobs:
           info=$(gh issue view "$ISSUE" --json state,labels)
           labels=$(jq -r '.labels[].name' <<<"$info")
           base=main
-          grep -Fxq 'claude:next' <<<"$labels" && base=next
+          grep -Fixq '@claude:next' <<<"$labels" && base=next
           echo "base=$base" >> "$GITHUB_OUTPUT"
 
           if [ "$(jq -r '.state' <<<"$info")" != "OPEN" ] \
-            || ! grep -Fxq -e "$TRIGGER_LABEL" -e 'claude:next' <<<"$labels"; then
+            || ! grep -Fixq -e "$TRIGGER_LABEL" -e '@claude:next' <<<"$labels"; then
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -102,7 +104,7 @@ jobs:
           open=$(jq -s 'add // [] | map(select(.state != "closed" or .state_reason != "completed"))' "$RUNNER_TEMP/blockers.json")
 
           if [ "$(jq 'length' <<<"$open")" != "0" ]; then
-            if ! grep -Fxq "$BLOCKED_LABEL" <<<"$labels"; then
+            if ! grep -Fixq -- "$BLOCKED_LABEL" <<<"$labels"; then
               gh label create "$BLOCKED_LABEL" --color D97757 --description "Claude waits for blocking issues to close" 2>/dev/null || true
               {
                 echo "<!-- claude:blocked -->"
@@ -204,7 +206,7 @@ jobs:
           # Only apply labels that already exist in the repository.
           gh label list --limit 200 --json name -q '.[].name' > "$RUNNER_TEMP/existing-labels.txt"
           jq -r '.labels[]' <<<"$RESULT" | while IFS= read -r label; do
-            if grep -Fxq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
+            if grep -Fixq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
               gh issue edit "$ISSUE" --add-label "$label"
             fi
           done
@@ -368,7 +370,7 @@ jobs:
           gh label list --limit 200 --json name -q '.[].name' > "$RUNNER_TEMP/existing-labels.txt"
           labels="$TRIGGER_LABEL"
           while IFS= read -r label; do
-            if [ -n "$label" ] && [ "$label" != "$TRIGGER_LABEL" ] && grep -Fxq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
+            if [ -n "$label" ] && [ "${label,,}" != "${TRIGGER_LABEL,,}" ] && grep -Fixq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
               labels="$labels,$label"
             fi
           done < <(jq -r '.labels[]' <<<"$RESULT")
