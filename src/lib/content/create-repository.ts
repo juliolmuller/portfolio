@@ -36,6 +36,7 @@ export interface ContentSource {
   projectsBySlug(slug: string): Promise<ProjectsRead>;
   recommendedProfiles(): Promise<unknown[]>;
   resume(): Promise<unknown>;
+  skills(): Promise<unknown[]>;
   technologies(): Promise<unknown[]>;
 }
 
@@ -450,6 +451,34 @@ export function createRepository(
           end: entry.end,
           url: entry.url,
           order: entry.order,
+        }),
+      );
+    },
+
+    async getSkills(locale): ReturnType<ContentRepository['getSkills']> {
+      const skills = parseCollection('skill', await source.skills(), logger);
+
+      return Promise.all(
+        skills.map(async (skill) => {
+          const resolved = skill.iconSource
+            ? await resolveTechIcon({
+                ...skill,
+                iconSource: skill.iconSource,
+                name: skill.name.en,
+              })
+            : undefined;
+
+          return defined({
+            id: skill.id,
+            name: pick(skill.name, locale),
+            categories: skill.categories,
+            icon: resolved?.icon,
+            inCloud: skill.showInCloud && resolved !== undefined,
+            brandColor: skill.brandColor ?? resolved?.defaultBrandColor,
+            url: skill.url,
+            priority: skill.priority,
+            order: skill.order,
+          });
         }),
       );
     },

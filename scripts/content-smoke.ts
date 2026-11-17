@@ -49,6 +49,7 @@ async function read(repository: ContentRepository): Promise<Array<[string, unkno
       ['getEducation', repository.getEducation(locale)],
       ['getTechnologies', repository.getTechnologies(locale)],
       ['getPractices', repository.getPractices(locale)],
+      ['getSkills', repository.getSkills(locale)],
     ];
     for (const [name, result] of reads) {
       results.push([`${name}(${locale})`, await result]);

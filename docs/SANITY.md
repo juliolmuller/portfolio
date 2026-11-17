@@ -49,11 +49,11 @@ SANITY_WRITE_TOKEN=…
 
 ### Skills (D93, epic #54)
 
-The `skill` type is in the schema, previewed by English name and primary category. No admin screen or public reader uses skills yet (readers arrive in #57), although the admin actions already accept the type. The in-use check in `AdminService.remove` still covers only technologies until the `skillIds` links land (#83, #84). Owner steps:
+The `skill` type is in the schema, previewed by English name and primary category. `getSkills` (tag `content:skills`) reads them, but no admin screen or UI uses skills yet, although the admin actions already accept the type. The in-use check in `AdminService.remove` still covers only technologies until the `skillIds` links land (#83, #84). Owner steps:
 
 1. Redeploy the `default` workspace schema to `development` now.
 2. Redeploy it to `production` at release gate R1.
-3. Add `"skill"` to the webhook `_type` filter (see "Revalidation webhook"). Until #57 lands, a skill change revalidates only the sitemap.
+3. Add `"skill"` to the webhook `_type` filter (see "Revalidation webhook"). Once the filter includes `skill`, a skill change revalidates `content:skills`. `bun run content:smoke` now reads skills too; optionally run it against `development` after the schema redeploy.
 
 ### Migration 2026-11 (D67)
 

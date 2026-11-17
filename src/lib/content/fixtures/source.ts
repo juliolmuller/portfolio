@@ -87,6 +87,7 @@ export function createFixtureSource(
         technologies: technologyRefs(dataset),
       }),
     education: () => read(dataset.education.filter(isVisible)),
+    skills: () => read(dataset.skill.filter(isVisible)),
     technologies: () => read(dataset.technology.filter(isVisible)),
     practices: () => read(dataset.practice.filter(isVisible)),
   };

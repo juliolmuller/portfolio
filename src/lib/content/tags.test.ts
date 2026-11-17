@@ -8,6 +8,14 @@ describe('tagsForDocument', () => {
     }
   });
 
+  it('maps skill changes to the skills tag', () => {
+    expect(tagsForDocument('skill')).toEqual([contentTags.skills]);
+  });
+
+  it('covers skills in revalidate-all', () => {
+    expect(Object.values(contentTags)).toContain('content:skills');
+  });
+
   it('adds the slug tag of a project', () => {
     expect(tagsForDocument('project', ['orbit-dashboard'])).toEqual([
       contentTags.projects,

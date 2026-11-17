@@ -11,6 +11,7 @@ import {
   type ProjectSummary,
   type RecommendedProfile,
   type Resume,
+  type Skill,
   type Technology,
 } from './types';
 
@@ -34,6 +35,7 @@ export interface ContentRepository {
   getProjects(locale: ContentLocale): Promise<ProjectSummary[]>;
   getRecommendedProfiles(locale: ContentLocale): Promise<RecommendedProfile[]>;
   getResume(): Promise<null | Resume>;
+  getSkills(locale: ContentLocale): Promise<Skill[]>;
   getTechnologies(locale: ContentLocale): Promise<Technology[]>;
   readonly source: 'fixtures' | 'sanity';
 }

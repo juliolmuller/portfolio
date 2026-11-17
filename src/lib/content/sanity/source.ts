@@ -11,6 +11,7 @@ import {
   PROJECTS_QUERY,
   RECOMMENDED_QUERY,
   RESUME_QUERY,
+  SKILLS_QUERY,
   TECHNOLOGIES_QUERY,
 } from './queries';
 
@@ -72,6 +73,7 @@ export function createSanitySource(fetchGroq: GroqFetch): ContentSource {
       };
     },
     education: () => list(EDUCATION_QUERY, [contentTags.education]),
+    skills: () => list(SKILLS_QUERY, [contentTags.skills]),
     technologies: () => list(TECHNOLOGIES_QUERY, [contentTags.technologies]),
     practices: () => list(PRACTICES_QUERY, [contentTags.practices]),
   };
