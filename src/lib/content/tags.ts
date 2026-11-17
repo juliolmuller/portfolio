@@ -17,6 +17,7 @@ export const contentTags = {
   education: 'content:education',
   technologies: 'content:technologies',
   practices: 'content:practices',
+  skills: 'content:skills',
 } as const;
 
 export type ContentTag = `content:${string}`;
@@ -48,8 +49,7 @@ export function tagsForDocument(type: DocumentType, slugs: string[] = []): strin
     case 'resume':
       return [contentTags.resume];
     case 'skill':
-      // No skill reader exists yet; its tag arrives with #57 (D93).
-      return [];
+      return [contentTags.skills];
     case 'technology':
       return [contentTags.technologies];
   }

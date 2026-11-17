@@ -1,8 +1,9 @@
 import { owner } from '@/config/site';
 
 import { createRecordingLogger } from '../../../tests/support/content-logger';
+import { sampleSkills } from '../../../tests/support/skill-documents';
 import { createFixtureDataset, type FixtureDataset } from './fixtures/dataset';
-import { techId } from './fixtures/ids';
+import { fixtureId, techId } from './fixtures/ids';
 import { type ContentLogger } from './log';
 import { type ContentRepository } from './repository';
 import { contentLocales, techCategories } from './schema';
@@ -238,6 +239,38 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
 
         expect(tech.brandColor ?? '#000000').toMatch(/^#[0-9a-f]{6}$/i);
       }
+    });
+
+    it('lists visible skills with resolved icons and cloud flags', async () => {
+      const { repository } = setup((dataset) => dataset.skill.push(...sampleSkills()));
+      const skills = await repository.getSkills('en');
+
+      expect(skills.map((skill) => skill.id)).toEqual([
+        fixtureId('skill', 'Sample React'),
+        fixtureId('skill', 'Sample code review'),
+      ]);
+
+      const [react, review] = skills;
+
+      expect(react?.icon && 'paths' in react.icon && react.icon.paths.length).toBeGreaterThan(0);
+      expect(react?.brandColor).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(react?.inCloud).toBe(true);
+      expect(react?.categories).toEqual(['frontend']);
+      expect(react?.priority).toBe(1);
+
+      expect(review).not.toHaveProperty('icon');
+      expect(review).not.toHaveProperty('brandColor');
+      expect(review?.inCloud).toBe(false);
+      expect(review?.url).toBe('https://example.com/code-review');
+      expect(review?.priority).toBe(2);
+
+      expect((await repository.getSkills('pt'))[1]?.name).toBe('Revisão de código');
+    });
+
+    it('returns no skills while the fixture dataset has none', async () => {
+      const { repository } = setup();
+
+      expect(await repository.getSkills('en')).toEqual([]);
     });
 
     it('lists practices', async () => {

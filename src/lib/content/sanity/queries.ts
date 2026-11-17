@@ -114,6 +114,9 @@ export const TECHNOLOGIES_QUERY = /* groq */ `*[_type == "technology" && ${VISIB
 export const PRACTICES_QUERY = /* groq */ `*[_type == "practice" && ${VISIBLE}] | order(order asc){${PRACTICE_FIELDS}
 }`;
 
+export const SKILLS_QUERY = /* groq */ `*[_type == "skill" && ${VISIBLE}] | order(order asc, name.en asc){${SKILL_FIELDS}
+}`;
+
 // --- Admin: every document, hidden ones included, one by id -------------------
 
 const ADMIN_FIELDS = {
