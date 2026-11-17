@@ -5,7 +5,9 @@ name: Claude issue to PR
 #      not closed as completed it labels the issue `@claude:blocked`, comments
 #      once and stops. claude-unblock.yml re-dispatches this workflow
 #      (workflow_dispatch, input `issue`) once every blocker is completed; a
-#      dispatch re-reads the labels from the API (D92).
+#      dispatch re-reads the labels from the API (D92). A dispatch made by that
+#      sweep is skipped when the issue is already planned, waits on the owner or
+#      has an open PR; runs started by the owner are never skipped (D94).
 #   1. The owner adds the `@claude` label (work on `main`) or `@claude:next` (work
 #      on `next`) to an issue → the planner (Opus) reads the issue and the code. If anything needs a decision it posts the
 #      questions mentioning the owner and stops (label `@claude:needs-input`).
@@ -18,9 +20,10 @@ name: Claude issue to PR
 #      the PR with the Claude GitHub App token, so the PR is authored by
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
-# To restart from scratch: remove and re-add the trigger label. Add only ONE of
-# the two labels; with both present `@claude:next` wins. Removing `@claude:blocked`
-# by hand does nothing: resolve or remove the dependency instead.
+# To restart from scratch: remove and re-add the trigger label, or use Run
+# workflow on this file. Add only ONE of the two labels; with both present
+# `@claude:next` wins. Removing `@claude:blocked` by hand does nothing: resolve
+# or remove the dependency instead.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -82,6 +85,8 @@ jobs:
           GH_REPO: ${{ github.repository }}
           ISSUE: ${{ github.event.issue.number || inputs.issue }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
           echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
@@ -96,6 +101,31 @@ jobs:
             || ! grep -Fixq -e "$TRIGGER_LABEL" -e '@claude:next' <<<"$labels"; then
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # Idempotency (D94): a dispatch made by claude-unblock.yml never re-runs an issue that
+          # is already planned, waits on the owner or has an open PR. A concurrency group only
+          # queues runs, it does not deduplicate them. Runs started by the owner (label, comment,
+          # Run workflow, re-run of a run) are never skipped, so a deliberate restart still works.
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$TRIGGERING_ACTOR" = "github-actions[bot]" ]; then
+            reason=""
+            if grep -Fixq -- "$PLANNED_LABEL" <<<"$labels"; then
+              reason="it already has $PLANNED_LABEL"
+            elif grep -Fixq -- "$WAITING_LABEL" <<<"$labels"; then
+              reason="it is waiting on the owner ($WAITING_LABEL)"
+            else
+              # A failing API call fails the job: never read it as "no PR".
+              pr=$(gh pr list --state open --limit 200 --json number,headRefName,body \
+                | jq -r --arg n "$ISSUE" 'map(select((.headRefName | startswith("claude/issue-\($n)-")) or ((.body // "") | test("closes #\($n)([^0-9]|$)"; "i")))) | .[0].number // empty')
+              if [ -n "$pr" ]; then
+                reason="open PR #$pr already refers to it"
+              fi
+            fi
+            if [ -n "$reason" ]; then
+              echo "::notice::Skipping #$ISSUE: $reason. To run it anyway, use Run workflow on claude-issue.yml."
+              echo "proceed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           # A failing API call fails the job: never read it as "no blockers".
@@ -117,10 +147,29 @@ jobs:
               gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/blocked.md"
               gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"
             fi
+            # Parking restarts the issue from scratch, so earlier progress no longer applies. Left
+            # in place, those labels would make the dispatch that releases it be skipped (D94).
+            gh issue edit "$ISSUE" --remove-label "$PLANNED_LABEL" 2>/dev/null || true
+            gh issue edit "$ISSUE" --remove-label "$WAITING_LABEL" 2>/dev/null || true
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
             gh issue edit "$ISSUE" --remove-label "$BLOCKED_LABEL" 2>/dev/null || true
             echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # claude-unblock.yml removes `@claude:blocked` before it dispatches this run (D94), so a
+      # failed gate would leave the issue orphaned. Put the label back so the next sweep retries.
+      - name: Restore the blocked label after a failed release
+        if: failure() && github.event_name == 'workflow_dispatch' && github.triggering_actor == 'github-actions[bot]'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+        run: |
+          if gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"; then
+            echo "::warning::The gate failed for #$ISSUE, so $BLOCKED_LABEL was restored and a later unblock sweep retries it."
+          else
+            echo "::error::The gate failed for #$ISSUE and $BLOCKED_LABEL could not be restored; add it back by hand."
           fi
 
   plan:
