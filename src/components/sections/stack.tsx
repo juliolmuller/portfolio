@@ -13,7 +13,7 @@ function toStackTech(tech: Technology): StackTech {
   return {
     id: tech.id,
     name: tech.name,
-    category: tech.category,
+    categories: [tech.category],
     icon: toPublicIcon(tech.icon),
     brandColor: tech.brandColor,
     url: tech.url,

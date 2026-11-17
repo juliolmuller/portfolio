@@ -53,10 +53,10 @@ test('cloud hydrates and category chips dim the geoid', async ({ page }) => {
     .poll(async () =>
       page.evaluate(() => {
         const unmatched = document.querySelector(
-          '[data-cloud-item][data-category]:not([data-category="language"])',
+          '[data-cloud-item][data-categories]:not([data-categories~="language"])',
         ) as HTMLElement | null;
         const matched = document.querySelector(
-          '[data-cloud-item][data-category="language"][data-interactive]',
+          '[data-cloud-item][data-categories~="language"][data-interactive]',
         ) as HTMLElement | null;
 
         if (!unmatched) return 'missing-unmatched';
