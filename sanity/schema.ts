@@ -7,8 +7,8 @@
  * `./studio.ts`, which adds previews, orderings and zod-backed validation.
  */
 
-import { iconSources } from '../src/lib/content/schema';
 import {
+  iconSources,
   skillCategories,
   techCategories,
   titleFontLabels,
@@ -288,7 +288,7 @@ const documents: SchemaType[] = [
         options: list(techCategories),
       }),
       field('iconSource', 'string', {
-        options: list(['simple-icons', 'devicon', 'custom-svg', 'monogram']),
+        options: list(iconSources),
       }),
       field('iconSlug', 'string'),
       field('customSvg', 'svgData'),

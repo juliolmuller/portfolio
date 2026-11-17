@@ -22,6 +22,13 @@ export const skillCategories = [...techCategories, 'engineering'] as const;
 export type SkillCategory = (typeof skillCategories)[number];
 
 /**
+ * Where a technology or skill icon comes from (D93).
+ */
+export const iconSources = ['simple-icons', 'devicon', 'custom-svg', 'monogram'] as const;
+
+export type IconSource = (typeof iconSources)[number];
+
+/**
  * Hero title fonts, alphabetical; the module that loads them is
  * `styles/title-fonts.ts`.
  */

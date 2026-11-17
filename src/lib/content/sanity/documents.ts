@@ -5,8 +5,10 @@ import {
   type DocumentInput,
   type DocumentType,
   type FileAsset,
+  type IconSource,
   type ImageAsset,
   type LocalizedText,
+  type SvgData,
 } from '../schema';
 
 /**
@@ -110,6 +112,26 @@ function base<T extends DocumentType>(
   doc: DocumentInput<T>,
 ): { _id: string; _type: T; isFixture: boolean | undefined } {
   return { _id: doc.id, _type: type, isFixture: doc.isFixture };
+}
+
+/**
+ * The icon fields technologies and skills store the same way (D93).
+ */
+function iconFields(doc: {
+  customSvg?: SvgData | undefined;
+  iconSlug?: string | undefined;
+  iconSource?: IconSource | undefined;
+  monogram?: string | undefined;
+}): Record<string, unknown> {
+  return {
+    iconSource: doc.iconSource,
+    iconSlug: doc.iconSlug,
+    customSvg: optional(doc.customSvg, (svg) => ({
+      _type: 'svgData',
+      ...svg,
+    })),
+    monogram: doc.monogram,
+  };
 }
 
 type Converters = {
@@ -268,13 +290,7 @@ const converters: Converters = {
       ...base('technology', doc),
       name: doc.name,
       category: doc.category,
-      iconSource: doc.iconSource,
-      iconSlug: doc.iconSlug,
-      customSvg: optional(doc.customSvg, (svg) => ({
-        _type: 'svgData',
-        ...svg,
-      })),
-      monogram: doc.monogram,
+      ...iconFields(doc),
       brandColor: doc.brandColor,
       url: doc.url,
       priority: doc.priority,
@@ -295,13 +311,7 @@ const converters: Converters = {
       ...base('skill', doc),
       name: localeString(doc.name),
       categories: doc.categories,
-      iconSource: doc.iconSource,
-      iconSlug: doc.iconSlug,
-      customSvg: optional(doc.customSvg, (svg) => ({
-        _type: 'svgData',
-        ...svg,
-      })),
-      monogram: doc.monogram,
+      ...iconFields(doc),
       showInCloud: doc.showInCloud ?? false,
       brandColor: doc.brandColor,
       url: doc.url,

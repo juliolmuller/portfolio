@@ -1,8 +1,16 @@
 import { z } from 'zod';
 
-import { skillCategories, techCategories, titleFonts } from './taxonomy';
+import {
+  type IconSource,
+  iconSources,
+  skillCategories,
+  techCategories,
+  titleFonts,
+} from './taxonomy';
 
 export {
+  type IconSource,
+  iconSources,
   skillCategories,
   type SkillCategory,
   techCategories,
@@ -269,9 +277,6 @@ export const recommendedProfileSchema = z.object({
   order: orderSchema,
   visible: visibleSchema,
 });
-
-export const iconSources = ['simple-icons', 'devicon', 'custom-svg', 'monogram'] as const;
-export type IconSource = (typeof iconSources)[number];
 
 /**
  * Icon fields shared by technologies and skills (D93).
