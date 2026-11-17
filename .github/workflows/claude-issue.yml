@@ -166,8 +166,9 @@ jobs:
           fi
 
       # claude-unblock.yml removes `@claude:blocked` before it dispatches this run (D94), so a
-      # failed or cancelled gate (a job timeout counts as a cancel) would leave the issue
-      # orphaned. Put the label back so the next sweep retries.
+      # failed gate would leave the issue orphaned. Put the label back so the next sweep retries.
+      # The case this relies on is the check step timing out first (3 minutes, a step failure).
+      # Running after a cancel or a job-level timeout is best effort and has not been verified.
       - name: Restore the blocked label after a failed release
         if: (failure() || cancelled()) && github.event_name == 'workflow_dispatch' && github.triggering_actor == 'github-actions[bot]'
         env:
