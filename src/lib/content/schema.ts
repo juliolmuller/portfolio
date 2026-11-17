@@ -513,6 +513,10 @@ export const documentSchemas = {
 export type DocumentType = keyof typeof documentSchemas;
 export const documentTypes = Object.keys(documentSchemas) as DocumentType[];
 
+export function isDocumentType(value: string): value is DocumentType {
+  return (documentTypes as string[]).includes(value);
+}
+
 export type DocumentOf<T extends DocumentType> = z.infer<(typeof documentSchemas)[T]>;
 /**
  * Authoring shape (defaults optional), used by fixtures and the seed.

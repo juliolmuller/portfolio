@@ -1,3 +1,5 @@
+import { type DocumentType } from './schema';
+
 /**
  * Fallback lifetime for cached content, in case a revalidation is missed.
  */
@@ -21,9 +23,11 @@ export type ContentTag = `content:${string}`;
 
 /**
  * Tags to revalidate when a document type changes (webhook and admin). Reads
- * that filter technology references also carry the technologies tag.
+ * that filter technology references also carry the technologies tag. The switch
+ * is exhaustive on purpose: registering a document type without deciding its
+ * tags does not compile.
  */
-export function tagsForDocument(type: string, slugs: string[] = []): string[] {
+export function tagsForDocument(type: DocumentType, slugs: string[] = []): string[] {
   switch (type) {
     case 'contact':
       return [contentTags.contact];
@@ -43,9 +47,10 @@ export function tagsForDocument(type: string, slugs: string[] = []): string[] {
       return [contentTags.recommended];
     case 'resume':
       return [contentTags.resume];
+    case 'skill':
+      // No skill reader exists yet; its tag arrives with #57 (D93).
+      return [];
     case 'technology':
       return [contentTags.technologies];
-    default:
-      return [];
   }
 }
