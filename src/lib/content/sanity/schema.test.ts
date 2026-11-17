@@ -95,7 +95,6 @@ describe('sanity/schema.ts', () => {
   });
 
   it('declares every field a skill writes', () => {
-    const assets = skillAssets;
     const full = toSanityDocument(
       'skill',
       {
@@ -110,7 +109,7 @@ describe('sanity/schema.ts', () => {
         showInCloud: true,
         priority: 1,
       },
-      assets,
+      skillAssets,
     );
     const minimal = toSanityDocument(
       'skill',
@@ -120,7 +119,7 @@ describe('sanity/schema.ts', () => {
         name: L('Testing', 'Testes'),
         categories: ['engineering'],
       },
-      assets,
+      skillAssets,
     );
     const type = registry.get('skill');
     const errors: string[] = [];
