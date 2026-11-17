@@ -1,8 +1,16 @@
 import { z } from 'zod';
 
-import { skillCategories, techCategories, titleFonts } from './taxonomy';
+import {
+  type IconSource,
+  iconSources,
+  skillCategories,
+  techCategories,
+  titleFonts,
+} from './taxonomy';
 
 export {
+  type IconSource,
+  iconSources,
   skillCategories,
   type SkillCategory,
   techCategories,
@@ -270,9 +278,6 @@ export const recommendedProfileSchema = z.object({
   visible: visibleSchema,
 });
 
-export const iconSources = ['simple-icons', 'devicon', 'custom-svg', 'monogram'] as const;
-export type IconSource = (typeof iconSources)[number];
-
 /**
  * Icon fields shared by technologies and skills (D93).
  */
@@ -344,9 +349,8 @@ export const practiceSchema = z.object({
 });
 
 /**
- * D93: skills replace technologies and practices. Not registered in
- * `documentSchemas` yet; the repository, Sanity and the admin adopt it in the
- * follow-up tasks of epic #54.
+ * D93: skills replace technologies and practices. Registered in
+ * `documentSchemas` (#56); the readers adopt it in #57.
  */
 export const skillSchema = z
   .object({
@@ -376,9 +380,6 @@ export const skillSchema = z
   .superRefine((skill, ctx) => {
     checkTechIcon(skill, ctx);
   });
-
-export type SkillDocument = z.infer<typeof skillSchema>;
-export type SkillInput = z.input<typeof skillSchema>;
 
 export const projectKinds = [
   'web',
@@ -506,10 +507,15 @@ export const documentSchemas = {
   education: educationSchema,
   technology: technologySchema,
   practice: practiceSchema,
+  skill: skillSchema,
 } as const;
 
 export type DocumentType = keyof typeof documentSchemas;
 export const documentTypes = Object.keys(documentSchemas) as DocumentType[];
+
+export function isDocumentType(value: string): value is DocumentType {
+  return (documentTypes as string[]).includes(value);
+}
 
 export type DocumentOf<T extends DocumentType> = z.infer<(typeof documentSchemas)[T]>;
 /**
@@ -527,6 +533,8 @@ export type ExperienceDocument = DocumentOf<'experience'>;
 export type EducationDocument = DocumentOf<'education'>;
 export type TechnologyDocument = DocumentOf<'technology'>;
 export type PracticeDocument = DocumentOf<'practice'>;
+export type SkillDocument = DocumentOf<'skill'>;
+export type SkillInput = DocumentInput<'skill'>;
 export type ImageField = z.infer<typeof imageSchema>;
 export type ImageAsset = z.infer<typeof imageAssetSchema>;
 export type FileAsset = z.infer<typeof fileAssetSchema>;

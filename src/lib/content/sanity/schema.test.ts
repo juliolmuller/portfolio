@@ -1,6 +1,8 @@
 import { schemaTypes } from '../../../../sanity/schema';
 import { createFixtureDataset } from '../fixtures/dataset';
-import { toSanityDocuments } from './documents';
+import { L, meta } from '../fixtures/helpers';
+import { type SkillInput } from '../schema';
+import { toSanityDocument, toSanityDocuments } from './documents';
 
 interface Field {
   fields?: Field[];
@@ -9,6 +11,7 @@ interface Field {
   type: string;
 }
 
+const skillAssets = { image: (): string => 'asset', file: (): string => 'asset' };
 const registry = new Map(schemaTypes.map((type) => [type.name, type as unknown as Field]));
 const builtIn: Record<string, string[]> = {
   image: ['asset', 'hotspot', 'crop'],
@@ -59,6 +62,78 @@ describe('sanity/schema.ts', () => {
       else check(document, type, document._type, errors);
     }
     expect(errors).toEqual([]);
+  });
+
+  it('declares the icon fields of every icon source a skill can use', () => {
+    const sources: Array<[string, Partial<SkillInput>]> = [
+      ['simple-icons', { iconSource: 'simple-icons', iconSlug: 'typescript' }],
+      ['devicon', { iconSource: 'devicon', iconSlug: 'react' }],
+      ['monogram', { iconSource: 'monogram', monogram: 'CA' }],
+    ];
+    const type = registry.get('skill');
+    const errors: string[] = [];
+
+    if (!type) throw new Error('skill is not in the Studio schema');
+
+    for (const [name, icon] of sources) {
+      const stored = toSanityDocument(
+        'skill',
+        {
+          ...meta('skill', `icon-${name}`),
+          order: 0,
+          name: L('Skill', 'Habilidade'),
+          categories: ['language'],
+          ...icon,
+        },
+        skillAssets,
+      );
+
+      check(stored, type, name, errors);
+      expect(stored, name).toMatchObject(icon);
+    }
+    expect(errors).toEqual([]);
+  });
+
+  it('declares every field a skill writes', () => {
+    const full = toSanityDocument(
+      'skill',
+      {
+        ...meta('skill', 'clean-architecture'),
+        order: 0,
+        name: L('Clean Architecture', 'Arquitetura limpa'),
+        categories: ['engineering', 'backend'],
+        iconSource: 'custom-svg',
+        customSvg: { viewBox: '0 0 24 24', paths: ['M0 0h24v24H0z'] },
+        brandColor: '#ff0000',
+        url: 'https://example.com/clean',
+        showInCloud: true,
+        priority: 1,
+      },
+      skillAssets,
+    );
+    const minimal = toSanityDocument(
+      'skill',
+      {
+        ...meta('skill', 'testing'),
+        order: 0,
+        name: L('Testing', 'Testes'),
+        categories: ['engineering'],
+      },
+      skillAssets,
+    );
+    const type = registry.get('skill');
+    const errors: string[] = [];
+
+    if (!type) throw new Error('skill is not in the Studio schema');
+
+    check(full, type, 'full', errors);
+    check(minimal, type, 'minimal', errors);
+    expect(errors).toEqual([]);
+    expect(full['name']).toMatchObject({ _type: 'localeString' });
+    expect(full['customSvg']).toMatchObject({ _type: 'svgData' });
+    expect(minimal).not.toHaveProperty('iconSource');
+    expect(minimal).not.toHaveProperty('customSvg');
+    expect(minimal).toMatchObject({ showInCloud: false, priority: 2, visible: true });
   });
 
   it('has unique type names', () => {

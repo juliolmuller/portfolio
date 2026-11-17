@@ -22,8 +22,8 @@ describe('derivedId', () => {
     expect(derivedId('skill', 'x')).not.toBe(derivedId('technology', 'x'));
   });
 
-  it('only accepts document types and skill (checked by typecheck)', () => {
-    // @ts-expect-error 'skil' is neither a document type nor 'skill'
+  it('only accepts registered document types (checked by typecheck)', () => {
+    // @ts-expect-error 'skil' is not a registered document type
     expect(derivedId('skil', 'x')).toMatch(/^skil\./);
   });
 });

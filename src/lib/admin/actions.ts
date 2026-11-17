@@ -8,7 +8,7 @@ import {
   type SaveOutcome,
 } from '@/lib/content/admin/service';
 import { resolveLinkIconDetailed, resolveTechIcon } from '@/lib/content/icons/resolve';
-import { type DocumentType, documentTypes } from '@/lib/content/schema';
+import { type DocumentType, isDocumentType } from '@/lib/content/schema';
 
 import { revalidateEverything } from './hooks';
 import { type IconHit, type IconSearchSource, lucideIconExists, searchIcons } from './icons';
@@ -16,9 +16,9 @@ import { getAdminService } from './service';
 import { sanitizeSvg, type SvgResult } from './upload/svg';
 
 function asType(type: string): DocumentType {
-  if (!(documentTypes as string[]).includes(type)) throw new Error('Unknown type');
+  if (!isDocumentType(type)) throw new Error('Unknown type');
 
-  return type as DocumentType;
+  return type;
 }
 
 export async function saveDocumentAction(

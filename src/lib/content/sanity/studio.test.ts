@@ -114,6 +114,29 @@ describe('sanity/studio.ts', () => {
     expect(validate('project', 'body', { en: 'Fine', pt: '<script>x</script>' })).toMatch(/HTML/);
   });
 
+  it('validates skills field by field', () => {
+    const name = { _type: 'localeString', en: 'Clean Architecture', pt: 'Arquitetura limpa' };
+
+    expect(validate('skill', 'name', name)).toBe(true);
+    expect(validate('skill', 'name', { ...name, pt: '' })).toMatch(/pt/);
+    expect(validate('skill', 'name', undefined)).toBe('Required');
+    expect(validate('skill', 'categories', ['frontend', 'engineering'])).toBe(true);
+    expect(validate('skill', 'categories', [])).not.toBe(true);
+    expect(validate('skill', 'categories', ['data', 'data'])).toMatch(/Duplicate/);
+    expect(validate('skill', 'categories', ['skills'])).not.toBe(true);
+    expect(validate('skill', 'brandColor', 'red')).not.toBe(true);
+    expect(validate('skill', 'brandColor', '#ff0000')).toBe(true);
+    expect(validate('skill', 'priority', 4)).not.toBe(true);
+    expect(validate('skill', 'priority', undefined)).toBe(true);
+    expect(validate('skill', 'showInCloud', undefined)).toBe(true);
+    expect(validate('skill', 'iconSource', undefined)).toBe(true);
+    expect(byName.get('skill')?.preview?.select).toEqual({
+      title: 'name.en',
+      subtitle: 'categories.0',
+      visible: 'visible',
+    });
+  });
+
   it('requires an asset and alt text in both languages on images', () => {
     const alt = { en: 'A cover', pt: 'Uma capa' };
     const asset = { _type: 'reference', _ref: 'image-asset' };

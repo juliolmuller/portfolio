@@ -2,7 +2,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { env } from '@/env';
 import { createWindowCounter } from '@/lib/admin/rate';
-import { documentTypes } from '@/lib/content/schema';
+import { isDocumentType } from '@/lib/content/schema';
 import { tagsForDocument } from '@/lib/content/tags';
 import { isValidWebhookSignature, SIGNATURE_HEADER } from '@/lib/content/webhook';
 
@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const type = String(payload._type);
 
-  if (!(documentTypes as string[]).includes(type)) return nothing();
+  if (!isDocumentType(type)) return nothing();
 
   const slugs = typeof payload.slug === 'string' ? [payload.slug] : [];
   const tags = tagsForDocument(type, slugs);
