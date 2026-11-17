@@ -1,6 +1,7 @@
 import { schemaTypes } from '../../../../sanity/schema';
 import { createFixtureDataset } from '../fixtures/dataset';
 import { L, meta } from '../fixtures/helpers';
+import { type SkillInput } from '../schema';
 import { toSanityDocument, toSanityDocuments } from './documents';
 
 interface Field {
@@ -10,6 +11,7 @@ interface Field {
   type: string;
 }
 
+const skillAssets = { image: (): string => 'asset', file: (): string => 'asset' };
 const registry = new Map(schemaTypes.map((type) => [type.name, type as unknown as Field]));
 const builtIn: Record<string, string[]> = {
   image: ['asset', 'hotspot', 'crop'],
@@ -62,9 +64,38 @@ describe('sanity/schema.ts', () => {
     expect(errors).toEqual([]);
   });
 
+  it('declares the icon fields of every icon source a skill can use', () => {
+    const sources: Array<[string, Partial<SkillInput>]> = [
+      ['simple-icons', { iconSource: 'simple-icons', iconSlug: 'typescript' }],
+      ['devicon', { iconSource: 'devicon', iconSlug: 'react' }],
+      ['monogram', { iconSource: 'monogram', monogram: 'CA' }],
+    ];
+    const type = registry.get('skill');
+    const errors: string[] = [];
+
+    if (!type) throw new Error('skill is not in the Studio schema');
+
+    for (const [name, icon] of sources) {
+      const stored = toSanityDocument(
+        'skill',
+        {
+          ...meta('skill', `icon-${name}`),
+          order: 0,
+          name: L('Skill', 'Habilidade'),
+          categories: ['language'],
+          ...icon,
+        },
+        skillAssets,
+      );
+
+      check(stored, type, name, errors);
+      expect(stored, name).toMatchObject(icon);
+    }
+    expect(errors).toEqual([]);
+  });
+
   it('declares every field a skill writes', () => {
-    const asset = (): string => 'asset';
-    const assets = { image: asset, file: asset };
+    const assets = skillAssets;
     const full = toSanityDocument(
       'skill',
       {
