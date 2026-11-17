@@ -8,6 +8,7 @@ import { type SkillCategory } from '@/lib/content/taxonomy';
 import { fibonacciGeoid } from '@/lib/tech-cloud/geoid';
 import { ease, frameScale, stepDrag } from '@/lib/tech-cloud/motion';
 
+import { matchesCategory } from './categories';
 import { CloudMark } from './cloud-mark';
 import { geoidStageClassName } from './stage';
 
@@ -271,7 +272,7 @@ export function GeoidSphere({
         const mul = item.radiusMultiplier;
         const x = rxScale * mul * item.sinPhi * Math.cos(item.theta);
         const z = rzScale * mul * item.sinPhi * Math.sin(item.theta);
-        const matching = category === null || item.tech.categories.includes(category);
+        const matching = matchesCategory(item.tech, category);
         const inFront = z > 0;
         const interactive = inFront && matching;
         const dimTarget = matching ? 1 : CATEGORY_DIM;
@@ -467,7 +468,7 @@ export function GeoidSphere({
 
         const category = categoryRef.current;
 
-        if (category && !tech.categories.includes(category)) return;
+        if (!matchesCategory(tech, category)) return;
 
         onSelectRef.current(selectedRef.current === tech.id ? null : tech);
       }
@@ -525,7 +526,7 @@ export function GeoidSphere({
 
         if (!tech) return;
 
-        if (activeCategory && !tech.categories.includes(activeCategory)) return;
+        if (!matchesCategory(tech, activeCategory)) return;
 
         onSelect(selectedId === tech.id ? null : tech);
       }}

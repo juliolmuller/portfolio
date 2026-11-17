@@ -4,6 +4,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 import { type Practice } from '@/lib/content/types';
 
+import { matchesCategory } from './categories';
 import { type StackTech } from './types';
 
 export function StackList({
@@ -20,7 +21,7 @@ export function StackList({
   const groups = skillCategories
     .map((category) => ({
       category,
-      items: technologies.filter((tech) => tech.categories.includes(category)),
+      items: technologies.filter((tech) => matchesCategory(tech, category)),
     }))
     .filter((group) => group.items.length > 0);
 

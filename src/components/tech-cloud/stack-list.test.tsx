@@ -21,7 +21,7 @@ const categoryLabels = Object.fromEntries(
 ) as Record<SkillCategory, string>;
 
 function tech(id: string, categories: SkillCategory[]): StackTech {
-  return { id, name: id, categories, icon: 'x', priority: 1 } as unknown as StackTech;
+  return { id, name: id, categories, icon: { monogram: 'x' }, priority: 1 };
 }
 
 function render(technologies: StackTech[]): string {
@@ -51,10 +51,12 @@ describe('StackList categories (#69)', () => {
   });
 
   it('lists a multi-category item under each of its categories', () => {
-    const html = render([tech('ts', ['language', 'engineering'])]);
+    const html = render([tech('ts', ['language', 'engineering']), tech('go', ['language'])]);
 
-    expect(listOf(html, 'language')).toContain('ts');
-    expect(listOf(html, 'engineering')).toContain('ts');
+    expect(listOf(html, 'language')).toContain('<span>ts</span>');
+    expect(listOf(html, 'language')).toContain('<span>go</span>');
+    expect(listOf(html, 'engineering')).toContain('<span>ts</span>');
+    expect(listOf(html, 'engineering')).not.toContain('<span>go</span>');
   });
 
   it('renders no heading for categories without items', () => {

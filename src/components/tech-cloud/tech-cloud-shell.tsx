@@ -10,6 +10,7 @@ import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 import { type Practice } from '@/lib/content/types';
 import { useReducedMotionPreference } from '@/lib/motion-preference';
 
+import { countByCategory, matchesCategory } from './categories';
 import { type CloudTech } from './geoid-sphere';
 import { StackList } from './stack-list';
 import { geoidStageClassName } from './stage';
@@ -84,8 +85,7 @@ export function TechCloudShell({
     skillCategories.map((key) => [key, t(`categories.${key}`)]),
   ) as Record<SkillCategory, string>;
 
-  const announced =
-    selected && (!category || selected.categories.includes(category)) ? selected : null;
+  const announced = selected && matchesCategory(selected, category) ? selected : null;
   const primaryCategory = announced?.categories[0];
 
   useEffect(() => {
@@ -118,16 +118,7 @@ export function TechCloudShell({
     return (): void => observer.disconnect();
   }, [showCloud, near]);
 
-  const counts = useMemo(() => {
-    const map = new Map<SkillCategory, number>();
-    for (const tech of visibleCloud) {
-      for (const key of tech.categories) {
-        map.set(key, (map.get(key) ?? 0) + 1);
-      }
-    }
-
-    return map;
-  }, [visibleCloud]);
+  const counts = useMemo(() => countByCategory(visibleCloud), [visibleCloud]);
 
   const list = (
     <StackList
