@@ -150,8 +150,10 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # claude-unblock.yml dispatches this workflow as github-actions[bot];
-          # CodeRabbit may be the actor of events too. The job gates above still
+          # claude-unblock.yml dispatches this workflow as github-actions[bot].
+          # coderabbitai[bot] is listed at the owner's request, but the gate job
+          # only lets the owner start issues/issue_comment runs, so it has no
+          # effect here until that gate is widened (D94). The job gates still
           # decide who may start a run; this only lets the action accept them.
           allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
