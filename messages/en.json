@@ -400,7 +400,8 @@
       "data": "Data & messaging",
       "cloud": "Cloud & DevOps",
       "integration": "Integrations & automation",
-      "ai": "AI agents & tooling"
+      "ai": "AI agents & tooling",
+      "engineering": "Software engineering"
     },
     "practicesTitle": "Practices and concepts",
     "filterLabel": "Filter by category",

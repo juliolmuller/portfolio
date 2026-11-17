@@ -4,16 +4,17 @@ import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react
 
 import { cn } from '@/lib/cn';
 import { type PublicTechIcon } from '@/lib/content/icon-src';
-import { type TechCategory } from '@/lib/content/taxonomy';
+import { type SkillCategory } from '@/lib/content/taxonomy';
 import { fibonacciGeoid } from '@/lib/tech-cloud/geoid';
 import { ease, frameScale, stepDrag } from '@/lib/tech-cloud/motion';
 
+import { matchesCategory } from './categories';
 import { CloudMark } from './cloud-mark';
 import { geoidStageClassName } from './stage';
 
 export interface CloudTech {
   brandColor?: string;
-  category: TechCategory;
+  categories: SkillCategory[];
   icon: PublicTechIcon;
   id: string;
   name: string;
@@ -25,7 +26,7 @@ interface GeoidSphereProps {
   /**
    * Active category filter; null = all.
    */
-  activeCategory: null | TechCategory;
+  activeCategory: null | SkillCategory;
   className?: string;
   onSelect: (tech: CloudTech | null) => void;
   paused: boolean;
@@ -271,7 +272,7 @@ export function GeoidSphere({
         const mul = item.radiusMultiplier;
         const x = rxScale * mul * item.sinPhi * Math.cos(item.theta);
         const z = rzScale * mul * item.sinPhi * Math.sin(item.theta);
-        const matching = category === null || item.tech.category === category;
+        const matching = matchesCategory(item.tech, category);
         const inFront = z > 0;
         const interactive = inFront && matching;
         const dimTarget = matching ? 1 : CATEGORY_DIM;
@@ -467,7 +468,7 @@ export function GeoidSphere({
 
         const category = categoryRef.current;
 
-        if (category && tech.category !== category) return;
+        if (!matchesCategory(tech, category)) return;
 
         onSelectRef.current(selectedRef.current === tech.id ? null : tech);
       }
@@ -525,7 +526,7 @@ export function GeoidSphere({
 
         if (!tech) return;
 
-        if (activeCategory && tech.category !== activeCategory) return;
+        if (!matchesCategory(tech, activeCategory)) return;
 
         onSelect(selectedId === tech.id ? null : tech);
       }}
@@ -538,7 +539,7 @@ export function GeoidSphere({
         <div
           key={tech.id}
           data-cloud-item={tech.id}
-          data-category={tech.category}
+          data-categories={tech.categories.join(' ')}
           className="group absolute top-1/2 left-1/2 flex cursor-pointer flex-col items-center justify-center"
         >
           <CloudMark
