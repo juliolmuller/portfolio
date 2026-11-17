@@ -18,7 +18,12 @@
  */
 import { type z } from 'zod';
 
-import { documentSchemas, type DocumentType, galleryItemSchema } from '../src/lib/content/schema';
+import {
+  documentSchemas,
+  type DocumentType,
+  galleryItemSchema,
+  isDocumentType,
+} from '../src/lib/content/schema';
 import { schemaTypes } from './schema';
 
 export interface StudioRule {
@@ -231,10 +236,6 @@ const ORDER_ASC = {
   name: 'orderAsc',
   by: [{ field: 'order', direction: 'asc' }],
 };
-
-function isDocumentType(name: string): name is DocumentType {
-  return name in documentSchemas;
-}
 
 /**
  * `schemaTypes` plus previews, orderings and zod-backed validation.
