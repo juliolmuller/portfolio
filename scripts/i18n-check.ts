@@ -225,8 +225,14 @@ function checkFixtures(): number {
 
   for (const type of documentTypes) {
     for (const document of dataset[type]) {
+      // A localized name (skills) is an object, so label by its English text.
+      const name = 'name' in document ? document.name : undefined;
       const label =
-        'slug' in document ? document.slug : 'name' in document ? document.name : document.id;
+        'slug' in document
+          ? document.slug
+          : typeof name === 'string'
+            ? name
+            : (name?.en ?? document.id);
 
       walk(document, `${type}(${label})`);
     }
