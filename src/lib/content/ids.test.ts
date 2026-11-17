@@ -21,4 +21,9 @@ describe('derivedId', () => {
   it('gives different ids to different types with the same key', () => {
     expect(derivedId('skill', 'x')).not.toBe(derivedId('technology', 'x'));
   });
+
+  it('only accepts document types and skill (checked by typecheck)', () => {
+    // @ts-expect-error 'skil' is neither a document type nor 'skill'
+    expect(derivedId('skil', 'x')).toMatch(/^skil\./);
+  });
 });

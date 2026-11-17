@@ -79,16 +79,20 @@ describe('skill copy mapper', () => {
     expect('brandColor' in technologyToSkill(without, NOW)).toBe(false);
   });
 
-  it('does not add a monogram key when the source has none', () => {
-    const source = technologies.find(
+  it('copies a monogram override and adds none when the source has none', () => {
+    const withText = technologies.find(
+      (tech) => tech.iconSource === 'monogram' && tech.monogram !== undefined,
+    )!;
+    const withoutText = technologies.find(
       (tech) => tech.iconSource === 'monogram' && tech.monogram === undefined,
-    );
+    )!;
 
-    if (source) {
-      expect('monogram' in technologyToSkill(source, NOW)).toBe(false);
-    }
-
-    expect('monogram' in technologyToSkill(typescript, NOW)).toBe(false);
+    expect(technologyToSkill(withText, NOW)).toMatchObject({
+      iconSource: 'monogram',
+      monogram: withText.monogram,
+    });
+    expect(technologyToSkill(withoutText, NOW).iconSource).toBe('monogram');
+    expect('monogram' in technologyToSkill(withoutText, NOW)).toBe(false);
   });
 
   it('clones a custom svg', () => {
@@ -126,6 +130,34 @@ describe('skill copy mapper', () => {
     const minPractice = Math.min(...practices.map((item) => practiceToSkill(item, NOW).order));
 
     expect(minPractice).toBeGreaterThan(maxTech);
+  });
+
+  it('rejects a technology order that would not sort before the practices', () => {
+    const last = PRACTICE_ORDER_OFFSET - 1;
+
+    expect(technologyToSkill({ ...typescript, order: last }, NOW).order).toBe(last);
+    expect(() => technologyToSkill({ ...typescript, order: PRACTICE_ORDER_OFFSET }, NOW)).toThrow(
+      RangeError,
+    );
+  });
+
+  it('rejects a practice order that would pass the schema cap', () => {
+    const cap = 1_000_000;
+    const last = cap - PRACTICE_ORDER_OFFSET;
+
+    expect(practiceToSkill({ ...practice, order: last }, NOW).order).toBe(cap);
+    expect(() => practiceToSkill({ ...practice, order: last + 1 }, NOW)).toThrow(
+      `${practice.id} cannot be copied to a skill (order: `,
+    );
+  });
+
+  it('rejects a timestamp the schema would reject, naming the source', () => {
+    expect(() => technologyToSkill(typescript, 'yesterday')).toThrow(
+      `${typescript.id} cannot be copied to a skill (updatedAt: `,
+    );
+    expect(() => practiceToSkill(practice, 'yesterday')).toThrow(
+      `${practice.id} cannot be copied to a skill (updatedAt: `,
+    );
   });
 
   it('keeps hidden items hidden and carries isFixture', () => {
