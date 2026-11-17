@@ -400,7 +400,8 @@
       "data": "Dados e mensageria",
       "cloud": "Cloud e DevOps",
       "integration": "Integrações e automação",
-      "ai": "Agentes de IA e ferramentas"
+      "ai": "Agentes de IA e ferramentas",
+      "engineering": "Engenharia de software"
     },
     "practicesTitle": "Práticas e conceitos",
     "filterLabel": "Filtrar por categoria",

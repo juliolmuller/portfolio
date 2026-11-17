@@ -6,10 +6,11 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { cn } from '@/lib/cn';
-import { techCategories, type TechCategory } from '@/lib/content/taxonomy';
+import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 import { type Practice } from '@/lib/content/types';
 import { useReducedMotionPreference } from '@/lib/motion-preference';
 
+import { countByCategory, matchesCategory } from './categories';
 import { type CloudTech } from './geoid-sphere';
 import { StackList } from './stack-list';
 import { geoidStageClassName } from './stage';
@@ -26,7 +27,7 @@ function toCloudTech(tech: StackTech): CloudTech {
   return {
     id: tech.id,
     name: tech.name,
-    category: tech.category,
+    categories: tech.categories,
     icon: tech.icon,
     brandColor: tech.brandColor,
     url: tech.url,
@@ -71,7 +72,7 @@ export function TechCloudShell({
     () => false,
   );
   const [failed, setFailed] = useState(false);
-  const [category, setCategory] = useState<null | TechCategory>(null);
+  const [category, setCategory] = useState<null | SkillCategory>(null);
   const [selected, setSelected] = useState<CloudTech | null>(null);
   const [near, setNear] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -81,10 +82,11 @@ export function TechCloudShell({
   const visibleCloud = useMobileCull(cloudTechs);
 
   const categoryLabels = Object.fromEntries(
-    techCategories.map((key) => [key, t(`categories.${key}`)]),
-  ) as Record<TechCategory, string>;
+    skillCategories.map((key) => [key, t(`categories.${key}`)]),
+  ) as Record<SkillCategory, string>;
 
-  const announced = selected && (!category || selected.category === category) ? selected : null;
+  const announced = selected && matchesCategory(selected, category) ? selected : null;
+  const primaryCategory = announced?.categories[0];
 
   useEffect(() => {
     if (!selected) return;
@@ -116,14 +118,7 @@ export function TechCloudShell({
     return (): void => observer.disconnect();
   }, [showCloud, near]);
 
-  const counts = useMemo(() => {
-    const map = new Map<TechCategory, number>();
-    for (const tech of visibleCloud) {
-      map.set(tech.category, (map.get(tech.category) ?? 0) + 1);
-    }
-
-    return map;
-  }, [visibleCloud]);
+  const counts = useMemo(() => countByCategory(visibleCloud), [visibleCloud]);
 
   const list = (
     <StackList
@@ -140,7 +135,7 @@ export function TechCloudShell({
       aria-label={t('filterLabel')}
       className="flex flex-wrap items-center justify-center gap-2"
     >
-      {techCategories.map((key) => {
+      {skillCategories.map((key) => {
         const count = counts.get(key) ?? 0;
 
         if (count === 0) return null;
@@ -204,7 +199,9 @@ export function TechCloudShell({
             {announced ? (
               <p>
                 <span className="text-text-1">{announced.name}</span>
-                <span className="text-text-3"> · {categoryLabels[announced.category]}</span>
+                {primaryCategory ? (
+                  <span className="text-text-3"> · {categoryLabels[primaryCategory]}</span>
+                ) : null}
                 {announced.url ? (
                   <>
                     {' '}

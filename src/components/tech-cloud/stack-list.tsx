@@ -1,9 +1,10 @@
 import { TechIcon } from '@/components/content/tech-icon';
 import { Chip } from '@/components/ui/chip';
 import { Reveal } from '@/components/ui/reveal';
-import { techCategories } from '@/lib/content/taxonomy';
+import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 import { type Practice } from '@/lib/content/types';
 
+import { matchesCategory } from './categories';
 import { type StackTech } from './types';
 
 export function StackList({
@@ -12,15 +13,15 @@ export function StackList({
   categoryLabels,
   practicesTitle,
 }: {
-  categoryLabels: Record<(typeof techCategories)[number], string>;
+  categoryLabels: Record<SkillCategory, string>;
   practices: Practice[];
   practicesTitle: string;
   technologies: StackTech[];
 }): React.JSX.Element {
-  const groups = techCategories
+  const groups = skillCategories
     .map((category) => ({
       category,
-      items: technologies.filter((tech) => tech.category === category),
+      items: technologies.filter((tech) => matchesCategory(tech, category)),
     }))
     .filter((group) => group.items.length > 0);
 

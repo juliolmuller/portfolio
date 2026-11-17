@@ -34,7 +34,7 @@ src/
   proxy.ts           canonical URLs, admin gate, locale negotiation for "/", admin nonce CSP
   components/        layout/ sections/ portfolio/ tech-cloud/ window-manager/ terminal/ admin/ ui/ seo/ markdown/
   lib/
-    content/         schema.ts (zod contract), repository, pipeline, sanity/ fixtures/ admin/ icons/
+    content/         schema.ts (zod contract), repository, pipeline, sanity/ fixtures/ admin/ icons/ ids.ts migrations/
     auth/            session, token, password, rate-limit, cookie, actions
     admin/           upload sanitizers (image, pdf, svg), actions
     terminal/        pure TS core: parser, vfs, registry, engine, completion, commands/{public,secret}
