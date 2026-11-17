@@ -49,7 +49,7 @@ SANITY_WRITE_TOKEN=…
 
 ### Skills (D93, epic #54)
 
-The `skill` type is in the schema, previewed by English name and primary category. Nothing reads or writes skills yet (readers arrive in #57). Owner steps:
+The `skill` type is in the schema, previewed by English name and primary category. No admin screen or public reader uses skills yet (readers arrive in #57), although the admin actions already accept the type. Their in-use check on delete covers only technologies until the `skillIds` links land (#83, #84). Owner steps:
 
 1. Redeploy the `default` workspace schema to `development` now.
 2. Redeploy it to `production` at release gate R1.
