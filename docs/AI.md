@@ -49,7 +49,7 @@ Usage counts against the Claude subscription tied to the token. Rotate it like a
 
 **Blocked issues (D92).** Before planning, the `gate` job reads the issue's `blocked_by` dependencies. With any blocker not closed as **completed** it labels the issue `@claude:blocked`, comments once and stops; `not planned` and `duplicate` closures don't release, so remove the dependency instead. Blockers worked on `next` stay open until closed by hand. Removing `@claude:blocked` manually does nothing. Issues released together run in parallel on separate branches.
 
-**Bot actors (D93).** The three `claude-code-action` steps set `allowed_bots: "github-actions[bot],coderabbitai[bot]"`. Unblock dispatches run as `github-actions[bot]`, and without the entry the action fails with "Workflow initiated by non-human actor". CodeRabbit is accepted at the owner's request. `'*'` is never used, and the job gates still decide who may start a run.
+**Bot actors (D93).** The three `claude-code-action` steps set `allowed_bots: "github-actions[bot],coderabbitai[bot]"`. Unblock dispatches run as `github-actions[bot]`, and without the entry the action fails with "Workflow initiated by non-human actor". CodeRabbit is listed at the owner's request, but in `claude-issue.yml` it has no effect today: the gate lets only the owner start `issues` and `issue_comment` runs, so a CodeRabbit-initiated issue run is still skipped until that gate is widened (an explicit owner decision). In `claude-review.yml` the entry is effective. `'*'` is never used, and the job gates still decide who may start a run.
 
 To restart an issue from scratch, remove and re-add the trigger label. Only the owner's label and comments trigger it.
 
