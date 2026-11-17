@@ -80,6 +80,9 @@ jobs:
     steps:
       - name: Check blocking issues
         id: check
+        # Shorter than the job timeout, so a stalled API call ends as a step failure while the
+        # restore step below still has time to run (D95).
+        timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -149,8 +152,13 @@ jobs:
             fi
             # Parking restarts the issue from scratch, so earlier progress no longer applies. Left
             # in place, those labels would make the dispatch that releases it be skipped (D95).
-            gh issue edit "$ISSUE" --remove-label "$PLANNED_LABEL" 2>/dev/null || true
-            gh issue edit "$ISSUE" --remove-label "$WAITING_LABEL" 2>/dev/null || true
+            # A failed removal fails the job after one retry instead of being ignored, because a
+            # stale label would silently strand the issue; a re-run finishes the job.
+            for stale in "$PLANNED_LABEL" "$WAITING_LABEL"; do
+              if grep -Fixq -- "$stale" <<<"$labels"; then
+                gh issue edit "$ISSUE" --remove-label "$stale" || { sleep 3; gh issue edit "$ISSUE" --remove-label "$stale"; }
+              fi
+            done
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
             gh issue edit "$ISSUE" --remove-label "$BLOCKED_LABEL" 2>/dev/null || true
@@ -158,18 +166,19 @@ jobs:
           fi
 
       # claude-unblock.yml removes `@claude:blocked` before it dispatches this run (D95), so a
-      # failed gate would leave the issue orphaned. Put the label back so the next sweep retries.
+      # failed or cancelled gate (a job timeout counts as a cancel) would leave the issue
+      # orphaned. Put the label back so the next sweep retries.
       - name: Restore the blocked label after a failed release
-        if: failure() && github.event_name == 'workflow_dispatch' && github.triggering_actor == 'github-actions[bot]'
+        if: (failure() || cancelled()) && github.event_name == 'workflow_dispatch' && github.triggering_actor == 'github-actions[bot]'
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           ISSUE: ${{ github.event.issue.number || inputs.issue }}
         run: |
           if gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"; then
-            echo "::warning::The gate failed for #$ISSUE, so $BLOCKED_LABEL was restored and a later unblock sweep retries it."
+            echo "::warning::The gate did not finish for #$ISSUE (failed or cancelled), so $BLOCKED_LABEL was restored and a later unblock sweep retries it."
           else
-            echo "::error::The gate failed for #$ISSUE and $BLOCKED_LABEL could not be restored; add it back by hand."
+            echo "::error::The gate did not finish for #$ISSUE and $BLOCKED_LABEL could not be restored; add it back by hand."
           fi
 
   plan:
