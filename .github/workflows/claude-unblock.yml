@@ -10,7 +10,7 @@ name: Claude unblock
 # A release is idempotent (D95): the sweep re-reads the issue, removes
 # `@claude:blocked` and only then dispatches, so the next sweep never sees a
 # released issue as blocked. If the dispatch fails the label goes back, and the
-# gate puts it back if its own run fails or is cancelled, so a later sweep retries. The gate also
+# gate puts it back if its own run fails (best effort when it is cancelled), so a later sweep retries. The gate also
 # skips a bot dispatch for an issue that is already planned or has an open PR.
 
 on:
