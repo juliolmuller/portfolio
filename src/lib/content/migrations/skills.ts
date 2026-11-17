@@ -23,8 +23,7 @@ export const PRACTICE_ORDER_OFFSET = 100_000;
 
 /**
  * Document ids are unique across a dataset, so distinct sources always get
- * distinct copies. Seeded ids carry a `<type>.` prefix but admin-created ones
- * are plain UUIDs (D28); nothing here may rely on the prefix.
+ * distinct copies. Nothing here parses or relies on the shape of a source id.
  */
 export function skillIdFor(sourceId: string): string {
   return derivedId('skill', sourceId);

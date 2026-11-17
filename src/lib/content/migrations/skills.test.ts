@@ -30,6 +30,7 @@ describe('skill copy mapper', () => {
 
       expect(result.success, `${source}: ${JSON.stringify(result.error?.issues)}`).toBe(true);
       expect(skillSchema.parse(skill)).toStrictEqual(skill);
+      expect(skill.id).toBe(skillIdFor(source));
     }
   });
 
@@ -164,6 +165,7 @@ describe('skill copy mapper', () => {
     expect(technologyToSkill({ ...typescript, visible: false }, NOW).visible).toBe(false);
     expect(practiceToSkill({ ...practice, visible: false }, NOW).visible).toBe(false);
     expect(technologyToSkill({ ...typescript, isFixture: true }, NOW).isFixture).toBe(true);
+    expect(practiceToSkill({ ...practice, isFixture: true }, NOW).isFixture).toBe(true);
 
     const { isFixture: _omit, ...bare } = typescript;
 
@@ -191,5 +193,9 @@ describe('skill copy mapper', () => {
     expect(mapTechIds(ids)).toEqual(ids.map(skillIdFor));
     expect(ids).toEqual(copy);
     expect(mapTechIds([])).toEqual([]);
+  });
+
+  it('maps technology ids to the ids of the copies', () => {
+    expect(mapTechIds([typescript.id])).toEqual([technologyToSkill(typescript, NOW).id]);
   });
 });
