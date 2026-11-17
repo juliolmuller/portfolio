@@ -43,11 +43,11 @@ function friendly(issue: IssueLike): string {
   }
 
   if (issue.code === 'too_small' && issue.origin === 'array') {
-    return `At least ${issue.minimum} items`;
+    return `At least ${issue.minimum} ${Number(issue.minimum) === 1 ? 'item' : 'items'}`;
   }
 
   if (issue.code === 'too_big' && issue.origin === 'array') {
-    return `At most ${issue.maximum} items`;
+    return `At most ${issue.maximum} ${Number(issue.maximum) === 1 ? 'item' : 'items'}`;
   }
 
   if (issue.code === 'too_big' && issue.origin === 'string') {

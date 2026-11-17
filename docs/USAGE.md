@@ -35,7 +35,7 @@ Every login answer takes at least 800 ms whether it succeeds or not; that is del
 
 The **dashboard** shows counts of visible and hidden items per area, a **Needs attention** list, recent changes and two buttons (**Revalidate all public pages**, **Open public site**). **Needs attention** flags: missing Portuguese, images without alt text, project titles or summaries outside their length ranges, thin write-ups (under 150 words in a language) and more than six featured projects.
 
-Areas (sidebar on desktop, tab bar on phones): **Profile, Links, Recommended, Projects, Experience, Education, Technologies, Practices, Contact, Resume.**
+Areas (sidebar on desktop, tab bar on phones): **Profile, Links, Recommended, Projects, Experience, Education, Skills, Technologies, Practices, Contact, Resume.**
 
 How every area behaves:
 
@@ -48,6 +48,10 @@ How every area behaves:
 - Images: JPEG, PNG, WebP or AVIF, **up to 4 MB** (Vercel's request limit), re-encoded and stripped of metadata. PDFs: up to 4 MB, checked for scripts. Custom icons are pasted as SVG and reduced to plain filled shapes.
 
 ## 3. Add a portfolio item
+
+### Skills
+
+**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Official site is optional (https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet; icons and the cloud option come later.
 
 ### Step 1: make sure its technologies exist
 
