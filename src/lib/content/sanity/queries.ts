@@ -64,6 +64,10 @@ const TECHNOLOGY_FIELDS = /* groq */ `
   ${META}, name, category, iconSource, iconSlug,
   customSvg{ viewBox, paths }, monogram, brandColor, url, priority, order, visible`;
 
+const SKILL_FIELDS = /* groq */ `
+  ${META}, name, categories, iconSource, iconSlug,
+  customSvg{ viewBox, paths }, monogram, showInCloud, brandColor, url, priority, order, visible`;
+
 const PRACTICE_FIELDS = /* groq */ `
   ${META}, label, order, visible`;
 
@@ -123,6 +127,7 @@ const ADMIN_FIELDS = {
   education: EDUCATION_FIELDS,
   technology: TECHNOLOGY_FIELDS,
   practice: PRACTICE_FIELDS,
+  skill: SKILL_FIELDS,
 } as const;
 
 /**

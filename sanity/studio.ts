@@ -193,6 +193,7 @@ const PREVIEWS: Record<DocumentType, { media?: string; subtitle?: string; title:
   education: { title: 'title.en', subtitle: 'institution' },
   technology: { title: 'name', subtitle: 'category' },
   practice: { title: 'label.en' },
+  skill: { title: 'name.en', subtitle: 'categories.0' },
 };
 
 interface PreviewValues {

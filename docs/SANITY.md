@@ -47,6 +47,14 @@ SANITY_WRITE_TOKEN=…
 2. `bun run sanity:schema` prints the declaration;
 3. deploy it to `development` and `production` with Sanity's MCP `deploy_schema` (workspace `default`), or wire `schemaTypes` into a Studio and run `sanity schema deploy`.
 
+### Skills (D93, epic #54)
+
+The `skill` type is in the schema, previewed by English name and primary category. Nothing reads or writes skills yet (readers arrive in #57). Owner steps:
+
+1. Redeploy the `default` workspace schema to `development` now.
+2. Redeploy it to `production` at release gate R1.
+3. Add `"skill"` to the webhook `_type` filter (see "Revalidation webhook"). Until #57 lands, a skill change revalidates only the sitemap.
+
 ### Migration 2026-11 (D67)
 
 Redeploy the schema, then for each dataset (`development`, then `production`):
@@ -145,7 +153,7 @@ The admin (`/admin`) is the editor: it writes through `src/lib/content/admin/` w
 Edits made outside the admin (Studio, the Sanity Manage UI) reach the site through `POST /api/revalidate`, which maps the document type to `content:*` tags (`tagsForDocument`) and calls `revalidateTag(tag, { expire: 0 })` (D9). After deploying:
 
 1. In [sanity.io/manage](https://www.sanity.io/manage/project/njcnsmax) → API → Webhooks, add a webhook to `https://<your-domain>/api/revalidate`, method POST, dataset `production` (and one for `development` if previews matter; see [SETUP.md §6.7](./SETUP.md#67-staging-webhook-optional)).
-2. Filter: `_type in ["profile","contact","resume","featuredLink","recommendedProfile","project","experience","education","technology","practice"]`. Projection: `{_type, "slug": slug.current}`. Trigger on create, update and delete; drafts off.
+2. Filter: `_type in ["profile","contact","resume","featuredLink","recommendedProfile","project","experience","education","technology","practice","skill"]`. Projection: `{_type, "slug": slug.current}`. Trigger on create, update and delete; drafts off.
 3. Set a secret and put the same value in `SANITY_WEBHOOK_SECRET`. Anything unsigned, stale (over 10 minutes) or malformed gets a bare 404.
 
 ### Smoke run against a real dataset

@@ -289,6 +289,26 @@ const converters: Converters = {
       order: doc.order,
       visible: doc.visible ?? true,
     }),
+
+  skill: (doc) =>
+    compact({
+      ...base('skill', doc),
+      name: localeString(doc.name),
+      categories: doc.categories,
+      iconSource: doc.iconSource,
+      iconSlug: doc.iconSlug,
+      customSvg: optional(doc.customSvg, (svg) => ({
+        _type: 'svgData',
+        ...svg,
+      })),
+      monogram: doc.monogram,
+      showInCloud: doc.showInCloud ?? false,
+      brandColor: doc.brandColor,
+      url: doc.url,
+      priority: doc.priority ?? 2,
+      order: doc.order,
+      visible: doc.visible ?? true,
+    }),
 };
 
 export function toSanityDocument<T extends DocumentType>(

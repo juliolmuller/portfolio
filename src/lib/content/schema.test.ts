@@ -1,6 +1,7 @@
 import { createFixtureDataset } from './fixtures/dataset';
 import {
   documentSchemas,
+  documentTypes,
   experienceSchema,
   featuredLinkSchema,
   hasNoRawHtml,
@@ -234,8 +235,9 @@ describe('skill schema', () => {
     expect(skillSchema.safeParse({ ...baseSkill, url: 'http://example.com' }).success).toBe(false);
   });
 
-  it('is not registered yet and extends the technology categories', () => {
-    expect('skill' in documentSchemas).toBe(false);
+  it('is registered and extends the technology categories', () => {
+    expect(documentSchemas.skill).toBe(skillSchema);
+    expect(documentTypes).toContain('skill');
     expect(skillCategories).toEqual([...techCategories, 'engineering']);
   });
 });

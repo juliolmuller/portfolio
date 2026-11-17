@@ -344,9 +344,8 @@ export const practiceSchema = z.object({
 });
 
 /**
- * D93: skills replace technologies and practices. Not registered in
- * `documentSchemas` yet; the repository, Sanity and the admin adopt it in the
- * follow-up tasks of epic #54.
+ * D93: skills replace technologies and practices. Registered in
+ * `documentSchemas` (#56); the readers adopt it in #57.
  */
 export const skillSchema = z
   .object({
@@ -376,9 +375,6 @@ export const skillSchema = z
   .superRefine((skill, ctx) => {
     checkTechIcon(skill, ctx);
   });
-
-export type SkillDocument = z.infer<typeof skillSchema>;
-export type SkillInput = z.input<typeof skillSchema>;
 
 export const projectKinds = [
   'web',
@@ -506,6 +502,7 @@ export const documentSchemas = {
   education: educationSchema,
   technology: technologySchema,
   practice: practiceSchema,
+  skill: skillSchema,
 } as const;
 
 export type DocumentType = keyof typeof documentSchemas;
@@ -527,6 +524,8 @@ export type ExperienceDocument = DocumentOf<'experience'>;
 export type EducationDocument = DocumentOf<'education'>;
 export type TechnologyDocument = DocumentOf<'technology'>;
 export type PracticeDocument = DocumentOf<'practice'>;
+export type SkillDocument = DocumentOf<'skill'>;
+export type SkillInput = DocumentInput<'skill'>;
 export type ImageField = z.infer<typeof imageSchema>;
 export type ImageAsset = z.infer<typeof imageAssetSchema>;
 export type FileAsset = z.infer<typeof fileAssetSchema>;

@@ -26,5 +26,7 @@ export function createFixtureDataset(): FixtureDataset {
     education,
     technology: technologies,
     practice: practices,
+    // Fixture skills arrive in #59.
+    skill: [],
   });
 }

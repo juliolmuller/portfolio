@@ -7,7 +7,13 @@
  * `./studio.ts`, which adds previews, orderings and zod-backed validation.
  */
 
-import { titleFontLabels, titleFonts } from '../src/lib/content/taxonomy';
+import { iconSources } from '../src/lib/content/schema';
+import {
+  skillCategories,
+  techCategories,
+  titleFontLabels,
+  titleFonts,
+} from '../src/lib/content/taxonomy';
 
 type Field = { name: string; type: string } & Record<string, unknown>;
 type SchemaType = {
@@ -279,7 +285,7 @@ const documents: SchemaType[] = [
     fields: [
       field('name', 'string'),
       field('category', 'string', {
-        options: list(['language', 'frontend', 'backend', 'data', 'cloud', 'integration', 'ai']),
+        options: list(techCategories),
       }),
       field('iconSource', 'string', {
         options: list(['simple-icons', 'devicon', 'custom-svg', 'monogram']),
@@ -300,6 +306,42 @@ const documents: SchemaType[] = [
     title: 'Practice',
     type: 'document',
     fields: [localeString('label'), ...common],
+  },
+  {
+    name: 'skill',
+    title: 'Skill',
+    type: 'document',
+    fields: [
+      localeString('name'),
+      field('categories', 'array', {
+        of: [{ type: 'string' }],
+        options: { list: skillCategories.map((value) => ({ title: value, value })) },
+        description: 'At least one; the first is the primary category',
+      }),
+      field('iconSource', 'string', {
+        description: 'Empty = no icon',
+        options: {
+          list: iconSources.map((value) => ({ title: value, value })),
+          layout: 'dropdown',
+        },
+      }),
+      field('iconSlug', 'string'),
+      field('customSvg', 'svgData'),
+      field('monogram', 'string', { description: '1–3 capitals or digits' }),
+      field('showInCloud', 'boolean', {
+        title: 'Show in cloud',
+        initialValue: false,
+        description: 'Only with an icon',
+      }),
+      field('brandColor', 'string', { description: '#rrggbb' }),
+      field('url', 'url'),
+      field('priority', 'number', {
+        title: 'Prominence',
+        initialValue: 2,
+        options: { list: [1, 2, 3], layout: 'radio' },
+      }),
+      ...common,
+    ],
   },
 ];
 
