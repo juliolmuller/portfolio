@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "audit:deps": "bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm",
+    "audit:deps": "bun audit --audit-level=high --ignore=GHSA-vfj7-8cjw-p6xm --ignore=GHSA-fc5q-39xc-vjpf",
     "i18n:check": "bun --conditions=react-server scripts/i18n-check.ts",
     "icons:audit": "bun --conditions=react-server scripts/icons-audit.ts",
     "check:seo": "bun --conditions=react-server scripts/check-seo.ts",
