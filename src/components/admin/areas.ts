@@ -42,6 +42,7 @@ export const AREAS: AreaMeta[] = [
     singular: 'entry',
     type: 'education',
   },
+  { slug: 'skills', label: 'Skills', singular: 'skill', type: 'skill' },
   {
     slug: 'technologies',
     label: 'Technologies',

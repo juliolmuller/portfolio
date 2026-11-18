@@ -123,6 +123,7 @@ const AREAS = [
   'projects',
   'experience',
   'education',
+  'skills',
   'technologies',
   'practices',
   'contact',
@@ -136,6 +137,7 @@ test.describe('every area', () => {
     const urls = [
       ...AREAS.map((area) => `/admin/${area}`),
       '/admin/projects/new',
+      '/admin/skills/new',
       '/admin/technologies/new',
       '/admin/links/new',
       '/admin/experience/new',
@@ -386,6 +388,73 @@ test.describe('singletons and lists', () => {
     await page.getByRole('button', { name: 'Delete permanently' }).click();
     await expect(page).toHaveURL(/\/admin\/practices$/);
     await expect(page.locator('tbody tr').filter({ hasText: label })).toHaveCount(0);
+  });
+
+  test('a skill: create with two categories, copy EN to PT, reorder, hide, delete', async ({
+    page,
+  }) => {
+    const suffix = Math.random().toString(36).slice(2, 7);
+    const nameA = `E2E skill A ${suffix}`;
+    const nameB = `E2E skill B ${suffix}`;
+
+    await signIn(page);
+    await openEditor(page, '/admin/skills/new');
+    await field(page, 'name.en').fill(nameA);
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await expect(page.getByRole('alert').first()).toBeVisible();
+    await expect(page.getByRole('group', { name: /Categories/ })).toContainText('At least 1 item');
+
+    await page.getByText('Copy', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Copy English to Portuguese' }).click();
+    await expect(field(page, 'name.pt')).toHaveValue(nameA);
+    await page.getByLabel('Software engineering').check();
+    await page.getByLabel('Frontend', { exact: true }).check();
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+    await expect(page).toHaveURL(/\/admin\/skills\/[0-9a-f-]{36}$/);
+
+    await openEditor(page, '/admin/skills/new');
+    await field(page, 'name.en').fill(nameB);
+    await page.getByText('Copy', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Copy English to Portuguese' }).click();
+    await page.getByLabel('Data & messaging').check();
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+    await expect(page).toHaveURL(/\/admin\/skills\/[0-9a-f-]{36}$/);
+
+    await page.goto('/admin/skills');
+
+    const rowA = page.locator('tbody tr').filter({ hasText: nameA });
+    const rowB = page.locator('tbody tr').filter({ hasText: nameB });
+    const indexOf = async (name: string): Promise<number> =>
+      (await page.locator('tbody tr').allInnerTexts()).findIndex((text) => text.includes(name));
+
+    await expect(rowA).toContainText('Software engineering, Frontend');
+    await rowB.getByRole('button', { name: `Move ${nameB} up` }).click();
+    await expect(page.getByText('Order saved')).toBeVisible();
+    await page.reload();
+    await expect(rowB).toBeVisible();
+    expect(await indexOf(nameB)).toBeLessThan(await indexOf(nameA));
+
+    await rowA.getByRole('checkbox', { name: `Visible: ${nameA}` }).uncheck();
+    // The toggle has no confirmation toast, so reload until the change sticks.
+    await expect(async () => {
+      await page.reload();
+      await expect(rowA.getByRole('checkbox', { name: `Visible: ${nameA}` })).not.toBeChecked({
+        timeout: 1_500,
+      });
+    }).toPass();
+
+    for (const name of [nameA, nameB]) {
+      await page.goto('/admin/skills');
+      await page.locator('tbody tr').filter({ hasText: name }).getByRole('link', { name }).click();
+      await hydrated(page);
+      await openDeleteDialog(page);
+      await page.getByLabel('Confirmation text').fill(name);
+      await page.getByRole('button', { name: 'Delete permanently' }).click();
+      await expect(page).toHaveURL(/\/admin\/skills$/);
+      await expect(page.locator('tbody tr').filter({ hasText: name })).toHaveCount(0);
+    }
   });
 
   test('a concurrent edit opens the conflict dialog; overwrite wins', async ({ page, context }) => {

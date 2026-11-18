@@ -231,7 +231,7 @@ test.describe('terminal login', () => {
     await expect(logOf(page)).toContainText('julio');
     await run(page, 'admin');
     await expect(logOf(page)).toContainText('Admin areas:');
-    await logOf(page).getByRole('button', { name: 'projects', exact: true });
+    await expect(logOf(page).getByRole('button', { name: 'skills', exact: true })).toBeVisible();
 
     await run(page, 'logout');
     await expect(logOf(page)).toContainText('Signed out.');
