@@ -350,7 +350,7 @@ export const practiceSchema = z.object({
 
 /**
  * D93: skills replace technologies and practices. Registered in
- * `documentSchemas` (#56); the readers adopt it in #57.
+ * `documentSchemas` (#56); `getSkills` reads it (#57); the UI adopts it later.
  */
 export const skillSchema = z
   .object({
