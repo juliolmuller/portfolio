@@ -112,16 +112,16 @@ Server-rendered HTML, unique metadata and canonical/hreflang per page, JSON-LD, 
 
 ## Quality gates
 
-| Gate                        | What it enforces                                                                                                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lint` (`--max-warnings=0`) | ESLint 9 + jsx-a11y strict, Sanity/groq-js import bans                                                                                         |
-| `typecheck`                 | `next typegen` + `tsc --noEmit`                                                                                                                |
-| `test`                      | Vitest: core libs, schemas, both adapters, auth, JSON-LD, token contrast                                                                       |
-| `i18n:check`, `icons:audit` | Same keys/placeholders in both catalogs and fixtures; every technology has an icon or monogram                                                 |
+| Gate                        | What it enforces                                                                                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lint` (`--max-warnings=0`) | ESLint 9 + jsx-a11y strict, Sanity/groq-js import bans                                                                                                               |
+| `typecheck`                 | `next typegen` + `tsc --noEmit`                                                                                                                                      |
+| `test`                      | Vitest: core libs, schemas, both adapters, auth, JSON-LD, token contrast                                                                                             |
+| `i18n:check`, `icons:audit` | Same keys/placeholders in both catalogs and fixtures; every technology has an icon or monogram                                                                       |
 | `check:bundle`              | Public routes ≤ 200 KB gzip first load (admin reported, not budgeted), lazy chunks (terminal ≤ 20, secret ≤ 3, sphere ≤ 10); admin path/server-only leaks (D58, D97) |
-| `check:seo`                 | Crawls every sitemap URL with JS off (D32)                                                                                                     |
-| `test:e2e`                  | Playwright on a fixtures production build, port 3100; axe on Chromium (D23)                                                                    |
-| `lhci`                      | Accessibility/SEO = 1, best-practices ≥ 0.95, CLS ≤ 0.05; regression floors for performance ≥ 0.85, LCP ≤ 3.8 s, TBT ≤ 350 ms (D60)            |
+| `check:seo`                 | Crawls every sitemap URL with JS off (D32)                                                                                                                           |
+| `test:e2e`                  | Playwright on a fixtures production build, port 3100; axe on Chromium (D23)                                                                                          |
+| `lhci`                      | Accessibility/SEO = 1, best-practices ≥ 0.95, CLS ≤ 0.05; regression floors for performance ≥ 0.85, LCP ≤ 3.8 s, TBT ≤ 350 ms (D60)                                  |
 
 ## Known limitations
 

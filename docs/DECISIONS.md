@@ -8,17 +8,17 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 
 ## Index
 
-| Topic                       | Decisions                                                           |
-| --------------------------- | ------------------------------------------------------------------- |
-| Toolchain and versions      | D5, D6, D15, D20, D24                                               |
-| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86, D88      |
-| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87, D90              |
-| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                           |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                                         |
-| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82, D91                               |
-| Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                                   |
+| Topic                       | Decisions                                                                |
+| --------------------------- | ------------------------------------------------------------------------ |
+| Toolchain and versions      | D5, D6, D15, D20, D24                                                    |
+| Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86, D88           |
+| Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87, D90                   |
+| Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                                |
+| Tech cloud                  | D13, D22, D37–D45, D59, D66                                              |
+| Home, hero, header          | D17, D46–D48, D67, D69, D81, D82, D91                                    |
+| Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                                        |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79, D83, D89, D92–D95, D97 |
-| Analytics                   | D68                                                                 |
+| Analytics                   | D68                                                                      |
 
 ## Toolchain and versions
 
