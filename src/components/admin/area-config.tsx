@@ -39,6 +39,7 @@ const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
  */
 const en = (doc: AdminDoc, field: string): string =>
   String((doc[field] as { en?: string } | undefined)?.en ?? '');
+
 const categoriesCell = (doc: AdminDoc): string => {
   const value = doc['categories'];
 
@@ -49,6 +50,7 @@ const categoriesCell = (doc: AdminDoc): string => {
     .map((key) => (isSkillCategory(key) ? skillCategoryLabels[key] : key))
     .join(', ');
 };
+
 const str = (doc: AdminDoc, field: string): string => String(doc[field] ?? '');
 
 export const AREA_CONFIG: Record<string, AreaConfig> = {

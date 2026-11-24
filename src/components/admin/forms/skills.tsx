@@ -12,7 +12,6 @@ export function SkillForm(): React.JSX.Element {
       <CheckboxGroup
         path="categories"
         label="Categories"
-        max={skillCategories.length}
         hint="Tick the main category first; the list shows them in stored order."
         options={categoryOptions(skillCategories)}
       />

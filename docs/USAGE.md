@@ -49,10 +49,6 @@ How every area behaves:
 
 ## 3. Add a portfolio item
 
-### Skills
-
-**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Official site is optional (https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet; icons and the cloud option come later.
-
 ### Step 1: make sure its technologies exist
 
 A project can only reference existing technologies. In **Technologies**, check that every tool it used is there. If one is missing: **New technology** → name, category, priority (1 and 2 appear everywhere; 3 is left out of the cloud on phones but stays in the List view), official site (optional). Icon: search the built-in sets (Simple Icons, Devicon), paste a single-colour SVG (strokes and transforms are refused; convert to filled shapes first), or leave empty for a two-letter monogram. **Save and publish**.
@@ -115,6 +111,10 @@ Not editable in the admin (change the code and redeploy):
 - Owner name, job title, city: `src/config/site.ts`.
 - To offer another title font: add its id/label in `src/lib/content/taxonomy.ts`, a loader call in `src/styles/title-fonts.ts`, and redeploy the Sanity schema.
 - Section order and the schema itself.
+
+### Skills
+
+**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet; icons and the cloud option come later.
 
 ## 5. Replacing the demo data (owner checklist)
 
