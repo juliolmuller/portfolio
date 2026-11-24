@@ -1,11 +1,17 @@
 name: Claude unblock
 
-# Releases issues the gate in claude-issue.yml parked with "claude:blocked" (D92).
+# Releases issues the gate in claude-issue.yml parked with `@claude:blocked` (D92).
 # Every run is a full sweep: it re-checks `blocked_by` of every open blocked
 # issue, so it doesn't matter which issue closed, and dependency edits (which
 # emit no event) are caught by the schedule. A release starts claude-issue.yml with
 # workflow_dispatch: events made with GITHUB_TOKEN don't trigger workflows, but
 # workflow_dispatch is the exception.
+#
+# A release is idempotent (D95): the sweep re-reads the issue, removes
+# `@claude:blocked` and only then dispatches, so the next sweep never sees a
+# released issue as blocked. If the dispatch fails the label goes back, and the
+# gate puts it back if its own run fails (best effort when it is cancelled), so a later sweep retries. The gate also
+# skips a bot dispatch for an issue that is already planned or has an open PR.
 
 on:
   issues:
@@ -37,8 +43,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          gh issue list --label "claude:blocked" --state open --limit 200 --json number,labels > "$RUNNER_TEMP/blocked.json"
-          for n in $(jq -r '.[] | select(any(.labels[].name; . == "Claude" or . == "claude:next")) | .number' "$RUNNER_TEMP/blocked.json"); do
+          gh issue list --label "@claude:blocked" --state open --limit 200 --json number,labels > "$RUNNER_TEMP/blocked.json"
+          # Label names are case-insensitive on GitHub, so compare lowercased.
+          for n in $(jq -r '.[] | select(any(.labels[].name | ascii_downcase; . == "@claude" or . == "@claude:next")) | .number' "$RUNNER_TEMP/blocked.json"); do
             if ! gh api --paginate -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
               "repos/$GITHUB_REPOSITORY/issues/$n/dependencies/blocked_by" > "$RUNNER_TEMP/blockers.json"; then
               echo "::warning::Could not read the blockers of #$n"
@@ -46,9 +53,27 @@ jobs:
             fi
             open=$(jq -s 'add // [] | map(select(.state != "closed" or .state_reason != "completed")) | length' "$RUNNER_TEMP/blockers.json")
             if [ "$open" = "0" ]; then
-              # The gate removes the label once its own check passes, so a failed gate run is retried by the next sweep.
+              # The list above can be stale (an earlier sweep may have released the issue moments ago), so read the issue itself.
+              if ! cur=$(gh issue view "$n" --json state,labels); then
+                echo "::warning::Could not re-read #$n"
+                continue
+              fi
+              if ! jq -e '(.state == "OPEN") and ([.labels[].name | ascii_downcase] as $l | ($l | any(. == "@claude:blocked")) and ($l | any(. == "@claude" or . == "@claude:next")))' <<<"$cur" > /dev/null; then
+                echo "Skipping #$n: it is closed or no longer blocked"
+                continue
+              fi
+              # Release before dispatching: the gate removes the label only after its own check passes, and until then
+              # the next sweep would see this issue as blocked and dispatch it again.
+              if ! gh issue edit "$n" --remove-label "@claude:blocked"; then
+                echo "::warning::Could not release #$n"
+                continue
+              fi
               if ! gh workflow run claude-issue.yml --ref main -f issue="$n"; then
                 echo "::warning::Could not dispatch the gate for #$n"
+                # Put the label back so a later sweep retries.
+                if ! gh issue edit "$n" --add-label "@claude:blocked"; then
+                  echo "::error::#$n lost @claude:blocked after a failed dispatch; add it back by hand"
+                fi
                 continue
               fi
               echo "Released #$n"

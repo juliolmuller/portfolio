@@ -2,7 +2,7 @@ name: Claude PR review
 
 # Every same-repo PR is assigned to the owner. Claude reviews a PR only when:
 #   - it was opened by the owner (juliolmuller) or by claude[bot], AND
-#   - it carries the "Claude" label, AND
+#   - it carries the `@claude` label, AND
 #   - it is not a draft.
 # Each finding is posted as an inline comment anchored to the exact lines it
 # refers to (one thread per finding); a short summary comment closes the review.
@@ -35,14 +35,14 @@ jobs:
         run: gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-assignee juliolmuller
 
   review:
-    # On "labeled", only the Claude label counts, so other labels (including the
+    # On "labeled", only the `@claude` label counts, so other labels (including the
     # ones the reviewer itself adds) never start another review.
     if: >-
       github.event.pull_request.head.repo.full_name == github.repository
       && !github.event.pull_request.draft
-      && contains(github.event.pull_request.labels.*.name, 'Claude')
+      && contains(github.event.pull_request.labels.*.name, '@claude')
       && contains(fromJSON('["juliolmuller","claude[bot]"]'), github.event.pull_request.user.login)
-      && (github.event.action != 'labeled' || github.event.label.name == 'Claude')
+      && (github.event.action != 'labeled' || github.event.label.name == '@claude')
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     permissions:
@@ -60,8 +60,10 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          # PRs opened by the issue workflow are authored by the Claude App.
-          allowed_bots: "claude[bot]"
+          # claude[bot]: the issue workflow opens PRs as the Claude App.
+          # coderabbitai[bot]: CodeRabbit may be the actor of PR events (labels,
+          # autofix pushes). The job `if:` still limits which PRs are reviewed (D94).
+          allowed_bots: "claude[bot],coderabbitai[bot]"
           # Post every inline finding as written; do not let a classifier drop any.
           classify_inline_comments: false
           prompt: |
@@ -97,7 +99,7 @@ jobs:
             5. Make sure the PR has fitting labels: add the ones that apply with
                `gh pr edit ${{ github.event.pull_request.number }} --add-label …`,
                choosing only from `gh label list --limit 200` and never removing
-               "Claude". Also run
+               `@claude`. Also run
                `gh pr edit ${{ github.event.pull_request.number }} --add-assignee juliolmuller`.
             6. Finish with ONE short summary comment in English
                (`gh pr comment ${{ github.event.pull_request.number }} --body …`):

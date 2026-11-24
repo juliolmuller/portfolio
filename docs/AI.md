@@ -14,6 +14,7 @@ How AI agents built and maintain this repository, how to work with them, and the
 | 2026-11-03         | Manual **Claude PR review** workflow added to GitHub Actions.                                                                                                                                                                                                                        |
 | 2026-11-12         | Claude workflows reworked: label-triggered issue → plan → PR pipeline, automatic labeled PR review (D78).                                                                                                                                                                            |
 | 2026-11-04         | Documentation reorganized: `.cursor/rules/*` merged into `AGENTS.md`, `CLAUDE.md` added, `SPEC.md` archived, `DECISIONS.md` condensed, setup and usage guides rewritten.                                                                                                             |
+| 2026-11-16         | Agent labels renamed to lowercase `@claude*` names and matched case-insensitively (#99, D79).                                                                                                                                                                                        |
 
 Commit trailers are the audit trail for which tool wrote what: `git log --format='%h %s%n%b' | grep -iE 'co-authored'`.
 
@@ -35,29 +36,34 @@ Both run `anthropics/claude-code-action` (floating `@v1` tag: always the latest 
 1. Install the [Claude GitHub App](https://github.com/apps/claude) on this repository (it authors Claude's PRs and comments, and its token is what lets a Claude PR trigger the review).
 2. Locally run `claude setup-token` and copy the token it prints.
 3. GitHub → repository → Settings → Secrets and variables → Actions → New repository secret: `CLAUDE_CODE_OAUTH_TOKEN`.
-4. Create the `Claude` and `claude:next` labels (the workflows also create `Claude`, `claude:needs-input`, `claude:planned` and `claude:blocked` on first use; create `claude:next` yourself).
+4. Create the `@claude` and `@claude:next` labels (the workflows also create `@claude`, `@claude:needs-input`, `@claude:planned` and `@claude:blocked` on first use; create `@claude:next` yourself). Label names are all lowercase with the `@` prefix; the workflows match them case-insensitively.
 
 Usage counts against the Claude subscription tied to the token. Rotate it like any secret (re-run `claude setup-token`, replace the repository secret).
 
 ### Issue to PR (`claude-issue.yml`)
 
-1. The owner adds **one** trigger label to an issue: **Claude** (work on `main`: quick changes, improvements, hot-fixes) or **claude:next** (work on `next`: bigger changes and manual testing). With both, `claude:next` wins. The **planner** (Opus) reads the issue, the thread, `AGENTS.md` and the code. If a decision is genuinely the owner's, it posts numbered questions mentioning him, labels the issue `claude:needs-input` and stops.
-2. The owner answers **in one comment**; that comment re-runs the same workflow and the planner resumes with the whole thread. Comments are ignored once the issue is no longer `claude:needs-input`.
-3. With nothing open, the planner posts the plan as an issue comment (`<!-- claude:plan -->`, label `claude:planned`). The **implementer** (Sonnet) builds it from that comment on `claude/issue-<n>-<slug>` (cut from the base branch the label chose), loops on the gates and commits (hooks stay on).
-4. The workflow itself re-runs the gates (`lint`, `typecheck`, `test`, `i18n:check`, `icons:audit`, `build`, `check:bundle`, `check:seo`) and puts the results in the PR body. A short Claude step pushes and opens the PR against that same base branch (`main` or `next`) with the App token: author `claude[bot]`, assignee the owner, label `Claude` (always, even for `claude:next`, so the review runs) plus fitting existing labels, `Closes #<n>`. Any failing gate → draft PR.
+1. The owner adds **one** trigger label to an issue: `@claude` (work on `main`: quick changes, improvements, hot-fixes) or `@claude:next` (work on `next`: bigger changes and manual testing). With both, `@claude:next` wins. The **planner** (Opus) reads the issue, the thread, `AGENTS.md` and the code. If a decision is genuinely the owner's, it posts numbered questions mentioning him, labels the issue `@claude:needs-input` and stops.
+2. The owner answers **in one comment**; that comment re-runs the same workflow and the planner resumes with the whole thread. Comments are ignored once the issue is no longer `@claude:needs-input`.
+3. With nothing open, the planner posts the plan as an issue comment (`<!-- claude:plan -->`, label `@claude:planned`). The **implementer** (Sonnet) builds it from that comment on `claude/issue-<n>-<slug>` (cut from the base branch the label chose), loops on the gates and commits (hooks stay on).
+4. The workflow itself re-runs the gates (`lint`, `typecheck`, `test`, `i18n:check`, `icons:audit`, `build`, `check:bundle`, `check:seo`) and puts the results in the PR body. A short Claude step pushes and opens the PR against that same base branch (`main` or `next`) with the App token: author `claude[bot]`, assignee the owner, label `@claude` (always, even for `@claude:next`, so the review runs) plus fitting existing labels, `Closes #<n>`. Any failing gate → draft PR.
 
-**Blocked issues (D92).** Before planning, the `gate` job reads the issue's `blocked_by` dependencies. With any blocker not closed as **completed** it labels the issue `claude:blocked`, comments once and stops; `not planned` and `duplicate` closures don't release, so remove the dependency instead. Blockers worked on `next` stay open until closed by hand. Removing `claude:blocked` manually does nothing. Issues released together run in parallel on separate branches.
+**Blocked issues (D92).** Before planning, the `gate` job reads the issue's `blocked_by` dependencies. With any blocker not closed as **completed** it labels the issue `@claude:blocked`, comments once and stops; `not planned` and `duplicate` closures don't release, so remove the dependency instead. Blockers worked on `next` stay open until closed by hand. Removing `@claude:blocked` manually does nothing. Issues released together run in parallel on separate branches. When the gate parks an issue it also removes `@claude:planned` and `@claude:needs-input`, because a restart is from scratch; if a removal fails, the gate job fails so the stuck state is visible, and re-running it finishes the job.
 
-To restart an issue from scratch, remove and re-add the trigger label. Only the owner's label and comments trigger it.
+**Idempotent release (D95).** A dispatch made by `claude-unblock.yml` (actor `github-actions[bot]`) is skipped by the gate, with a notice in the run log, when the issue already has `@claude:planned` or `@claude:needs-input`, or has an open PR (branch `claude/issue-<n>-*` or a body with `Closes #<n>`). Runs started by the owner are never skipped: re-adding the label, commenting, "Run workflow" on `claude-issue.yml` and re-running a run all work as before. If the skip is wrong, use "Run workflow" with the issue number.
+
+**Bot actors (D94).** The three `claude-code-action` steps set `allowed_bots: "github-actions[bot],coderabbitai[bot]"`. Unblock dispatches run as `github-actions[bot]`, and without the entry the action fails with "Workflow initiated by non-human actor". CodeRabbit is listed at the owner's request, but in `claude-issue.yml` it has no effect today: the gate lets only the owner start `issues` and `issue_comment` runs, so a CodeRabbit-initiated issue run is still skipped until that gate is widened (an explicit owner decision). In `claude-review.yml` the entry is effective. `'*'` is never used, and the job gates still decide who may start a run.
+
+To restart an issue from scratch, remove and re-add the trigger label, or use "Run workflow" on `claude-issue.yml` (never skipped by D95). Only the owner's label, comments and manual runs trigger it, plus the unblock dispatch.
 
 ### Unblock (`claude-unblock.yml`)
 
-Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `claude:blocked` issue: if all blockers are completed it starts `claude-issue.yml` with `workflow_dispatch` (input `issue`); the gate run removes the label after its own check passes. It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
+Runs when an issue closes as completed, every 30 minutes (catches dependency edits, which emit no event) and manually. Each run sweeps every open `@claude:blocked` issue: if all blockers are completed it re-reads the issue, removes `@claude:blocked` and then starts `claude-issue.yml` with `workflow_dispatch` (input `issue`) (D95). A failed dispatch puts the label back, and the gate puts it back if its own run fails (its check step times out after 3 minutes, which counts as a failure), so a later sweep retries. The restore step also tries after a cancel or a job-level timeout, but that is best effort and unverified: an issue that still lost its label is restarted with "Run workflow". Because the label is gone before the dispatch, overlapping or consecutive sweeps never release an issue twice. The dispatched run's actor is `github-actions[bot]`, which is why that bot is allow-listed in `claude-issue.yml` (D94). It needs no secrets, only `GITHUB_TOKEN` with `issues: write` and `actions: write`.
 
 ### PR review (`claude-review.yml`)
 
 - Every same-repo PR is assigned to the owner when opened.
-- Claude (Sonnet) reviews when the PR is opened by the owner or `claude[bot]`, carries the **Claude** label and is not a draft; adding the label later starts it too. New commits trigger a re-review limited to what changed.
+- Claude (Sonnet) reviews when the PR is opened by the owner or `claude[bot]`, carries the `@claude` label and is not a draft; adding the label later starts it too. New commits trigger a re-review limited to what changed.
+- The action accepts `claude[bot]` (author of pipeline PRs) and `coderabbitai[bot]` (it may cause PR events); the review still requires an owner- or `claude[bot]`-authored PR with `@claude` (D94).
 - Each finding is an inline comment on the exact lines (one thread each), in English; the reviewer adds fitting existing labels and ends with one summary comment.
 
 ## Local agent settings
@@ -87,4 +93,5 @@ Things that cost time and are easy to repeat:
 - **Peer ranges decide versions** (TypeScript 6.0, ESLint 9).
 - **Don't leak the admin through side channels**: headers set in `next.config` apply to anonymous 404s too (D51); multipart POSTs get Next's 400, not 404 (D54).
 - **Performance targets in the original spec are unmet** (D58, D60). Decide deliberately before spending effort there; don't tighten the floors without a plan.
+- **A concurrency group serializes runs, it does not deduplicate them** (D95). A second sweep or dispatch simply waits and then does the same work. Make a trigger idempotent with a state check (remove the label before dispatching, skip what already has a plan or a PR), never by relying on timing.
 - **Fixture changes need a re-seed** (`sanity:seed --reset` on `development`), or technologies and categories drift between fixtures and Sanity (D39, SANITY.md).

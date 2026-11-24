@@ -2,13 +2,15 @@ name: Claude issue to PR
 
 # Flow:
 #   0. A gate job reads the issue's `blocked_by` dependencies. With any blocker
-#      not closed as completed it labels the issue "claude:blocked", comments
+#      not closed as completed it labels the issue `@claude:blocked`, comments
 #      once and stops. claude-unblock.yml re-dispatches this workflow
 #      (workflow_dispatch, input `issue`) once every blocker is completed; a
-#      dispatch re-reads the labels from the API (D92).
-#   1. The owner adds the "Claude" label (work on `main`) or "claude:next" (work
+#      dispatch re-reads the labels from the API (D92). A dispatch made by that
+#      sweep is skipped when the issue is already planned, waits on the owner or
+#      has an open PR; runs started by the owner are never skipped (D95).
+#   1. The owner adds the `@claude` label (work on `main`) or `@claude:next` (work
 #      on `next`) to an issue → the planner (Opus) reads the issue and the code. If anything needs a decision it posts the
-#      questions mentioning the owner and stops (label claude:needs-input).
+#      questions mentioning the owner and stops (label `@claude:needs-input`).
 #   2. The owner answers in ONE comment → this same workflow runs again
 #      (issue_comment trigger) and the planner resumes with the whole thread.
 #   3. With no open questions the planner posts the plan as an issue comment
@@ -18,9 +20,10 @@ name: Claude issue to PR
 #      the PR with the Claude GitHub App token, so the PR is authored by
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
-# To restart from scratch: remove and re-add the trigger label. Add only ONE of
-# the two labels; with both present "claude:next" wins. Removing "claude:blocked"
-# by hand does nothing: resolve or remove the dependency instead.
+# To restart from scratch: remove and re-add the trigger label, or use Run
+# workflow on this file. Add only ONE of the two labels; with both present
+# `@claude:next` wins. Removing `@claude:blocked` by hand does nothing: resolve
+# or remove the dependency instead.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -42,10 +45,12 @@ concurrency:
 
 env:
   OWNER_LOGIN: juliolmuller
-  TRIGGER_LABEL: Claude
-  WAITING_LABEL: "claude:needs-input"
-  PLANNED_LABEL: "claude:planned"
-  BLOCKED_LABEL: "claude:blocked"
+  # GitHub label names are case-insensitive: every label comparison below ignores
+  # case (grep -i, ${var,,}, ascii_downcase). Keep the names lowercase with the @ prefix.
+  TRIGGER_LABEL: "@claude"
+  WAITING_LABEL: "@claude:needs-input"
+  PLANNED_LABEL: "@claude:planned"
+  BLOCKED_LABEL: "@claude:blocked"
 
 jobs:
   gate:
@@ -56,13 +61,13 @@ jobs:
       (github.event_name == 'workflow_dispatch'
         && (github.actor == 'juliolmuller' || github.actor == 'github-actions[bot]'))
       || (github.event_name == 'issues'
-        && (github.event.label.name == 'Claude' || github.event.label.name == 'claude:next')
+        && (github.event.label.name == '@claude' || github.event.label.name == '@claude:next')
         && github.event.sender.login == 'juliolmuller')
       || (github.event_name == 'issue_comment'
         && !github.event.issue.pull_request
         && github.event.comment.user.login == 'juliolmuller'
-        && (contains(github.event.issue.labels.*.name, 'Claude') || contains(github.event.issue.labels.*.name, 'claude:next'))
-        && contains(github.event.issue.labels.*.name, 'claude:needs-input'))
+        && (contains(github.event.issue.labels.*.name, '@claude') || contains(github.event.issue.labels.*.name, '@claude:next'))
+        && contains(github.event.issue.labels.*.name, '@claude:needs-input'))
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
@@ -75,11 +80,16 @@ jobs:
     steps:
       - name: Check blocking issues
         id: check
+        # Shorter than the job timeout, so a stalled API call ends as a step failure while the
+        # restore step below still has time to run (D95).
+        timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
           ISSUE: ${{ github.event.issue.number || inputs.issue }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT: ${{ github.event_name }}
+          TRIGGERING_ACTOR: ${{ github.triggering_actor }}
         run: |
           set -euo pipefail
           echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
@@ -87,13 +97,38 @@ jobs:
           info=$(gh issue view "$ISSUE" --json state,labels)
           labels=$(jq -r '.labels[].name' <<<"$info")
           base=main
-          grep -Fxq 'claude:next' <<<"$labels" && base=next
+          grep -Fixq '@claude:next' <<<"$labels" && base=next
           echo "base=$base" >> "$GITHUB_OUTPUT"
 
           if [ "$(jq -r '.state' <<<"$info")" != "OPEN" ] \
-            || ! grep -Fxq -e "$TRIGGER_LABEL" -e 'claude:next' <<<"$labels"; then
+            || ! grep -Fixq -e "$TRIGGER_LABEL" -e '@claude:next' <<<"$labels"; then
             echo "proceed=false" >> "$GITHUB_OUTPUT"
             exit 0
+          fi
+
+          # Idempotency (D95): a dispatch made by claude-unblock.yml never re-runs an issue that
+          # is already planned, waits on the owner or has an open PR. A concurrency group only
+          # queues runs, it does not deduplicate them. Runs started by the owner (label, comment,
+          # Run workflow, re-run of a run) are never skipped, so a deliberate restart still works.
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$TRIGGERING_ACTOR" = "github-actions[bot]" ]; then
+            reason=""
+            if grep -Fixq -- "$PLANNED_LABEL" <<<"$labels"; then
+              reason="it already has $PLANNED_LABEL"
+            elif grep -Fixq -- "$WAITING_LABEL" <<<"$labels"; then
+              reason="it is waiting on the owner ($WAITING_LABEL)"
+            else
+              # A failing API call fails the job: never read it as "no PR".
+              pr=$(gh pr list --state open --limit 200 --json number,headRefName,body \
+                | jq -r --arg n "$ISSUE" 'map(select((.headRefName | startswith("claude/issue-\($n)-")) or ((.body // "") | test("closes #\($n)([^0-9]|$)"; "i")))) | .[0].number // empty')
+              if [ -n "$pr" ]; then
+                reason="open PR #$pr already refers to it"
+              fi
+            fi
+            if [ -n "$reason" ]; then
+              echo "::notice::Skipping #$ISSUE: $reason. To run it anyway, use Run workflow on claude-issue.yml."
+              echo "proceed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           # A failing API call fails the job: never read it as "no blockers".
@@ -102,7 +137,7 @@ jobs:
           open=$(jq -s 'add // [] | map(select(.state != "closed" or .state_reason != "completed"))' "$RUNNER_TEMP/blockers.json")
 
           if [ "$(jq 'length' <<<"$open")" != "0" ]; then
-            if ! grep -Fxq "$BLOCKED_LABEL" <<<"$labels"; then
+            if ! grep -Fixq -- "$BLOCKED_LABEL" <<<"$labels"; then
               gh label create "$BLOCKED_LABEL" --color D97757 --description "Claude waits for blocking issues to close" 2>/dev/null || true
               {
                 echo "<!-- claude:blocked -->"
@@ -115,10 +150,36 @@ jobs:
               gh issue comment "$ISSUE" --body-file "$RUNNER_TEMP/blocked.md"
               gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"
             fi
+            # Parking restarts the issue from scratch, so earlier progress no longer applies. Left
+            # in place, those labels would make the dispatch that releases it be skipped (D95).
+            # A failed removal fails the job after one retry instead of being ignored, because a
+            # stale label would silently strand the issue; a re-run finishes the job.
+            for stale in "$PLANNED_LABEL" "$WAITING_LABEL"; do
+              if grep -Fixq -- "$stale" <<<"$labels"; then
+                gh issue edit "$ISSUE" --remove-label "$stale" || { sleep 3; gh issue edit "$ISSUE" --remove-label "$stale"; }
+              fi
+            done
             echo "proceed=false" >> "$GITHUB_OUTPUT"
           else
             gh issue edit "$ISSUE" --remove-label "$BLOCKED_LABEL" 2>/dev/null || true
             echo "proceed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # claude-unblock.yml removes `@claude:blocked` before it dispatches this run (D95), so a
+      # failed gate would leave the issue orphaned. Put the label back so the next sweep retries.
+      # The case this relies on is the check step timing out first (3 minutes, a step failure).
+      # Running after a cancel or a job-level timeout is best effort and has not been verified.
+      - name: Restore the blocked label after a failed release
+        if: (failure() || cancelled()) && github.event_name == 'workflow_dispatch' && github.triggering_actor == 'github-actions[bot]'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+        run: |
+          if gh issue edit "$ISSUE" --add-label "$BLOCKED_LABEL"; then
+            echo "::warning::The gate did not finish for #$ISSUE (failed or cancelled), so $BLOCKED_LABEL was restored and a later unblock sweep retries it."
+          else
+            echo "::error::The gate did not finish for #$ISSUE and $BLOCKED_LABEL could not be restored; add it back by hand."
           fi
 
   plan:
@@ -148,6 +209,12 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # claude-unblock.yml dispatches this workflow as github-actions[bot].
+          # coderabbitai[bot] is listed at the owner's request, but the gate job
+          # only lets the owner start issues/issue_comment runs, so it has no
+          # effect here until that gate is widened (D94). The job gates still
+          # decide who may start a run; this only lets the action accept them.
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             You are the PLANNER for ${{ github.repository }}, issue #${{ env.ISSUE }}.
             You do not write code. Your output is a plan that another agent (the
@@ -204,7 +271,7 @@ jobs:
           # Only apply labels that already exist in the repository.
           gh label list --limit 200 --json name -q '.[].name' > "$RUNNER_TEMP/existing-labels.txt"
           jq -r '.labels[]' <<<"$RESULT" | while IFS= read -r label; do
-            if grep -Fxq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
+            if grep -Fixq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
               gh issue edit "$ISSUE" --add-label "$label"
             fi
           done
@@ -290,6 +357,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Same allow-list as the Plan step (D94).
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             You are the IMPLEMENTER for ${{ github.repository }}, issue #${{ env.ISSUE }}.
             You are on branch ${{ env.BRANCH }}. Do not push and do not open a PR:
@@ -368,7 +437,7 @@ jobs:
           gh label list --limit 200 --json name -q '.[].name' > "$RUNNER_TEMP/existing-labels.txt"
           labels="$TRIGGER_LABEL"
           while IFS= read -r label; do
-            if [ -n "$label" ] && [ "$label" != "$TRIGGER_LABEL" ] && grep -Fxq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
+            if [ -n "$label" ] && [ "${label,,}" != "${TRIGGER_LABEL,,}" ] && grep -Fixq -- "$label" "$RUNNER_TEMP/existing-labels.txt"; then
               labels="$labels,$label"
             fi
           done < <(jq -r '.labels[]' <<<"$RESULT")
@@ -415,6 +484,8 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Same allow-list as the Plan step (D94).
+          allowed_bots: "github-actions[bot],coderabbitai[bot]"
           prompt: |
             Run exactly this command once and report its output. Do nothing else.
             bash ${{ runner.temp }}/publish.sh

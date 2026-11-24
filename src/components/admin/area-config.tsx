@@ -2,10 +2,12 @@ import { type ComponentType } from 'react';
 
 import { type AdminDoc } from '@/lib/content/admin';
 
+import { isSkillCategory, skillCategoryLabels } from './category-labels';
 import { EducationForm, ExperienceForm, type Option } from './forms/career';
 import { ContactForm, ProfileForm, ResumeForm } from './forms/identity';
 import { LinkForm, RecommendedForm } from './forms/people';
 import { ProjectForm } from './forms/project';
+import { SkillForm } from './forms/skills';
 import { PracticeForm, TechnologyForm } from './forms/stack';
 
 type Values = Record<string, unknown>;
@@ -37,6 +39,18 @@ const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
  */
 const en = (doc: AdminDoc, field: string): string =>
   String((doc[field] as { en?: string } | undefined)?.en ?? '');
+
+const categoriesCell = (doc: AdminDoc): string => {
+  const value = doc['categories'];
+
+  if (!Array.isArray(value)) return '';
+
+  return value
+    .map(String)
+    .map((key) => (isSkillCategory(key) ? skillCategoryLabels[key] : key))
+    .join(', ');
+};
+
 const str = (doc: AdminDoc, field: string): string => String(doc[field] ?? '');
 
 export const AREA_CONFIG: Record<string, AreaConfig> = {
@@ -145,6 +159,20 @@ export const AREA_CONFIG: Record<string, AreaConfig> = {
     name: (doc) => en(doc, 'title'),
     defaults: () => ({ kind: 'degree', title: blank(), visible: true }),
     Form: EducationForm,
+  },
+
+  skills: {
+    columns: ['Name', 'Categories'],
+    cells: (doc) => [en(doc, 'name'), categoriesCell(doc)],
+    name: (doc) => en(doc, 'name'),
+    defaults: () => ({
+      name: blank(),
+      categories: [],
+      showInCloud: false,
+      priority: 2,
+      visible: true,
+    }),
+    Form: SkillForm,
   },
 
   technologies: {

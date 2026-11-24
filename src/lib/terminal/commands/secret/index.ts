@@ -13,6 +13,7 @@ const AREAS = [
   'projects',
   'experience',
   'education',
+  'skills',
   'technologies',
   'practices',
   'contact',
