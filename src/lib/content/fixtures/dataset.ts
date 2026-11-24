@@ -5,6 +5,7 @@ import { featuredLinks, recommendedProfiles } from './data/people';
 import { practices } from './data/practices';
 import { profile } from './data/profile';
 import { projects } from './data/projects';
+import { skills } from './data/skills';
 import { technologies } from './data/technologies';
 
 export type FixtureDataset = {
@@ -26,7 +27,6 @@ export function createFixtureDataset(): FixtureDataset {
     education,
     technology: technologies,
     practice: practices,
-    // Fixture skills arrive in #59.
-    skill: [],
+    skill: skills,
   });
 }

@@ -6,7 +6,7 @@ import { createFixtureDataset, type FixtureDataset } from './fixtures/dataset';
 import { fixtureId, techId } from './fixtures/ids';
 import { type ContentLogger } from './log';
 import { type ContentRepository } from './repository';
-import { contentLocales, techCategories } from './schema';
+import { contentLocales, skillCategories, techCategories } from './schema';
 
 export type RepositoryFactory = (
   dataset: FixtureDataset,
@@ -242,7 +242,9 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
     });
 
     it('lists visible skills with resolved icons and cloud flags', async () => {
-      const { repository } = setup((dataset) => dataset.skill.push(...sampleSkills()));
+      const { repository } = setup((dataset) => {
+        dataset.skill = sampleSkills();
+      });
       const skills = await repository.getSkills('en');
 
       expect(skills.map((skill) => skill.id)).toEqual([
@@ -271,7 +273,9 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       const { repository } = setup((dataset) => {
         const [first] = sampleSkills();
 
-        if (first) dataset.skill.push({ ...first, iconSource: undefined, brandColor: '#112233' });
+        if (first) {
+          dataset.skill = [{ ...first, iconSource: undefined, brandColor: '#112233' }];
+        }
       });
       const [skill] = await repository.getSkills('en');
 
@@ -283,7 +287,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       const { repository, logger } = setup((dataset) => {
         const [first, second] = sampleSkills();
 
-        if (first && second) dataset.skill.push(first, { ...second, categories: [] });
+        if (first && second) dataset.skill = [first, { ...second, categories: [] }];
       });
       const ids = (await repository.getSkills('en')).map((skill) => skill.id);
 
@@ -293,6 +297,52 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       ).toMatchObject({
         type: 'skill',
       });
+    });
+
+    it('resolves every seeded skill copy (D93)', async () => {
+      const { repository } = setup();
+      const skills = await repository.getSkills('en');
+
+      expect(skills).toHaveLength(112);
+      expect(skills.filter((skill) => skill.inCloud)).toHaveLength(96);
+
+      const counts = Object.fromEntries(
+        skillCategories.map((category) => [
+          category,
+          skills.filter((skill) => skill.categories[0] === category).length,
+        ]),
+      );
+
+      expect(counts).toEqual({
+        language: 15,
+        frontend: 17,
+        backend: 17,
+        data: 10,
+        cloud: 16,
+        integration: 15,
+        ai: 6,
+        engineering: 16,
+      });
+      expect(
+        skills
+          .filter((skill) => skill.icon && 'monogram' in skill.icon)
+          .map((skill) => skill.name)
+          .sort(),
+      ).toEqual(['Excel / Power Query', 'GPT', 'Power BI', 'SharePoint', 'VS Code']);
+
+      const engineering = skills.filter((skill) => skill.categories[0] === 'engineering');
+
+      for (const skill of engineering) {
+        expect(skill).not.toHaveProperty('icon');
+        expect(skill.inCloud).toBe(false);
+      }
+      expect(skills.slice(96)).toEqual(engineering);
+
+      const ptEngineering = (await repository.getSkills('pt')).filter(
+        (skill) => skill.categories[0] === 'engineering',
+      );
+
+      expect(ptEngineering[4]?.name).toBe('Microsserviços');
     });
 
     it('lists practices', async () => {
