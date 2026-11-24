@@ -162,8 +162,13 @@ export const AREA_CONFIG: Record<string, AreaConfig> = {
   },
 
   skills: {
-    columns: ['Name', 'Categories'],
-    cells: (doc) => [en(doc, 'name'), categoriesCell(doc)],
+    columns: ['Name', 'Categories', 'In cloud'],
+    filterColumns: [2],
+    cells: (doc) => [
+      en(doc, 'name'),
+      categoriesCell(doc),
+      doc['showInCloud'] === true && doc['iconSource'] ? 'Yes' : 'No',
+    ],
     name: (doc) => en(doc, 'name'),
     defaults: () => ({
       name: blank(),

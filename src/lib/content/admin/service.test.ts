@@ -124,6 +124,60 @@ describe('save', () => {
     );
   });
 
+  it('never stores a skill without an icon in the cloud', async () => {
+    const { store, service } = setup();
+    const result = await service.save('skill', null, {
+      name: { en: 'Plain skill', pt: 'Habilidade simples' },
+      categories: ['frontend'],
+      showInCloud: true,
+      iconSlug: 'react',
+      visible: true,
+    });
+
+    expect(result.ok).toBe(true);
+
+    const stored = (await store.list('skill')).find(
+      (d) => (d['name'] as { en: string }).en === 'Plain skill',
+    )!;
+
+    expect(stored['showInCloud']).toBe(false);
+    expect(stored['iconSlug']).toBeUndefined();
+  });
+
+  it('keeps showInCloud on a skill with an icon', async () => {
+    const { store, service } = setup();
+    const result = await service.save('skill', null, {
+      name: { en: 'Iconic skill', pt: 'Habilidade com ícone' },
+      categories: ['frontend'],
+      iconSource: 'monogram',
+      showInCloud: true,
+      visible: true,
+    });
+
+    expect(result.ok).toBe(true);
+
+    const stored = (await store.list('skill')).find(
+      (d) => (d['name'] as { en: string }).en === 'Iconic skill',
+    )!;
+
+    expect(stored['showInCloud']).toBe(true);
+  });
+
+  it('rejects a custom-SVG skill without an SVG', async () => {
+    const { service } = setup();
+    const result = await service.save('skill', null, {
+      name: { en: 'Broken svg', pt: 'SVG quebrado' },
+      categories: ['frontend'],
+      iconSource: 'custom-svg',
+      visible: true,
+    });
+
+    expect(result).toMatchObject({ ok: false, kind: 'invalid' });
+    expect(result.ok === false && 'fieldErrors' in result && result.fieldErrors).toHaveProperty(
+      'customSvg',
+    );
+  });
+
   it('rejects a duplicate slug, including another project’s old slug', async () => {
     const { store, service } = setup();
     const projects = await store.list('project');

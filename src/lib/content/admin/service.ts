@@ -79,6 +79,19 @@ export function createAdminService(
   }
 
   /**
+   * Without an icon source a skill is never in the cloud and keeps no stale
+   * icon data.
+   */
+  function normalizeSkill(candidate: Record<string, unknown>): void {
+    if (candidate['iconSource']) return;
+
+    candidate['showInCloud'] = false;
+    delete candidate['iconSlug'];
+    delete candidate['customSvg'];
+    delete candidate['monogram'];
+  }
+
+  /**
    * A slug change keeps the old one so its URL still redirects (§8.4).
    */
   function trackSlugs(candidate: Record<string, unknown>, existing: AdminDoc | null): void {
@@ -166,6 +179,8 @@ export function createAdminService(
       }
 
       if (type === 'project') trackSlugs(candidate, existing);
+
+      if (type === 'skill') normalizeSkill(candidate);
 
       const result = documentSchemas[type].safeParse(candidate);
 

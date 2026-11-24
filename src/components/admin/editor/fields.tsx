@@ -182,6 +182,7 @@ export function SelectField({
   hint,
   options,
   emptyLabel,
+  onValueChange,
 }: {
   /**
    * Optional field: an always-available empty choice that unsets it.
@@ -189,6 +190,10 @@ export function SelectField({
   emptyLabel?: string;
   hint?: ReactNode;
   label: string;
+  /**
+   * Called right after the value is set, with that value.
+   */
+  onValueChange?: (value: unknown) => void;
   options: ReadonlyArray<{ fontFamily?: string; label: string; value: number | string }>;
   path: string;
 }): React.JSX.Element {
@@ -206,12 +211,13 @@ export function SelectField({
           onChange={(event) => {
             const chosen = options.find((option) => String(option.value) === event.target.value);
 
-            form.set(
-              path,
+            const next =
               event.target.value === '' && emptyLabel
                 ? undefined
-                : (chosen?.value ?? event.target.value),
-            );
+                : (chosen?.value ?? event.target.value);
+
+            form.set(path, next);
+            onValueChange?.(next);
           }}
           className={inputClass}
         >
@@ -240,7 +246,9 @@ export function ToggleField({
   path,
   label,
   hint,
+  disabled = false,
 }: {
+  disabled?: boolean;
   hint?: ReactNode;
   label: string;
   path: string;
@@ -255,7 +263,7 @@ export function ToggleField({
           id={id}
           type="checkbox"
           checked={form.get(path) === true}
-          disabled={form.disabled}
+          disabled={form.disabled || disabled}
           aria-describedby={hint ? `${id}-hint` : undefined}
           onChange={(event) => form.set(path, event.target.checked)}
           className="size-5 accent-accent-1"

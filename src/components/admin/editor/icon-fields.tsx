@@ -89,23 +89,31 @@ const SOURCES = [
 ];
 
 /**
- * Icon source, search, custom SVG and a live preview for a technology.
+ * Icon source, search, custom SVG and a live preview for a technology or a
+ * skill. `allowNone` adds a "No icon" choice (skills); `namePath` is the field
+ * the monogram preview reads.
  */
-export function TechIconFields(): React.JSX.Element {
+export function TechIconFields({
+  allowNone = false,
+  namePath = 'name',
+}: { allowNone?: boolean; namePath?: string } = {}): React.JSX.Element {
   const form = useForm();
-  const source = String(form.get('iconSource') ?? 'monogram');
+  const source = String(form.get('iconSource') ?? (allowNone ? '' : 'monogram'));
   const slug = String(form.get('iconSlug') ?? '');
   const customSvg = form.get('customSvg') as { paths: string[]; viewBox: string } | undefined;
   const monogram = String(form.get('monogram') ?? '');
-  const name = String(form.get('name') ?? '');
-  const [preview, setPreview] = useState<{
+  const name = String(form.get(namePath) ?? '');
+  const [loaded, setLoaded] = useState<{
     brandColor?: string;
     icon: TechIcon;
   } | null>(null);
+  const preview = source ? loaded : null;
   const [svgText, setSvgText] = useState('');
   const [svgError, setSvgError] = useState('');
 
   useEffect(() => {
+    if (!source) return undefined;
+
     let live = true;
     const timer = window.setTimeout(async () => {
       const result = await previewTechIconAction({
@@ -116,7 +124,7 @@ export function TechIconFields(): React.JSX.Element {
         ...(monogram ? { monogram } : {}),
       }).catch(() => null);
 
-      if (live) setPreview(result);
+      if (live) setLoaded(result);
     }, 250);
 
     return (): void => {
@@ -124,6 +132,17 @@ export function TechIconFields(): React.JSX.Element {
       window.clearTimeout(timer);
     };
   }, [source, slug, customSvg, monogram, name]);
+
+  function clearWhenNone(value: unknown): void {
+    if (value !== undefined) return;
+
+    form.set('iconSlug', undefined);
+    form.set('customSvg', undefined);
+    form.set('monogram', undefined);
+    form.set('showInCloud', false);
+    setSvgText('');
+    setSvgError('');
+  }
 
   async function applySvg(text: string): Promise<void> {
     const result = await parseSvgAction(text);
@@ -140,7 +159,12 @@ export function TechIconFields(): React.JSX.Element {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-60 flex-1">
-          <SelectField path="iconSource" label="Icon source" options={SOURCES} />
+          <SelectField
+            path="iconSource"
+            label="Icon source"
+            options={SOURCES}
+            {...(allowNone ? { emptyLabel: 'No icon', onValueChange: clearWhenNone } : {})}
+          />
         </div>
         {preview ? <TechIconPreview icon={preview.icon} /> : null}
       </div>
