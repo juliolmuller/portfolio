@@ -3,6 +3,7 @@ import {
   type linkPlacements,
   type ProjectKind,
   type ProjectStatus,
+  type SkillCategory,
   type SvgData,
   type TechCategory,
   type TitleFont,
@@ -197,5 +198,23 @@ export interface Education {
   order: number;
   start?: string;
   title: string;
+  url?: string;
+}
+
+export interface Skill {
+  brandColor?: string;
+  /**
+   * The first entry is the primary category.
+   */
+  categories: SkillCategory[];
+  icon?: TechIcon;
+  id: string;
+  /**
+   * `showInCloud` and a resolvable icon (a monogram counts).
+   */
+  inCloud: boolean;
+  name: string;
+  order: number;
+  priority: 1 | 2 | 3;
   url?: string;
 }
