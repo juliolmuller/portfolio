@@ -1,28 +1,17 @@
 'use client';
 
+import { techCategories } from '@/lib/content/taxonomy';
+
+import { categoryOptions } from '../category-labels';
 import { LocalizedField, Section, SelectField, TextField, ToggleField } from '../editor/fields';
 import { TechIconFields } from '../editor/icon-fields';
-
-const CATEGORIES = [
-  ['language', 'Languages'],
-  ['frontend', 'Frontend'],
-  ['backend', 'Backend & APIs'],
-  ['data', 'Data & messaging'],
-  ['cloud', 'Cloud & DevOps'],
-  ['integration', 'Integrations & automation'],
-  ['ai', 'AI agents & tooling'],
-] as const;
 
 export function TechnologyForm(): React.JSX.Element {
   return (
     <>
       <Section title="Technology">
         <TextField path="name" label="Name" maxLength={40} />
-        <SelectField
-          path="category"
-          label="Category"
-          options={CATEGORIES.map(([value, label]) => ({ value, label }))}
-        />
+        <SelectField path="category" label="Category" options={categoryOptions(techCategories)} />
         <SelectField
           path="priority"
           label="Prominence"
