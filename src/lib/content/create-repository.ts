@@ -497,7 +497,7 @@ export function createRepository(
             categories: skill.categories,
             icon: resolved?.icon,
             inCloud: skill.showInCloud && resolved !== undefined,
-            brandColor: skill.brandColor ?? resolved?.defaultBrandColor,
+            brandColor: resolved ? (skill.brandColor ?? resolved.defaultBrandColor) : undefined,
             url: skill.url,
             priority: skill.priority,
             order: skill.order,

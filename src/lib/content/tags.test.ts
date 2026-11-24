@@ -1,5 +1,11 @@
+import { updateTag } from 'next/cache';
+
+import { revalidateEverything } from '@/lib/admin/hooks';
+
 import { documentTypes } from './schema';
 import { contentTags, tagsForDocument } from './tags';
+
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), updateTag: vi.fn() }));
 
 describe('tagsForDocument', () => {
   it('answers every document type with content tags', () => {
@@ -13,7 +19,9 @@ describe('tagsForDocument', () => {
   });
 
   it('covers skills in revalidate-all', () => {
-    expect(Object.values(contentTags)).toContain('content:skills');
+    revalidateEverything();
+
+    expect(vi.mocked(updateTag)).toHaveBeenCalledWith(contentTags.skills);
   });
 
   it('adds the slug tag of a project', () => {

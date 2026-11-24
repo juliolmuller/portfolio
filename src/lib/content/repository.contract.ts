@@ -267,10 +267,32 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       expect((await repository.getSkills('pt'))[1]?.name).toBe('Revisão de código');
     });
 
-    it('returns no skills while the fixture dataset has none', async () => {
-      const { repository } = setup();
+    it('drops brandColor from a skill without an icon', async () => {
+      const { repository } = setup((dataset) => {
+        const [first] = sampleSkills();
 
-      expect(await repository.getSkills('en')).toEqual([]);
+        if (first) dataset.skill.push({ ...first, iconSource: undefined, brandColor: '#112233' });
+      });
+      const [skill] = await repository.getSkills('en');
+
+      expect(skill).not.toHaveProperty('icon');
+      expect(skill).not.toHaveProperty('brandColor');
+    });
+
+    it('skips and logs an invalid skill', async () => {
+      const { repository, logger } = setup((dataset) => {
+        const [first, second] = sampleSkills();
+
+        if (first && second) dataset.skill.push(first, { ...second, categories: [] });
+      });
+      const ids = (await repository.getSkills('en')).map((skill) => skill.id);
+
+      expect(ids).toEqual([fixtureId('skill', 'Sample React')]);
+      expect(
+        logger.warnings.find((entry) => entry.event === 'invalid-document')?.details,
+      ).toMatchObject({
+        type: 'skill',
+      });
     });
 
     it('lists practices', async () => {
