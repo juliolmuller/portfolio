@@ -1,4 +1,10 @@
-import { type DocumentOf, type DocumentType, type FileAsset, type ImageAsset } from '../schema';
+import {
+  type DocumentOf,
+  type DocumentType,
+  type FileAsset,
+  type ImageAsset,
+  type SKILL_LINK_CAPS,
+} from '../schema';
 
 /**
  * What the admin reads: the schema shape without validation, so a document that
@@ -18,6 +24,15 @@ export interface Reference {
   id: string;
   label: string;
   type: string;
+}
+
+export type SkillLinkOwner = keyof typeof SKILL_LINK_CAPS;
+
+export interface SkillLinkChange {
+  expectedRev: string;
+  id: string;
+  skillIds: string[];
+  type: SkillLinkOwner;
 }
 
 export interface UploadMeta {
@@ -56,6 +71,11 @@ export interface AdminStore {
    */
   referencesTo(id: string): Promise<Reference[]>;
   remove(type: DocumentType, id: string, expectedRev?: string): Promise<WriteResult>;
+  /**
+   * Replaces the `skillIds` of several owners. All or nothing: every revision
+   * is checked before anything is written.
+   */
+  setSkillLinks(changes: SkillLinkChange[]): Promise<WriteResult>;
   readonly source: 'fixtures' | 'sanity';
   uploadFile(bytes: Buffer, meta: UploadMeta): Promise<FileAsset>;
 

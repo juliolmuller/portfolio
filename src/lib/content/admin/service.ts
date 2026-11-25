@@ -1,6 +1,20 @@
-import { type DocumentOf, documentSchemas, type DocumentType } from '../schema';
-import { type FieldErrors, pruneEmpty, toFieldErrors } from './normalize';
-import { type AdminDoc, type AdminStore, type Reference } from './types';
+import { z } from 'zod';
+
+import {
+  documentIdSchema,
+  type DocumentOf,
+  documentSchemas,
+  type DocumentType,
+  SKILL_LINK_CAPS,
+} from '../schema';
+import { type FieldErrors, labelOf, pruneEmpty, toFieldErrors } from './normalize';
+import {
+  type AdminDoc,
+  type AdminStore,
+  type Reference,
+  type SkillLinkChange,
+  type SkillLinkOwner,
+} from './types';
 
 export const SINGLETONS = ['profile', 'contact', 'resume'] as const;
 const singletons: readonly DocumentType[] = SINGLETONS;
@@ -39,6 +53,29 @@ export type DeleteOutcome =
 export type FlagOutcome =
   { kind: 'conflict' | 'missing' | 'readonly'; ok: false } | { ok: true; rev: string };
 
+/**
+ * The owners (by id) that should link a skill, per owner type.
+ */
+const skillUsageSchema = z.object({
+  education: z.array(documentIdSchema),
+  experience: z.array(documentIdSchema),
+  project: z.array(documentIdSchema),
+});
+
+export type SkillUsage = z.infer<typeof skillUsageSchema>;
+
+export type SkillUsageOutcome =
+  | { changed: number; ok: true }
+  | { fieldErrors: FieldErrors; formErrors: string[]; kind: 'invalid'; ok: false }
+  | { kind: 'conflict' | 'missing' | 'readonly'; ok: false };
+
+const SKILL_OWNER_TYPES = Object.keys(SKILL_LINK_CAPS) as SkillLinkOwner[];
+const OWNER_NOUN: Record<SkillLinkOwner, string> = {
+  project: 'project',
+  experience: 'experience entry',
+  education: 'education entry',
+};
+
 const META_KEYS = ['id', 'rev', 'updatedAt', 'isFixture', 'order'];
 
 const invalid = (fieldErrors: FieldErrors, formErrors: string[] = []): SaveOutcome => ({
@@ -61,6 +98,7 @@ export function createAdminService(
   remove(type: DocumentType, id: string, rev?: string): Promise<DeleteOutcome>;
   reorder(type: DocumentType, ids: string[]): Promise<FlagOutcome>;
   save(type: DocumentType, id: null | string, values: unknown, rev?: string): Promise<SaveOutcome>;
+  saveSkillUsage(skillId: string, usage: SkillUsage): Promise<SkillUsageOutcome>;
   setFlag(
     type: DocumentType,
     id: string,
@@ -286,6 +324,91 @@ export function createAdminService(
       hooks.audit({ type, id, action: `${field}=${value}` });
 
       return { ok: true, rev: result.rev };
+    },
+
+    /**
+     * Makes `usage` the set of owners that link the skill: appends the skill to
+     * owners that gain it and removes it from the ones that drop it, in one
+     * all-or-nothing write. Other links keep their order.
+     */
+    async saveSkillUsage(skillId: string, usage: SkillUsage): Promise<SkillUsageOutcome> {
+      if (readonly) return { ok: false, kind: 'readonly' };
+
+      // A missing key must not read as "no owners" and unlink the skill everywhere.
+      const parsed = skillUsageSchema.safeParse(usage);
+
+      if (!parsed.success) {
+        return { ok: false, kind: 'invalid', ...toFieldErrors(parsed.error.issues) };
+      }
+
+      if (!(await store.get('skill', skillId))) return { ok: false, kind: 'missing' };
+
+      const fieldErrors: FieldErrors = {};
+      const changes: SkillLinkChange[] = [];
+      const slugs: string[] = [];
+      const changedTypes = new Set<SkillLinkOwner>();
+      const lists = await Promise.all(
+        SKILL_OWNER_TYPES.map(async (type) => [type, await store.list(type)] as const),
+      );
+
+      for (const [type, owners] of lists) {
+        const byId = new Map(owners.map((owner) => [owner.id, owner]));
+        const sent = parsed.data[type];
+        const wanted = new Set(sent);
+
+        sent.forEach((id, index) => {
+          if (!byId.has(id)) fieldErrors[`${type}.${index}`] = `Unknown ${OWNER_NOUN[type]}`;
+        });
+
+        for (const owner of owners) {
+          const skillIds = (owner['skillIds'] as string[] | undefined) ?? [];
+          const has = skillIds.includes(skillId);
+          const want = wanted.has(owner.id);
+
+          if (want === has) continue;
+
+          let next: string[];
+
+          if (want) {
+            const cap = SKILL_LINK_CAPS[type];
+
+            if (skillIds.length >= cap) {
+              fieldErrors[`${type}.${sent.indexOf(owner.id)}`] =
+                `${labelOf(owner)} already has the maximum of ${cap} skills`;
+              continue;
+            }
+
+            next = [...skillIds, skillId];
+          } else {
+            next = skillIds.filter((id) => id !== skillId);
+          }
+
+          changes.push({ type, id: owner.id, skillIds: next, expectedRev: owner.rev ?? '' });
+          changedTypes.add(type);
+
+          if (type === 'project') slugs.push(owner['slug'] as string);
+        }
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
+        return { ok: false, kind: 'invalid', fieldErrors, formErrors: [] };
+      }
+
+      if (changes.length === 0) return { ok: true, changed: 0 };
+
+      const result = await store.setSkillLinks(changes);
+
+      if (!result.ok) {
+        return { ok: false, kind: result.reason === 'exists' ? 'conflict' : result.reason };
+      }
+
+      for (const type of changedTypes) {
+        hooks.revalidate(type, type === 'project' ? unique(slugs.filter(Boolean)) : []);
+      }
+
+      hooks.audit({ type: 'skill', id: skillId, action: 'skill-usage' });
+
+      return { ok: true, changed: changes.length };
     },
 
     /**

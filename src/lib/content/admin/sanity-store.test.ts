@@ -2,6 +2,7 @@ import { type SanityClient } from '@sanity/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createFixtureDataset } from '../fixtures/dataset';
+import { skillReferences } from '../sanity/documents';
 import { type DocumentOf } from '../schema';
 import { createSanityAdminStore, fileAssetId, imageAssetId } from './sanity-store';
 
@@ -190,5 +191,61 @@ describe('sanity admin store writes', () => {
 
     expect(store.readOnlyReason).toBe('no token');
     expect(store.label).toBe('Sanity · development');
+  });
+});
+
+describe('sanity admin store setSkillLinks', () => {
+  const changes = [
+    {
+      type: 'project' as const,
+      id: 'project.a',
+      skillIds: ['skill.x', 'skill.y'],
+      expectedRev: 'r1',
+    },
+    { type: 'education' as const, id: 'education.b', skillIds: [], expectedRev: 'r2' },
+  ];
+
+  it('patches every owner in one transaction with revision checks', async () => {
+    const { client, calls } = fakeClient();
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+    const result = await store.setSkillLinks(changes);
+
+    expect(result).toEqual({ ok: true, rev: 't1' });
+    expect(client.transaction).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual([
+      [
+        'tx.patch',
+        [
+          'project.a',
+          {
+            ifRevisionID: 'r1',
+            set: { skills: skillReferences('project.a', ['skill.x', 'skill.y']) },
+          },
+        ],
+      ],
+      ['tx.patch', ['education.b', { ifRevisionID: 'r2', set: { skills: [] } }]],
+    ]);
+  });
+
+  it('maps a stale revision to a conflict', async () => {
+    const { client } = fakeClient({ failWith: 409 });
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+
+    expect(await store.setSkillLinks(changes)).toEqual({ ok: false, reason: 'conflict' });
+  });
+
+  it('maps a missing owner to missing', async () => {
+    const { client } = fakeClient({ failWith: 404 });
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+
+    expect(await store.setSkillLinks(changes)).toEqual({ ok: false, reason: 'missing' });
+  });
+
+  it('does nothing without changes', async () => {
+    const { client } = fakeClient();
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+
+    expect(await store.setSkillLinks([])).toEqual({ ok: true, rev: '' });
+    expect(client.transaction).not.toHaveBeenCalled();
   });
 });

@@ -1,7 +1,7 @@
 import { type SanityClient } from '@sanity/client';
 
 import { stripNulls } from '../pipeline';
-import { type AssetResolver, toSanityDocument } from '../sanity/documents';
+import { type AssetResolver, skillReferences, toSanityDocument } from '../sanity/documents';
 import { adminGetQuery, adminListQuery } from '../sanity/queries';
 import { type FileAsset, type ImageAsset } from '../schema';
 import { type AdminDoc, type AdminStore, type Reference, type WriteResult } from './types';
@@ -123,6 +123,25 @@ export function createSanityAdminStore(
       }
 
       transaction.delete(id);
+
+      return attempt(async () => {
+        const result = await transaction.commit();
+
+        return { _rev: result.transactionId };
+      });
+    },
+
+    async setSkillLinks(changes): Promise<WriteResult> {
+      if (changes.length === 0) return { ok: true, rev: '' };
+
+      const transaction = client.transaction();
+
+      for (const change of changes) {
+        transaction.patch(change.id, {
+          ifRevisionID: change.expectedRev,
+          set: { skills: skillReferences(change.id, change.skillIds) },
+        });
+      }
 
       return attempt(async () => {
         const result = await transaction.commit();

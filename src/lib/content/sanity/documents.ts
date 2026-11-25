@@ -101,6 +101,13 @@ export function references(
   }));
 }
 
+export function skillReferences(
+  id: string,
+  ids: readonly string[] = [],
+): Array<{ _key: string; _ref: string; _type: string }> {
+  return references(id, 'skills', ids);
+}
+
 function compact(document: Record<string, unknown>): SanityDocument {
   return Object.fromEntries(
     Object.entries(document).filter(([, value]) => value !== undefined),
@@ -228,7 +235,7 @@ const converters: Converters = {
       kind: doc.kind,
       status: doc.status,
       technologies: references(doc.id, 'technologies', doc.techIds),
-      skills: references(doc.id, 'skills', doc.skillIds),
+      skills: skillReferences(doc.id, doc.skillIds),
       cover: optional(doc.cover, (cover) => image(assets, cover)),
       gallery: (doc.gallery ?? []).map((item, index) => ({
         _key: key(doc.id, 'gallery', index),
@@ -268,7 +275,7 @@ const converters: Converters = {
         }),
       ),
       technologies: references(doc.id, 'technologies', doc.techIds),
-      skills: references(doc.id, 'skills', doc.skillIds),
+      skills: skillReferences(doc.id, doc.skillIds),
       collapsedByDefault: doc.collapsedByDefault ?? false,
       order: doc.order,
       visible: doc.visible ?? true,
@@ -283,7 +290,7 @@ const converters: Converters = {
       start: doc.start,
       end: doc.end,
       url: doc.url,
-      skills: references(doc.id, 'skills', doc.skillIds),
+      skills: skillReferences(doc.id, doc.skillIds),
       order: doc.order,
       visible: doc.visible ?? true,
     }),
