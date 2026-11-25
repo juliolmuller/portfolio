@@ -2,8 +2,9 @@ import { L, meta } from '@/lib/content/fixtures/helpers';
 import { type SkillInput } from '@/lib/content/schema';
 
 /**
- * Three fictional skills (one hidden) shared by the contract and parity tests,
- * since the fixture dataset has none until #59.
+ * Three fictional skills (one hidden) shared by the contract and parity tests.
+ * They cover cases the derived fixture copies lack: a hidden skill, several
+ * categories, a cloud flag without an icon.
  */
 export function sampleSkills(): SkillInput[] {
   return [

@@ -1,6 +1,8 @@
 import { icons as lucideIcons } from 'lucide-react';
 
+import { skillIdFor } from '../migrations/skills';
 import { documentSchemas, documentTypes } from '../schema';
+import { skillRef } from './data/skills';
 import { createFixtureDataset } from './dataset';
 
 const dataset = createFixtureDataset();
@@ -19,6 +21,33 @@ function collectStrings(value: unknown, out: string[] = []): string[] {
 }
 
 describe('fixture dataset', () => {
+  it('has exactly one skill copy per technology and practice', () => {
+    const sources = [...dataset.technology, ...dataset.practice];
+    const ids = dataset.skill.map((skill) => skill.id);
+
+    expect(ids).toHaveLength(112);
+    expect(new Set(ids)).toEqual(new Set(sources.map((source) => skillIdFor(source.id))));
+
+    for (const technology of dataset.technology) {
+      const skill = dataset.skill.find((entry) => entry.id === skillIdFor(technology.id));
+
+      expect(skill?.name).toEqual({ en: technology.name, pt: technology.name });
+    }
+    for (const practice of dataset.practice) {
+      const skill = dataset.skill.find((entry) => entry.id === skillIdFor(practice.id));
+
+      expect(skill?.name).toEqual(practice.label);
+    }
+  });
+
+  it('resolves skillRef to the technology copy and rejects unknown names', () => {
+    const typescript = dataset.skill.find((skill) => skill.name.en === 'TypeScript');
+
+    expect(skillRef('TypeScript')).toBe(typescript?.id);
+    expect(skillRef('TypeScript')).toBe('skill.99609fbb-7be5-5f16-8d36-abe063d9df76');
+    expect(() => skillRef('Nope')).toThrow('Nope');
+  });
+
   it.each(documentTypes)('every %s document passes strict validation', (type) => {
     for (const document of dataset[type]) {
       const result = documentSchemas[type].safeParse(document);
@@ -57,9 +86,11 @@ describe('fixture dataset', () => {
     }
   });
 
-  it('uses only example.com links outside the technology inventory', () => {
+  it('uses only example.com links outside the technology inventory and its skill copies', () => {
     const urls = collectStrings(
-      documentTypes.filter((type) => type !== 'technology').map((type) => dataset[type]),
+      documentTypes
+        .filter((type) => type !== 'technology' && type !== 'skill')
+        .map((type) => dataset[type]),
     ).filter((value) => /^(?:https?:|mailto:)/.test(value));
 
     expect(urls.length).toBeGreaterThan(10);

@@ -114,7 +114,7 @@ Not editable in the admin (change the code and redeploy):
 
 ### Skills
 
-**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet; icons and the cloud option come later.
+**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet; icons and the cloud option come later. In fixtures mode the Skills list starts with a copy of every technology and practice.
 
 ## 5. Replacing the demo data (owner checklist)
 

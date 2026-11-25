@@ -49,7 +49,7 @@ SANITY_WRITE_TOKEN=…
 
 ### Skills (D93, epic #54)
 
-The `skill` type is in the schema, previewed by English name and primary category. The public reader `getSkills` (tag `content:skills`) exists (#57) but no UI uses it, and there is no admin screen, although the admin actions already accept the type. The in-use check in `AdminService.remove` still covers only technologies until the `skillIds` links land (#83, #84). Owner steps:
+The `skill` type is in the schema, previewed by English name and primary category. The public reader `getSkills` (tag `content:skills`) exists (#57) but no UI uses it; the admin has a Skills area (#66). Fixtures hold 112 skill copies (96 technologies, 16 practices) built with the shared mapper (#59); re-seed `development` (`bun run sanity:seed --dataset development`; the copies are new documents and no ids change, so `--reset` is optional) or run `skills:migrate` (#65) there, since both write the same ids. Until then `content:smoke` against `development` reports a `getSkills` difference. The in-use check in `AdminService.remove` still covers only technologies until the `skillIds` links land (#83, #84). Owner steps:
 
 1. Redeploy the `default` workspace schema to `development` now.
 2. Redeploy it to `production` at release gate R1.
