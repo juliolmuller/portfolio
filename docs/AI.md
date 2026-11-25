@@ -58,7 +58,7 @@ Usage counts against the Claude subscription tied to the token. Rotate it like a
 - `full` (the default): plan, then implement and publish. The same as removing and re-adding the trigger label.
 - `plan`: the gate and the planner only. The plan comment says implementation was not started, and `implement` and `publish` do not run.
 - `implement`: no planner. It builds from the latest plan comment of `github-actions[bot]`, on the branch named in that comment's plan-meta line. It refuses, with a comment on the issue and a failed run, when the issue is `@claude:needs-input`, there is no plan, the plan has no plan-meta line (posted before D98: run `plan` first), the plan was written for another base branch than the label now selects, or the bot posted questions or a blocked notice after the plan.
-- A failed push or PR: **Re-run failed jobs** on the run. Only `publish` runs again, from the artifact, for 7 days. If `implement` itself failed, run `phase: implement`.
+- A failed push or PR: **Re-run failed jobs** on the run. Only `publish` runs again, from the artifact, for 7 days. It pushes with a lease on the branch head that `implement` saw, so it never overwrites a branch that a newer implementation or a manual push changed since: it fails instead (the PR check names the head it found), and `phase: implement` is then the way forward. If `implement` itself failed, run `phase: implement` too.
 
 ### Unblock (`claude-unblock.yml`)
 

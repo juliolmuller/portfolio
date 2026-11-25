@@ -40,7 +40,9 @@ name: Claude issue to PR
 #   - only the plan: Run workflow with phase `plan`.
 #   - the code, from the plan already on the issue: Run workflow with phase `implement`.
 #   - a failed push or PR: Re-run failed jobs on `publish` (within 7 days). It reuses
-#     the artifact and does not redo `implement`.
+#     the artifact and does not redo `implement`. It never overwrites a branch that a
+#     newer implementation or a manual push changed since: it is refused, and then
+#     `phase: implement` is the way forward.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -570,9 +572,12 @@ jobs:
           # meta.json, so none of it depends on this runner surviving.
           draft=false
           [ "$GATES_OK" = "true" ] || draft=true
+          # The head origin has for this branch right now ("" when it does not exist). publish only ever
+          # replaces that state, so re-running an older publish cannot overwrite a newer implementation.
+          remote=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/$BRANCH" | jq -r --arg ref "refs/heads/$BRANCH" '.[] | select(.ref == $ref) | .object.sha')
           jq -n --arg branch "$BRANCH" --arg base "$BASE_BRANCH" --arg title "$(jq -r '.pr_title' <<<"$RESULT")" \
-            --arg labels "$labels" --argjson draft "$draft" \
-            '{branch: $branch, base: $base, title: $title, labels: $labels, draft: $draft}' > "$handoff/meta.json"
+            --arg labels "$labels" --argjson draft "$draft" --arg remote "$remote" \
+            '{branch: $branch, base: $base, title: $title, labels: $labels, draft: $draft, remote: $remote}' > "$handoff/meta.json"
           cp "$RUNNER_TEMP/gates.md" "$handoff/gates.md"
           git rev-parse "$BRANCH" > "$handoff/head.txt"
           git bundle create "$handoff/branch.bundle" "$BRANCH" "^origin/$BASE_BRANCH"
@@ -664,13 +669,21 @@ jobs:
           labels=$(jq -r '.labels' "$handoff/meta.json")
           draft=""
           if [ "$(jq -r '.draft' "$handoff/meta.json")" = "true" ]; then draft="--draft"; fi
+          remote=$(jq -r '.remote' "$handoff/meta.json")
+          if ! [[ "$remote" =~ ^([0-9a-f]{40})?$ ]]; then
+            echo "::error::meta.json has an invalid remote head."
+            exit 1
+          fi
 
           # Run later by Claude, so git and gh use the Claude App token.
+          # The push is a lease on the head the implement run saw on origin (empty: no branch yet). It
+          # replaces that state, retries its own earlier push (already up to date), and is refused when a
+          # newer implementation or a manual push moved the branch since, so no commit is lost (D98).
           {
             echo '#!/usr/bin/env bash'
             echo 'set -euo pipefail'
             echo 'token="${GH_TOKEN:-${GITHUB_TOKEN:-}}"'
-            printf 'git push --force "https://x-access-token:${token}@github.com/%s.git" "HEAD:refs/heads/%s"\n' "$GITHUB_REPOSITORY" "$BRANCH"
+            printf 'git push --force-with-lease=%q "https://x-access-token:${token}@github.com/%s.git" %q\n' "refs/heads/$BRANCH:$remote" "$GITHUB_REPOSITORY" "HEAD:refs/heads/$BRANCH"
             printf 'existing=$(gh pr list --head %q --state open --json number -q ".[0].number")\n' "$BRANCH"
             echo 'if [ -n "$existing" ]; then'
             printf '  gh pr edit "$existing" --title %q --body-file %q --add-assignee %q --add-label %q\n' "$title" "$handoff/pr-body.md" "$OWNER_LOGIN" "$labels"
@@ -697,11 +710,20 @@ jobs:
             --allowedTools "Bash(bash ${{ runner.temp }}/publish.sh)"
 
       # The Claude step reports success even when publish.sh fails (a rejected
-      # push, for instance), so check the result instead of trusting it.
+      # push, for instance), so check the result instead of trusting it. An open PR alone proves
+      # nothing: a newer implementation's PR makes a refused (stale) push look fine, so the branch
+      # tip must also be the head this run built.
       - name: Verify the PR exists
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          head=$(tr -d '[:space:]' < "$RUNNER_TEMP/handoff/head.txt")
+          remote=$(gh api "repos/$GITHUB_REPOSITORY/git/matching-refs/heads/$BRANCH" | jq -r --arg ref "refs/heads/$BRANCH" '.[] | select(.ref == $ref) | .object.sha')
+          if [ "$remote" != "$head" ]; then
+            echo "::error::$BRANCH is at ${remote:-nothing} on origin, not at $head, which this run built. Either the push was refused because a newer implementation or a manual push moved the branch (nothing was overwritten), or it failed; a push touching .github/workflows needs the Claude App to have the Workflows permission."
+            exit 1
+          fi
           pr=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -z "$pr" ]; then
             echo "::error::publish.sh did not open a PR for $BRANCH. A push touching .github/workflows needs the Claude App to have the Workflows permission."
@@ -713,4 +735,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN publishing the PR failed; the implementation is saved in the run's artifact for 7 days. Use **Re-run failed jobs** on the [run]($RUN_URL) to retry only the publishing."
+        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN publishing the PR failed; the implementation is saved in the run's artifact for 7 days. Use **Re-run failed jobs** on the [run]($RUN_URL) to retry only the publishing. If the branch was changed since (a newer implementation), publishing is refused, so run the workflow with phase implement instead."
