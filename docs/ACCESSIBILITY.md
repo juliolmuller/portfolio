@@ -12,7 +12,7 @@ All of this runs in CI (`bun run lint`, `bun run test`, `bun run test:e2e`, `bun
   - Home in both locales, with the mobile menu open (`shell.spec.ts`);
   - `/projects`, a filtered listing, a project detail, the lightbox open, `/accessibility`, in both locales (`projects.spec.ts`, `a11y.spec.ts`);
   - the localized 404s and the global 404 (`a11y.spec.ts`);
-  - the terminal open with output (`terminal.spec.ts`), the tech cloud (`stack.spec.ts`);
+  - the terminal open with output (`terminal.spec.ts`), the skills cloud (`stack.spec.ts`);
   - Home under `prefers-contrast: more` and reduced motion (`a11y.spec.ts`);
   - every admin list and editor, authenticated (`admin-content.spec.ts`).
 - **Emulated runs** (`a11y.spec.ts`): reflow at 320 CSS px (400% zoom) and 640 px (200%) with no horizontal scroll on Home, `/projects`, a detail page and `/accessibility`; WCAG 1.4.12 text-spacing overrides; forced colors keeps a ≥ 2px focus outline; reduced motion and the **Pause animations** toggle each leave no looping animation running.
@@ -31,7 +31,7 @@ Run once before launch and after any large UI change. Mark each cell with the da
 | Home: skip link, landmarks, heading outline (one `h1`)                                                                                                                      |                |                            |                          |                   |
 | Header nav: `aria-current`, language switch keeps route and hash                                                                                                            |                |                            |                          |                   |
 | Mobile menu: modal, focus trapped, Esc restores focus; terminal item closes it and focuses the terminal input; language switcher in the header at 320 px with 44 px targets |                |                            |                          |                   |
-| Tech stack: List view read as grouped lists (skills without a logo are listed by name only; no practices chip list); the sphere is silent                                   |                |                            |                          |                   |
+| Skills (Stack section): List view read as grouped lists (skills without a logo are listed by name only; no practices chip list); the sphere is silent                       |                |                            |                          |                   |
 | Project filter (radiogroup) and pagination, also with JavaScript off                                                                                                        |                |                            |                          |                   |
 | Project card: "View details about {title}", "Visit app" as its own stop                                                                                                     |                |                            |                          |                   |
 | Project detail: breadcrumbs, gallery lightbox as a dialog with a label                                                                                                      |                |                            |                          |                   |
@@ -53,4 +53,4 @@ Tips:
 
 ## Known limitations
 
-Listed on the statement page as well: decorative motion (aurora, sphere spin) has no text equivalent because it carries no information; the tech sphere is hidden from assistive technology and the List view is its equivalent; linked third-party sites are outside this standard. Feedback goes to the contact address on the statement page.
+Listed on the statement page as well: decorative motion (aurora, sphere spin) has no text equivalent because it carries no information; the skills sphere is hidden from assistive technology and the List view is its equivalent; linked third-party sites are outside this standard. Feedback goes to the contact address on the statement page.

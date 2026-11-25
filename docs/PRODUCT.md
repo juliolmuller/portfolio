@@ -13,7 +13,7 @@ Personal site of **Julio L. Muller**, Senior Full Stack Software Engineer in Cur
 ## Signature features (non-negotiable)
 
 1. An OS-style **terminal window**: draggable, resizable, snappable, minimizable, maximizable, a bottom sheet on phones.
-2. An animated **technology cloud** (logos, names on hover/tap) — never skill meters.
+2. An animated **skills cloud** (logos, names on hover/tap; renamed from technology cloud, D96) — never skill meters or levels.
 3. **Portfolio cards** (snapshot, short description, up to two CTAs), a dedicated page per project, featured projects on Home.
 4. **Bilingual** (English, Brazilian Portuguese) for every public text field.
 5. **Dark-only** identity.
