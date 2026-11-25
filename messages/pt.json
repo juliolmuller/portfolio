@@ -189,7 +189,7 @@
         "usage": "recommend"
       },
       "skills": {
-        "summary": "Tecnologias por categoria (alias: stack).",
+        "summary": "Habilidades por categoria (alias: stack).",
         "usage": "skills [--category nome]"
       },
       "projects": {
@@ -391,8 +391,8 @@
   },
   "stack": {
     "eyebrow": "Stack",
-    "title": "Tecnologias com que trabalho",
-    "lead": "As ferramentas que uso no dia a dia, agrupadas pelo lugar que ocupam em um sistema. É um mapa de amplitude, não um placar.",
+    "title": "Habilidades com que trabalho",
+    "lead": "As ferramentas e práticas em que me apoio, agrupadas pelo lugar que ocupam em um sistema. É um mapa de amplitude, não um placar.",
     "categories": {
       "language": "Linguagens",
       "frontend": "Frontend",
@@ -405,7 +405,7 @@
     },
     "practicesTitle": "Práticas e conceitos",
     "filterLabel": "Filtrar por categoria",
-    "filterChip": "{category} {count, plural, one {# tecnologia} other {# tecnologias}}",
+    "filterChip": "{category} {count, plural, one {# habilidade} other {# habilidades}}",
     "officialSite": "Site oficial ↗"
   },
   "work": {

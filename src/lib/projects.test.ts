@@ -78,10 +78,11 @@ describe('relatedProjects and neighbors', () => {
 
     const related = relatedProjects(orbit, projects, 3);
 
-    expect(related.map((r) => r.slug)).toEqual(['pocket-ledger', 'pay-bridge', 'lint-kit']);
-
-    expect(related).toHaveLength(3);
-    expect(related.map((project) => project.slug)).not.toContain('orbit-dashboard');
+    expect(related.map((project) => project.slug)).toEqual([
+      'pocket-ledger',
+      'pay-bridge',
+      'lint-kit',
+    ]);
 
     const neighbors = projectNeighbors(orbit, projects);
 

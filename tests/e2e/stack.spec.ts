@@ -4,8 +4,8 @@ import { expect, type Page, test } from '@playwright/test';
 /**
  * Hero/geoid motion keeps WebKit's actionability check from settling.
  */
-async function showStack(page: Page): Promise<void> {
-  await page.goto('/en', { waitUntil: 'domcontentloaded' });
+async function showStack(page: Page, locale: 'en' | 'pt' = 'en'): Promise<void> {
+  await page.goto(`/${locale}`, { waitUntil: 'domcontentloaded' });
   await page.locator('#stack').evaluate((el) => {
     el.scrollIntoView({ block: 'center' });
   });
@@ -20,7 +20,8 @@ test('stack list is in the first HTML', async ({ request }) => {
 
   const html = await response.text();
 
-  expect(html).toContain('Technologies I work with');
+  expect(html).toContain('Skills I work with');
+  expect(html).not.toContain('Technologies I work with');
   expect(html).toContain('TypeScript');
   expect(html).toContain('Zustand');
   expect(html).toContain('Redis');
@@ -32,6 +33,13 @@ test('stack list is in the first HTML', async ({ request }) => {
   expect(html).not.toContain('id="stack-practices"');
   expect(html).not.toContain('>Cloud</button>');
   expect(html).not.toContain('>List</button>');
+});
+
+test('stack title is translated in the first HTML', async ({ request }) => {
+  const html = await (await request.get('/pt')).text();
+
+  expect(html).toContain('Habilidades com que trabalho');
+  expect(html).not.toContain('Tecnologias com que trabalho');
 });
 
 test('cloud hydrates and category chips dim the geoid', async ({ page }) => {
@@ -89,6 +97,20 @@ test('cloud hydrates and category chips dim the geoid', async ({ page }) => {
     )
     .toBe('ok');
 });
+
+// The chip's accessible name comes from `stack.filterChip`, which now counts
+// skills (#75); the visible text is only the category and the number.
+for (const [locale, count] of [
+  ['en', /\d+ skills?$/],
+  ['pt', /\d+ habilidades?$/],
+] as const) {
+  test(`category chips count skills in ${locale}`, async ({ page }) => {
+    await showStack(page, locale);
+    await expect(
+      page.locator('#stack').getByRole('toolbar').getByRole('button').first(),
+    ).toHaveAccessibleName(count);
+  });
+}
 
 test('reduced motion keeps the list', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
