@@ -138,3 +138,17 @@ test('tap on a front icon announces its name', async ({ page }, info) => {
   await page.locator(`[data-cloud-item="${id}"]`).tap({ force: true });
   await expect(page.locator('#stack [aria-live="polite"]')).toContainText(name ?? '');
 });
+
+test('every logo the stack requests resolves', async ({ page }) => {
+  const statuses: number[] = [];
+
+  page.on('response', (response) => {
+    if (response.url().includes('/tech-icons/')) statuses.push(response.status());
+  });
+  await showStack(page);
+  await expect(page.locator('[data-cloud-item]').first()).toBeVisible();
+  await page.waitForLoadState('networkidle');
+
+  expect(statuses.length).toBeGreaterThan(0);
+  expect(statuses.filter((status) => status >= 400)).toEqual([]);
+});

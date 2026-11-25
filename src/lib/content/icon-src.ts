@@ -33,6 +33,21 @@ export function iconHash({ viewBox, paths }: SvgIcon): string {
   return `${pass(0x811c9dc5)}${pass(0x050c5d1f)}`;
 }
 
+/**
+ * The SVG icon whose content hash is `hash` (D59); monograms and missing icons
+ * never match.
+ */
+export function findIconByHash(
+  icons: ReadonlyArray<TechIcon | undefined>,
+  hash: string,
+): SvgIcon | undefined {
+  for (const icon of icons) {
+    if (icon && 'paths' in icon && iconHash(icon) === hash) return icon;
+  }
+
+  return undefined;
+}
+
 export function toPublicIcon(icon: TechIcon): PublicTechIcon {
   if ('monogram' in icon) return { monogram: icon.monogram };
 
