@@ -15,6 +15,12 @@ describe('nameLookup', () => {
     expect(nameLookup(items)(['a', 'zzz', 'b'])).toEqual(['Alpha', 'Beta']);
   });
 
+  it('drops repeated names, keeping the first one', () => {
+    const twins = [...items, { id: 'd', name: 'Alpha' }];
+
+    expect(nameLookup(twins)(['a', 'b', 'd'])).toEqual(['Alpha', 'Beta']);
+  });
+
   it('returns an empty list for empty input', () => {
     expect(nameLookup(items)([])).toEqual([]);
     expect(nameLookup([])(['a'])).toEqual([]);

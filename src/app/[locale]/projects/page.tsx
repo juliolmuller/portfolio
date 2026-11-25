@@ -91,7 +91,7 @@ export default async function ProjectsPage({
 
   if (listing.outOfRange) notFound();
 
-  const namesFor = nameLookup(skills);
+  const skillNamesFor = nameLookup(skills);
   const crumbs = [
     { name: t('home'), path: '/' },
     { name: t('title'), path: '/projects' },
@@ -138,7 +138,7 @@ export default async function ProjectsPage({
               <li key={project.id}>
                 <ProjectCard
                   project={project}
-                  skillNames={namesFor(project.skillIds)}
+                  skillNames={skillNamesFor(project.skillIds)}
                   headingLevel="h2"
                   eager={index < 3}
                   lcp={index === 0}

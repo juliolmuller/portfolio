@@ -72,6 +72,22 @@ test.describe('projects', () => {
     ).toBeVisible();
   });
 
+  test('project cards list the project skills', async ({ page }) => {
+    await page.goto('/en/projects');
+
+    const card = page.getByRole('listitem').filter({
+      has: page.getByRole('heading', { level: 2, name: 'Orbit Dashboard', exact: true }),
+    });
+
+    await expect(card.locator('ul > li')).toHaveText([
+      'TypeScript',
+      'React',
+      'Next.js',
+      'PostgreSQL',
+      /^\+1/,
+    ]);
+  });
+
   test('resume redirects to the locale PDF', async ({ request }) => {
     const response = await request.get('/en/resume', { maxRedirects: 0 });
 

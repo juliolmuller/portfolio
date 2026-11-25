@@ -16,7 +16,7 @@ export async function Work({
   skills: Skill[];
 }): Promise<React.JSX.Element> {
   const t = await getTranslations('work');
-  const namesFor = nameLookup(skills);
+  const skillNamesFor = nameLookup(skills);
 
   return (
     <section id="work" aria-labelledby="work-title" className="section-y">
@@ -40,7 +40,7 @@ export async function Work({
           {projects.map((project, index) => (
             <li key={project.id}>
               <Reveal index={index % 3} className="h-full">
-                <ProjectCard project={project} skillNames={namesFor(project.skillIds)} />
+                <ProjectCard project={project} skillNames={skillNamesFor(project.skillIds)} />
               </Reveal>
             </li>
           ))}
