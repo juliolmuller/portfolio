@@ -10,8 +10,8 @@ import { CoverTransition } from '@/components/portfolio/cover-transition';
 import { DeviceFrame } from '@/components/portfolio/device-frame';
 import { Gallery } from '@/components/portfolio/gallery';
 import { GeneratedCover } from '@/components/portfolio/generated-cover';
+import { nameLookup } from '@/components/portfolio/names';
 import { ProjectCard } from '@/components/portfolio/project-card';
-import { techNameLookup } from '@/components/portfolio/tech-names';
 import { Breadcrumb } from '@/components/seo/breadcrumb';
 import { JsonLd } from '@/components/seo/json-ld';
 import { ButtonAnchor, ButtonLink } from '@/components/ui/button';
@@ -69,7 +69,7 @@ export default async function ProjectPage({
   const { slug } = await params;
   const { locale, project } = await loadProject(slug);
   const content = getContent();
-  const [t, tWork, tA11y, tProjects, all, technologies, profile, links, practices] =
+  const [t, tWork, tA11y, tProjects, all, technologies, skills, profile, links, practices] =
     await Promise.all([
       getTranslations('project'),
       getTranslations('work'),
@@ -77,12 +77,13 @@ export default async function ProjectPage({
       getTranslations('projects'),
       content.getProjects(locale),
       content.getTechnologies(locale),
+      content.getSkills(locale),
       content.getProfile(locale),
       content.getFeaturedLinks(locale),
       content.getPractices(locale),
     ]);
 
-  const namesFor = techNameLookup(technologies);
+  const skillNamesFor = nameLookup(skills);
   const techById = new Map(technologies.map((tech) => [tech.id, tech]));
   const usedTech = project.techIds
     .map((id) => techById.get(id))
@@ -251,7 +252,7 @@ export default async function ProjectPage({
               <ul className="mt-8 grid gap-6 min-[1100px]:grid-cols-3 md:grid-cols-2">
                 {related.map((item) => (
                   <li key={item.id}>
-                    <ProjectCard project={item} techNames={namesFor(item.techIds)} />
+                    <ProjectCard project={item} skillNames={skillNamesFor(item.skillIds)} />
                   </li>
                 ))}
               </ul>

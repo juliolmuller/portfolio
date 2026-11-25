@@ -33,26 +33,26 @@ interface ProjectCardProps {
   lcp?: boolean;
   project: ProjectSummary;
   /**
-   * Names of the project's technologies, in order.
+   * Names of the project's skills, in order.
    */
-  techNames: readonly string[];
+  skillNames: readonly string[];
 }
 
 /**
- * Cover, kind and status, title, summary, up to four stack chips and the CTAs.
+ * Cover, kind and status, title, summary, up to four skill chips and the CTAs.
  * The whole card is clickable through the stretched "View details" link; "Visit
  * app" sits above it as its own tab stop.
  */
 export async function ProjectCard({
   project,
-  techNames,
+  skillNames,
   headingLevel: Heading = 'h3',
   eager = false,
   lcp = false,
 }: ProjectCardProps): Promise<React.JSX.Element> {
   const t = await getTranslations('work');
-  const chips = techNames.slice(0, MAX_CHIPS);
-  const overflow = techNames.length - chips.length;
+  const chips = skillNames.slice(0, MAX_CHIPS);
+  const overflow = skillNames.length - chips.length;
   const live = project.links.live;
 
   return (
@@ -125,7 +125,7 @@ export async function ProjectCard({
                 {overflow > 0 ? (
                   <li className="rounded-full border border-line px-2.5 py-0.5 font-mono text-[0.75rem] text-text-2">
                     <span aria-hidden="true">+{overflow}</span>
-                    <span className="sr-only">{t('moreTechnologies', { count: overflow })}</span>
+                    <span className="sr-only">{t('moreSkills', { count: overflow })}</span>
                   </li>
                 ) : null}
               </ul>

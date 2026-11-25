@@ -3,9 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 
 import { KindFilter } from '@/components/portfolio/kind-filter';
+import { nameLookup } from '@/components/portfolio/names';
 import { Pagination } from '@/components/portfolio/pagination';
 import { ProjectCard } from '@/components/portfolio/project-card';
-import { techNameLookup } from '@/components/portfolio/tech-names';
 import { Breadcrumb } from '@/components/seo/breadcrumb';
 import { JsonLd } from '@/components/seo/json-ld';
 import { owner } from '@/config/site';
@@ -71,10 +71,11 @@ export default async function ProjectsPage({
   if (!parsed.ok) notFound();
 
   const content = getContent();
-  const [t, projects, technologies, profile, links, practices] = await Promise.all([
+  const [t, projects, technologies, skills, profile, links, practices] = await Promise.all([
     getTranslations('projects'),
     content.getProjects(locale).then(indexOrder),
     content.getTechnologies(locale),
+    content.getSkills(locale),
     content.getProfile(locale),
     content.getFeaturedLinks(locale),
     content.getPractices(locale),
@@ -90,7 +91,7 @@ export default async function ProjectsPage({
 
   if (listing.outOfRange) notFound();
 
-  const namesFor = techNameLookup(technologies);
+  const namesFor = nameLookup(skills);
   const crumbs = [
     { name: t('home'), path: '/' },
     { name: t('title'), path: '/projects' },
@@ -137,7 +138,7 @@ export default async function ProjectsPage({
               <li key={project.id}>
                 <ProjectCard
                   project={project}
-                  techNames={namesFor(project.techIds)}
+                  skillNames={namesFor(project.skillIds)}
                   headingLevel="h2"
                   eager={index < 3}
                   lcp={index === 0}

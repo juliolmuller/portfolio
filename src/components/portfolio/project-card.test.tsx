@@ -11,7 +11,7 @@ const t = (key: string, values?: Record<string, string>): string => {
     'visitAppLabel': `Visit app: ${values?.title ?? ''} (opens in a new tab)`,
     'viewDetails': 'View details',
     'viewDetailsLabel': `View details about ${values?.title ?? ''}`,
-    'moreTechnologies': 'more',
+    'moreSkills': `${values?.count ?? ''} more skills`,
     'kinds.web': 'Web',
     'statuses.live': 'Live',
   };
@@ -69,9 +69,29 @@ const base: ProjectSummary = {
   updatedAt: '2026-10-01T12:00:00Z',
 };
 
-async function markup(project: ProjectSummary): Promise<string> {
-  return renderToStaticMarkup(await ProjectCard({ project, techNames: ['React'] }));
+async function markup(project: ProjectSummary, skillNames: string[] = ['React']): Promise<string> {
+  return renderToStaticMarkup(await ProjectCard({ project, skillNames }));
 }
+
+describe('ProjectCard chips', () => {
+  it('renders four chips and an overflow count with its sr-only label', async () => {
+    const html = await markup(base, ['A1', 'B2', 'C3', 'D4', 'E5', 'F6']);
+
+    for (const name of ['A1', 'B2', 'C3', 'D4']) {
+      expect(html).toContain(`>${name}</li>`);
+    }
+    expect(html).not.toContain('E5');
+    expect(html).not.toContain('F6');
+    expect(html).toContain('+2');
+    expect(html).toContain('2 more skills');
+  });
+
+  it('renders no chip list without skills', async () => {
+    const html = await markup(base, []);
+
+    expect(html).not.toContain('<ul');
+  });
+});
 
 describe('ProjectCard CTAs', () => {
   it('renders Visit app + View details when a live URL exists', async () => {
