@@ -28,21 +28,22 @@ With no Sanity variables the site runs on fixtures. To try the admin locally set
 
 ## Scripts
 
-| Script                                          | What it does                                                                                   |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `dev` / `build` / `start`                       | Development server, production build, production server                                        |
-| `lint`, `typecheck`                             | ESLint (incl. Prettier formatting, zero warnings), `tsc` after route type generation           |
-| `test`, `test:watch`                            | Vitest unit tests                                                                              |
-| `test:e2e`                                      | Playwright against the production build on port 3100 (run `build` first)                       |
-| `check:seo`                                     | Crawl of every sitemap URL with JavaScript off, plus admin and API header checks               |
-| `check:bundle`                                  | First-load and lazy-chunk budgets, admin isolation, server-only secret leaks (after `build`)   |
-| `lhci`                                          | Lighthouse CI on Home, `/projects` and a detail page in both locales                           |
-| `i18n:check`, `icons:audit`                     | Catalog/fixture parity; every technology resolves to an icon or a deliberate monogram          |
-| `audit:deps`, `update`                          | `bun audit` at high severity; upgrade everything to latest (keeps ESLint 9 and TypeScript 6.0) |
-| `admin:hash`                                    | Prints an `ADMIN_PASSWORD_HASH` for a password                                                 |
-| `admin:smoke`                                   | Write-path smoke test against the Sanity `development` dataset (never production)              |
-| `sanity:seed`, `sanity:schema`, `content:smoke` | Seed a dataset with the fictional data, print the schema, read-path smoke test                 |
-| `fixtures:generate`                             | Regenerates the fixture images and metadata                                                    |
+| Script                                          | What it does                                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `dev` / `build` / `start`                       | Development server, production build, production server                                              |
+| `lint`, `typecheck`                             | ESLint (incl. Prettier formatting, zero warnings), `tsc` after route type generation                 |
+| `test`, `test:watch`                            | Vitest unit tests                                                                                    |
+| `test:e2e`                                      | Playwright against the production build on port 3100 (run `build` first)                             |
+| `check:seo`                                     | Crawl of every sitemap URL with JavaScript off, plus admin and API header checks                     |
+| `check:bundle`                                  | First-load and lazy-chunk budgets, admin isolation, server-only secret leaks (after `build`)         |
+| `lhci`                                          | Lighthouse CI on Home, `/projects` and a detail page in both locales                                 |
+| `i18n:check`, `icons:audit`                     | Catalog/fixture parity; every technology resolves to an icon or a deliberate monogram                |
+| `audit:deps`, `update`                          | `bun audit` at high severity; upgrade everything to latest (keeps ESLint 9 and TypeScript 6.0)       |
+| `admin:hash`                                    | Prints an `ADMIN_PASSWORD_HASH` for a password                                                       |
+| `admin:smoke`                                   | Write-path smoke test against the Sanity `development` dataset (never production)                    |
+| `skills:migrate`                                | Copy technologies and practices into skills and link them (dry run by default; `--apply`, `--check`) |
+| `sanity:seed`, `sanity:schema`, `content:smoke` | Seed a dataset with the fictional data, print the schema, read-path smoke test                       |
+| `fixtures:generate`                             | Regenerates the fixture images and metadata                                                          |
 
 Visual snapshots run in CI; locally use `VISUAL=1 bun run test:e2e visual.spec.ts`.
 
