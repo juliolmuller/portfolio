@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { vi } from 'vitest';
 
-import { type Experience, type Skill } from '@/lib/content';
+import { type Education, type Experience, type Skill } from '@/lib/content';
 
 import { Resume } from './resume';
 
@@ -16,8 +16,17 @@ vi.mock('@/components/motion/timeline-progress', () => ({
 }));
 
 vi.mock('./resume-panes', () => ({
-  ResumePanes: ({ experience }: { experience: React.ReactNode }): React.JSX.Element => (
-    <div>{experience}</div>
+  ResumePanes: ({
+    experience,
+    education,
+  }: {
+    education: React.ReactNode;
+    experience: React.ReactNode;
+  }): React.JSX.Element => (
+    <div>
+      {experience}
+      {education}
+    </div>
   ),
 }));
 
@@ -120,5 +129,55 @@ describe('Resume experience skills (#76)', () => {
 
     expect(html).not.toContain('Tech');
     expect(chips(html)).toEqual(['Alpha']);
+  });
+});
+
+function degree(id: string, skillIds: string[]): Education {
+  return {
+    id,
+    kind: 'degree',
+    title: `Title ${id}`,
+    institution: `School ${id}`,
+    start: '2010-01',
+    end: '2014-01',
+    skillIds,
+    order: 0,
+    slug: id,
+  } as unknown as Education;
+}
+
+async function renderEducation(education: Education[], skills: Skill[]): Promise<string> {
+  return renderToStaticMarkup(
+    await Resume({ locale: 'en', education, skills, links: [], resume: null, experience: [] }),
+  );
+}
+
+describe('Resume education skills (#77)', () => {
+  const all = [skill('a', 'Alpha'), skill('b', 'Beta'), skill('c', 'Gamma')];
+
+  it('follows skillIds order and labels the list', async () => {
+    const html = await renderEducation([degree('x', ['c', 'a'])], all);
+
+    expect(chips(html)).toEqual(['Gamma', 'Alpha']);
+    expect(html).toContain('<p class="sr-only">skills</p>');
+  });
+
+  it('omits ids that are absent from skills', async () => {
+    const html = await renderEducation([degree('x', ['a', 'gone'])], all);
+
+    expect(chips(html)).toEqual(['Alpha']);
+  });
+
+  it('renders nothing extra without resolvable skills', async () => {
+    const html = await renderEducation([degree('x', []), degree('y', ['gone'])], all);
+
+    expect(html).not.toContain('sr-only">skills');
+    expect(chips(html)).toEqual([]);
+  });
+
+  it('renders one list when only one entry has skills', async () => {
+    const html = await renderEducation([degree('x', ['a']), degree('y', [])], all);
+
+    expect(html.split('<ul class="flex flex-wrap gap-2">')).toHaveLength(2);
   });
 });

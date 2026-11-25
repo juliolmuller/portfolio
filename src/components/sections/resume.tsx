@@ -67,6 +67,39 @@ function DateRange({
   );
 }
 
+function SkillChips({
+  ids,
+  names,
+  label,
+  className,
+}: {
+  className?: string;
+  ids: string[];
+  label: string;
+  names: Map<string, string>;
+}): null | React.JSX.Element {
+  const items = ids.flatMap((id) => {
+    const name = names.get(id);
+
+    return name ? [{ id, name }] : [];
+  });
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className={className}>
+      <p className="sr-only">{label}</p>
+      <ul className="flex flex-wrap gap-2">
+        {items.map(({ id, name }) => (
+          <li key={id}>
+            <Chip>{name}</Chip>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function RoleBody({
   role,
   labels,
@@ -121,11 +154,6 @@ export async function Resume({
           <ol className="space-y-4">
             {experience.map((entry) => {
               const [first, ...rest] = entry.roles;
-              const stack = entry.skillIds.flatMap((id) => {
-                const name = names.get(id);
-
-                return name ? [{ id, name }] : [];
-              });
               const details = (
                 <>
                   {first ? <RoleBody role={first} labels={labels} /> : null}
@@ -141,18 +169,12 @@ export async function Resume({
                       <RoleBody role={role} labels={labels} />
                     </div>
                   ))}
-                  {stack.length > 0 ? (
-                    <div className="mt-5">
-                      <p className="sr-only">{t('skills')}</p>
-                      <ul className="flex flex-wrap gap-2">
-                        {stack.map(({ id, name }) => (
-                          <li key={id}>
-                            <Chip>{name}</Chip>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
+                  <SkillChips
+                    ids={entry.skillIds}
+                    names={names}
+                    label={t('skills')}
+                    className="mt-5"
+                  />
                 </>
               );
 
@@ -208,6 +230,12 @@ export async function Resume({
                 <p className="font-label text-text-3">{t(`kinds.${item.kind}`)}</p>
                 <h3 className="mt-3 font-semibold text-text-1">{item.title}</h3>
                 <p className="mt-1 text-small text-text-2">{item.institution}</p>
+                <SkillChips
+                  ids={item.skillIds}
+                  names={names}
+                  label={t('skills')}
+                  className="mt-4"
+                />
                 <p className="mt-auto pt-4">
                   <DateRange locale={locale} start={item.start} end={item.end} />
                 </p>
