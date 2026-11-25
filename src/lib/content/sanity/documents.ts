@@ -268,6 +268,7 @@ const converters: Converters = {
         }),
       ),
       technologies: references(doc.id, 'technologies', doc.techIds),
+      skills: references(doc.id, 'skills', doc.skillIds),
       collapsedByDefault: doc.collapsedByDefault ?? false,
       order: doc.order,
       visible: doc.visible ?? true,

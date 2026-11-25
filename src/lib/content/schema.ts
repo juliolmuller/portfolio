@@ -479,6 +479,11 @@ export const experienceSchema = z.object({
     .max(32)
     .default([])
     .refine(isUnique, { message: 'Duplicate technology' }),
+  skillIds: z
+    .array(documentIdSchema)
+    .max(48)
+    .default([])
+    .refine(isUnique, { message: 'Duplicate skill' }),
   collapsedByDefault: z.boolean().default(false),
   order: orderSchema,
   visible: visibleSchema,

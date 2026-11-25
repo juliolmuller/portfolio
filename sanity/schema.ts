@@ -265,6 +265,7 @@ const documents: SchemaType[] = [
       localeString('location'),
       field('roles', 'array', { of: [{ type: 'experienceRole' }] }),
       technologyRefs,
+      skillRefs,
       field('collapsedByDefault', 'boolean', { initialValue: false }),
       ...common,
     ],
