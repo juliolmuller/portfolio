@@ -46,6 +46,32 @@ describe('admin experience projection', () => {
   });
 });
 
+describe('admin education projection', () => {
+  it('reads the stored skill references back as skillIds', async () => {
+    const degree = createFixtureDataset().education[0];
+
+    if (!degree) throw new Error('Expected fixture education');
+
+    const row = await fetchGroq(adminGetQuery('education'), { id: degree.id }, []);
+
+    expect(degree.skillIds?.length).toBeGreaterThan(0);
+    expect(row).toMatchObject({ skillIds: degree.skillIds });
+    expect(parseDocument('education', row)).toEqual(documentSchemas.education.parse(degree));
+  });
+
+  it('parses an entry without skills to an empty list', async () => {
+    const plain = createFixtureDataset().education.find(
+      (entry) => (entry.skillIds ?? []).length === 0,
+    );
+
+    if (!plain) throw new Error('Expected a fixture education without skills');
+
+    const row = await fetchGroq(adminGetQuery('education'), { id: plain.id }, []);
+
+    expect(parseDocument('education', row)).toMatchObject({ skillIds: [] });
+  });
+});
+
 describe('admin skill projection', () => {
   it.each([
     ['a full skill', full],

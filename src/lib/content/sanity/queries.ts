@@ -60,7 +60,9 @@ const EXPERIENCE_FIELDS = /* groq */ `
   collapsedByDefault, order, visible`;
 
 const EDUCATION_FIELDS = /* groq */ `
-  ${META}, kind, title, institution, start, end, url, order, visible`;
+  ${META}, kind, title, institution, start, end, url,
+  "skillIds": skills[]._ref,
+  order, visible`;
 
 const TECHNOLOGY_FIELDS = /* groq */ `
   ${META}, name, category, iconSource, iconSlug,

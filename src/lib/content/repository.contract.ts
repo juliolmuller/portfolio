@@ -190,6 +190,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
         'certification',
         'certification',
       ]);
+      expect(entries.every((entry) => !('skillIds' in entry))).toBe(true);
     });
 
     it('resolves all seeded technologies with icons (D37)', async () => {

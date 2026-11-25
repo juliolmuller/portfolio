@@ -55,6 +55,22 @@ describe('fixtures admin store', () => {
     await expect(store.get('experience', job.id)).resolves.toMatchObject({ skillIds });
   });
 
+  it('keeps education skill ids on read-back', async () => {
+    const dataset = createFixtureDataset();
+    const store = createFixturesAdminStore(dataset, { readOnlyReason: 'test', writable: true });
+    const degree = dataset.education[0];
+
+    if (!degree) throw new Error('Expected a fixture education');
+
+    const skillIds = (degree.skillIds ?? []).slice(0, 2);
+
+    expect(skillIds).toHaveLength(2);
+
+    await store.patch('education', degree.id, { skillIds });
+
+    await expect(store.get('education', degree.id)).resolves.toMatchObject({ skillIds });
+  });
+
   it('lists documents by order, like the Sanity admin query', async () => {
     const store = createFixturesAdminStore(createFixtureDataset(), {
       readOnlyReason: 'test',

@@ -2,6 +2,7 @@ import { createFixtureDataset } from './fixtures/dataset';
 import {
   documentSchemas,
   documentTypes,
+  educationSchema,
   experienceSchema,
   featuredLinkSchema,
   hasNoRawHtml,
@@ -22,6 +23,7 @@ const link = dataset.featuredLink[0];
 const tech = dataset.technology[0];
 const profile = dataset.profile[0];
 const job = dataset.experience[0];
+const degree = dataset.education[0];
 
 describe('content schema', () => {
   it.each([
@@ -177,6 +179,47 @@ describe('content schema', () => {
       const result = experienceSchema.safeParse(rest);
 
       expect(result.success && result.data.skillIds).toEqual([]);
+    });
+  });
+
+  describe('education skillIds', () => {
+    const ids = (count: number): string[] =>
+      Array.from(
+        { length: count },
+        (_, index) => `skill.00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      );
+
+    it('rejects duplicates', () => {
+      const [first = ''] = ids(1);
+      const result = educationSchema.safeParse({ ...degree, skillIds: [first, first] });
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues).toEqual([
+        expect.objectContaining({ path: ['skillIds'], message: 'Duplicate skill' }),
+      ]);
+    });
+
+    it('caps the list at 24', () => {
+      expect(educationSchema.safeParse({ ...degree, skillIds: ids(24) }).success).toBe(true);
+      expect(educationSchema.safeParse({ ...degree, skillIds: ids(25) }).success).toBe(false);
+    });
+
+    it('defaults to an empty list', () => {
+      const { skillIds: _omitted, ...rest } = degree ?? {};
+      const result = educationSchema.safeParse(rest);
+
+      expect(result.success && result.data.skillIds).toEqual([]);
+    });
+
+    it('still rejects an end before the start', () => {
+      const result = educationSchema.safeParse({
+        ...degree,
+        start: '2016',
+        end: '2012',
+        skillIds: ids(1),
+      });
+
+      expect(result.success).toBe(false);
     });
   });
 

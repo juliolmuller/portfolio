@@ -1,7 +1,7 @@
 import { type DocumentInput } from '../../schema';
 import { L, meta } from '../helpers';
 import { techId } from '../ids';
-import { skillRef } from './skills';
+import { practiceSkillRef, skillRef } from './skills';
 
 export const experience: Array<DocumentInput<'experience'>> = [
   {
@@ -117,6 +117,11 @@ export const education: Array<DocumentInput<'education'>> = [
     start: '2012',
     end: '2016',
     url: 'https://example.com/university',
+    skillIds: [
+      skillRef('SQL'),
+      practiceSkillRef('SOLID'),
+      practiceSkillRef('Solution architecture'),
+    ],
     order: 10,
     visible: true,
   },
@@ -127,6 +132,7 @@ export const education: Array<DocumentInput<'education'>> = [
     institution: 'Example Academy',
     end: '2021',
     url: 'https://example.com/academy/architecture',
+    skillIds: [practiceSkillRef('Clean Architecture')],
     order: 20,
     visible: true,
   },
