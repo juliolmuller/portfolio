@@ -69,7 +69,7 @@ function skill(id: string, name: string): Skill {
     inCloud: false,
     order: 0,
     priority: 2,
-  } as unknown as Skill;
+  };
 }
 
 async function render(experience: Experience, skills: Skill[]): Promise<string> {
@@ -113,11 +113,12 @@ describe('Resume experience skills (#76)', () => {
   });
 
   it('ignores techIds', async () => {
-    const html = await render({ ...entry('x', undefined, false), techIds: ['t1'], skillIds: [] }, [
-      skill('t1', 'Tech'),
-    ]);
+    const html = await render(
+      { ...entry('x', undefined, false), techIds: ['t'], skillIds: ['a'] },
+      [skill('a', 'Alpha'), skill('t', 'Tech')],
+    );
 
     expect(html).not.toContain('Tech');
-    expect(chips(html)).toEqual([]);
+    expect(chips(html)).toEqual(['Alpha']);
   });
 });
