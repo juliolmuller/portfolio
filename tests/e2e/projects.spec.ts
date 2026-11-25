@@ -51,6 +51,21 @@ test.describe('projects', () => {
     expect(missing.status()).toBe(404);
   });
 
+  test('detail page lists the project skills', async ({ page, request }) => {
+    await page.goto('/en/projects/orbit-dashboard');
+
+    await expect(page.getByRole('heading', { level: 2, name: 'Skills' })).toBeVisible();
+    await expect(
+      page
+        .locator('section', { has: page.getByRole('heading', { level: 2, name: 'Skills' }) })
+        .getByRole('listitem'),
+    ).toHaveText(['TypeScript', 'React', 'Next.js', 'PostgreSQL', 'Redis']);
+
+    const pt = await request.get('/pt/projects/orbit-dashboard');
+
+    expect(await pt.text()).toContain('Habilidades');
+  });
+
   test('resume redirects to the locale PDF', async ({ request }) => {
     const response = await request.get('/en/resume', { maxRedirects: 0 });
 
