@@ -356,12 +356,21 @@ test.describe('singletons and lists', () => {
     await expect(field(page, 'roles.0.summary.en')).toHaveAccessibleDescription(
       `${long.length}/5000`,
     );
-    // Re-reading the technologies keeps the unsaved form state.
+    await page.getByRole('searchbox', { name: 'Filter skills used' }).fill('TypeScript');
+    await page.getByRole('checkbox', { name: 'TypeScript', exact: true }).check();
+    await page.getByRole('searchbox', { name: 'Filter skills used' }).fill('');
+    await expect(page.getByRole('group', { name: /^Skills used/ })).toContainText('1/48');
+    await expect(page.getByRole('group', { name: /^Technologies/ })).toHaveCount(0);
+    // Re-reading the skills keeps the unsaved form state.
     await page.getByRole('button', { name: 'Refresh the list' }).click();
     await expect(field(page, 'company')).toHaveValue(company);
+    await expect(page.getByRole('checkbox', { name: 'TypeScript', exact: true })).toBeChecked();
     await page.getByRole('button', { name: 'Save and publish' }).click();
     await published(page);
     await slow.poll(snapshot(page)).toContain(company);
+    await page.reload();
+    await hydrated(page);
+    await expect(page.getByRole('checkbox', { name: 'TypeScript', exact: true })).toBeChecked();
 
     await openDeleteDialog(page);
     await page.getByLabel('Confirmation text').fill(company);
