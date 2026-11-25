@@ -14,16 +14,33 @@ name: Claude issue to PR
 #   2. The owner answers in ONE comment → this same workflow runs again
 #      (issue_comment trigger) and the planner resumes with the whole thread.
 #   3. With no open questions the planner posts the plan as an issue comment
-#      (marker <!-- claude:plan -->) and the implementer (Sonnet) builds it
-#      from that comment on branch claude/issue-<n>-<slug>, cut from the base branch.
-#   4. The workflow runs the quality gates itself, then Claude pushes and opens
-#      the PR with the Claude GitHub App token, so the PR is authored by
+#      (marker <!-- claude:plan -->, then a <!-- claude:plan-meta {"slug","base"} -->
+#      line that a retry reads to reuse the same branch) and the `implement` job
+#      (Sonnet) builds it from that comment on branch claude/issue-<n>-<slug>, cut
+#      from the base branch.
+#   4. The same job runs the quality gates itself and uploads what the next job
+#      needs (the commits as a git bundle, the PR body, the gates report and the
+#      PR data) as the artifact claude-issue-<n>-handoff, kept for 7 days (D98).
+#   5. The `publish` job restores the branch from that artifact, then Claude pushes
+#      and opens the PR with the Claude GitHub App token, so the PR is authored by
 #      claude[bot] and DOES trigger claude-review.yml. Failing gates → draft PR.
 #
-# To restart from scratch: remove and re-add the trigger label, or use Run
-# workflow on this file. Add only ONE of the two labels; with both present
-# `@claude:next` wins. Removing `@claude:blocked` by hand does nothing: resolve
-# or remove the dependency instead.
+# Phases (D98): Run workflow takes a `phase`. `full` (the default, and what every
+# label, comment and unblock run does) plans and implements. `plan` stops after the
+# plan comment. `implement` skips the planner and builds from the LATEST plan
+# comment posted by github-actions[bot]; it refuses, with a comment on the issue and
+# a failed run, when the issue waits on the owner, has no plan, the plan has no
+# plan-meta line (posted before D98) or the plan is stale for the base branch.
+#
+# To restart:
+#   - from scratch: remove and re-add the trigger label, or Run workflow with phase
+#     `full`. Add only ONE of the two labels; with both present `@claude:next` wins.
+#     Removing `@claude:blocked` by hand does nothing: resolve or remove the
+#     dependency instead.
+#   - only the plan: Run workflow with phase `plan`.
+#   - the code, from the plan already on the issue: Run workflow with phase `implement`.
+#   - a failed push or PR: Re-run failed jobs on `publish` (within 7 days). It reuses
+#     the artifact and does not redo `implement`.
 # Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (`claude setup-token`); usage counts
 # against the Claude subscription.
 
@@ -35,9 +52,15 @@ on:
   workflow_dispatch:
     inputs:
       issue:
-        description: Issue number to plan (used by claude-unblock.yml)
+        description: Issue number (claude-unblock.yml passes only this)
         required: true
         type: number
+      phase:
+        description: "full = plan and implement; plan = stop after the plan; implement = build from the latest plan comment"
+        required: false
+        type: choice
+        options: [full, plan, implement]
+        default: full
 
 concurrency:
   group: claude-issue-${{ github.event.issue.number || inputs.issue }}
@@ -77,6 +100,7 @@ jobs:
       issue: ${{ steps.check.outputs.issue }}
       base: ${{ steps.check.outputs.base }}
       proceed: ${{ steps.check.outputs.proceed }}
+      phase: ${{ steps.check.outputs.phase }}
     steps:
       - name: Check blocking issues
         id: check
@@ -90,8 +114,15 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           EVENT: ${{ github.event_name }}
           TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+          # Only Run workflow sets it; every other path (label, comment, the unblock dispatch) is `full` (D98).
+          PHASE: ${{ inputs.phase || 'full' }}
         run: |
           set -euo pipefail
+          case "$PHASE" in
+            full|plan|implement) ;;
+            *) echo "::error::Unknown phase '$PHASE'"; exit 1 ;;
+          esac
+          echo "phase=$PHASE" >> "$GITHUB_OUTPUT"
           echo "issue=$ISSUE" >> "$GITHUB_OUTPUT"
           # Labels come from the API, so every path (label, comment, dispatch) agrees.
           info=$(gh issue view "$ISSUE" --json state,labels)
@@ -195,8 +226,9 @@ jobs:
       ISSUE: ${{ needs.gate.outputs.issue }}
       BASE_BRANCH: ${{ needs.gate.outputs.base }}
     outputs:
-      ready: ${{ steps.publish.outputs.ready }}
-      slug: ${{ steps.publish.outputs.slug }}
+      # `post` runs for phases full and plan, `load` for implement; the other one is skipped (empty outputs).
+      ready: ${{ steps.post.outputs.ready || steps.load.outputs.ready }}
+      slug: ${{ steps.post.outputs.slug || steps.load.outputs.slug }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -206,6 +238,7 @@ jobs:
 
       - name: Plan
         id: planner
+        if: needs.gate.outputs.phase != 'implement'
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -258,11 +291,13 @@ jobs:
             --json-schema '{"type":"object","additionalProperties":false,"required":["status","questions","plan","labels","slug"],"properties":{"status":{"type":"string","enum":["needs_input","ready"]},"questions":{"type":"string"},"plan":{"type":"string"},"labels":{"type":"array","items":{"type":"string"}},"slug":{"type":"string","pattern":"^[a-z0-9]+(-[a-z0-9]+)*$"}}}'
 
       - name: Post questions or plan
-        id: publish
+        id: post
+        if: needs.gate.outputs.phase != 'implement'
         env:
           GH_TOKEN: ${{ github.token }}
           RESULT: ${{ steps.planner.outputs.structured_output }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PHASE: ${{ needs.gate.outputs.phase }}
         run: |
           set -euo pipefail
           status=$(jq -r '.status' <<<"$RESULT")
@@ -291,30 +326,102 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             gh label create "$PLANNED_LABEL" --color 0E8A16 --description "Claude posted a plan" 2>/dev/null || true
+            slug=$(jq -r '.slug' <<<"$RESULT")
+            # Line 2 of the plan comment (D98): phase implement reads it to reuse this branch name and base.
+            meta=$(jq -nc --arg slug "$slug" --arg base "$BASE_BRANCH" '{slug: $slug, base: $base}')
+            if [ "$PHASE" = "plan" ]; then
+              footer="implementation was not started (phase: plan); use Run workflow with phase \`implement\` to build it."
+            else
+              footer="implementation starts next."
+            fi
             {
               echo "<!-- claude:plan -->"
+              echo "<!-- claude:plan-meta $meta -->"
               echo "## Implementation plan"
               echo
               jq -r '.plan' <<<"$RESULT"
               echo
-              echo "<sub>[Planner run]($RUN_URL) · implementation starts next.</sub>"
+              echo "<sub>[Planner run]($RUN_URL) · $footer</sub>"
             } > "$body"
             gh issue comment "$ISSUE" --body-file "$body"
             gh issue edit "$ISSUE" --remove-label "$WAITING_LABEL" 2>/dev/null || true
             gh issue edit "$ISSUE" --add-label "$PLANNED_LABEL"
             echo "ready=true" >> "$GITHUB_OUTPUT"
-            echo "slug=$(jq -r '.slug' <<<"$RESULT")" >> "$GITHUB_OUTPUT"
+            echo "slug=$slug" >> "$GITHUB_OUTPUT"
           fi
 
+      # phase implement (D98): no planner. Reuse the latest plan comment of the bot, so a retry
+      # builds what was already planned and on the same branch. Every refusal comments on the
+      # issue and fails the run; nothing here guesses a slug.
+      - name: Load the existing plan
+        id: load
+        if: needs.gate.outputs.phase == 'implement'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          refuse() {
+            gh issue comment "$ISSUE" --body "@$OWNER_LOGIN phase implement cannot start: $1. See the [run]($RUN_URL)." \
+              || echo "::warning::Could not comment on #$ISSUE"
+            echo "::error::phase implement cannot start: $1"
+            exit 1
+          }
+
+          labels=$(gh issue view "$ISSUE" --json labels -q '.labels[].name')
+          if grep -Fixq -- "$WAITING_LABEL" <<<"$labels"; then
+            refuse "the issue is still waiting for your answer (\`$WAITING_LABEL\`)"
+          fi
+
+          # Only the bot's comments count: on a public repository anyone can post the marker.
+          gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" \
+            | jq -s 'add // [] | map(select(.user.login == "github-actions[bot]")) | sort_by(.id)' > "$RUNNER_TEMP/bot-comments.json"
+          plan=$(jq -c '[.[] | select((.body // "") | startswith("<!-- claude:plan -->"))] | last // empty' "$RUNNER_TEMP/bot-comments.json")
+          if [ -z "$plan" ]; then
+            refuse "there is no plan comment from github-actions[bot] on this issue; run the workflow with phase plan (or full) first"
+          fi
+
+          # Line 2 only: a marker inside the plan text must not count.
+          meta=$(jq -r '.body' <<<"$plan" | tr -d '\r' | sed -n '2s/^<!-- claude:plan-meta \(.*\) -->$/\1/p')
+          slug=$(jq -r '.slug | strings' <<<"$meta" 2>/dev/null || true)
+          plan_base=$(jq -r '.base | strings' <<<"$meta" 2>/dev/null || true)
+          if [ -z "$slug" ] || [ -z "$plan_base" ]; then
+            refuse "the plan comment has no readable branch metadata (it was posted before D98); run the workflow with phase plan (or full) to plan again"
+          fi
+          if ! [[ "$slug" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || { [ "$plan_base" != main ] && [ "$plan_base" != next ]; }; then
+            refuse "the branch metadata in the plan comment is not valid; run the workflow with phase plan to plan again"
+          fi
+
+          if [ "$plan_base" != "$BASE_BRANCH" ]; then
+            refuse "the plan was written for $plan_base but the trigger label now selects $BASE_BRANCH; run the workflow with phase plan to plan again"
+          fi
+          plan_id=$(jq -r '.id' <<<"$plan")
+          newer=$(jq --argjson id "$plan_id" '[.[] | select(.id > $id) | select((.body // "") | startswith("<!-- claude:questions -->") or startswith("<!-- claude:blocked -->"))] | length' "$RUNNER_TEMP/bot-comments.json")
+          if [ "$newer" != "0" ]; then
+            refuse "the bot posted questions or a blocked notice after the plan, so the plan may be stale; run the workflow with phase plan to plan again"
+          fi
+
+          echo "::notice::Building from $(jq -r '.html_url' <<<"$plan") on branch claude/issue-$ISSUE-$slug"
+          {
+            echo "ready=true"
+            echo "slug=$slug"
+          } >> "$GITHUB_OUTPUT"
+
+  # Implements, runs the gates and uploads the hand-off artifact. Pushing and opening the PR is the
+  # next job, so a failure there can be retried with "Re-run failed jobs" without redoing this one (D98).
   implement:
     needs: [gate, plan]
-    if: needs.plan.outputs.ready == 'true'
+    if: needs.plan.outputs.ready == 'true' && needs.gate.outputs.phase != 'plan'
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
       contents: read
       issues: write
       id-token: write
+    outputs:
+      skip: ${{ steps.prepare.outputs.skip }}
+      branch: ${{ steps.prepare.outputs.branch }}
     env:
       ISSUE: ${{ needs.gate.outputs.issue }}
       BASE_BRANCH: ${{ needs.gate.outputs.base }}
@@ -327,7 +434,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       # No persisted GITHUB_TOKEN: a push with it would not trigger the review
-      # workflow. The push happens later with the Claude App token.
+      # workflow. The push happens in the publish job with the Claude App token.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ env.BASE_BRANCH }}
@@ -364,8 +471,8 @@ jobs:
             You are on branch ${{ env.BRANCH }}. Do not push and do not open a PR:
             the workflow does that after verifying your work.
 
-            1. Get the plan: it is the LAST comment on the issue that starts with
-               `<!-- claude:plan -->`.
+            1. Get the plan: it is the LAST comment posted by github-actions[bot]
+               on the issue that starts with `<!-- claude:plan -->`.
                `gh issue view ${{ env.ISSUE }} --comments`
                Read the issue and the rest of the thread only for context; the
                plan and the owner's answers are the source of truth.
@@ -442,6 +549,8 @@ jobs:
             fi
           done < <(jq -r '.labels[]' <<<"$RESULT")
 
+          handoff="$RUNNER_TEMP/handoff"
+          mkdir -p "$handoff"
           {
             jq -r '.pr_body' <<<"$RESULT"
             echo
@@ -455,11 +564,106 @@ jobs:
               echo
             fi
             echo "Closes #$ISSUE"
-          } > "$RUNNER_TEMP/pr-body.md"
+          } > "$handoff/pr-body.md"
 
+          # Everything the publish job needs (D98). It rebuilds the branch from the bundle and the PR from
+          # meta.json, so none of it depends on this runner surviving.
+          draft=false
+          [ "$GATES_OK" = "true" ] || draft=true
+          jq -n --arg branch "$BRANCH" --arg base "$BASE_BRANCH" --arg title "$(jq -r '.pr_title' <<<"$RESULT")" \
+            --arg labels "$labels" --argjson draft "$draft" \
+            '{branch: $branch, base: $base, title: $title, labels: $labels, draft: $draft}' > "$handoff/meta.json"
+          cp "$RUNNER_TEMP/gates.md" "$handoff/gates.md"
+          git rev-parse "$BRANCH" > "$handoff/head.txt"
+          git bundle create "$handoff/branch.bundle" "$BRANCH" "^origin/$BASE_BRANCH"
+          git bundle verify "$handoff/branch.bundle"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+
+      # Artifacts belong to the run, not to an attempt, so "Re-run failed jobs" on publish still finds
+      # this one. `overwrite` lets a full re-run of this job replace the previous attempt's upload.
+      - name: Upload the hand-off
+        if: steps.prepare.outputs.skip == 'false'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: claude-issue-${{ env.ISSUE }}-handoff
+          path: ${{ runner.temp }}/handoff/
+          retention-days: 7
+          if-no-files-found: error
+          overwrite: true
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN the implementation failed before opening the PR. See the [run]($RUN_URL)."
+
+  # Pushes the branch and opens the PR from the implement job's hand-off artifact (D98). It has no
+  # implementation work of its own, so "Re-run failed jobs" on it is cheap. `actions: read` is only
+  # for `gh run download`.
+  publish:
+    needs: [gate, implement]
+    if: needs.implement.outputs.skip == 'false'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+      actions: read
+    env:
+      ISSUE: ${{ needs.gate.outputs.issue }}
+      BASE_BRANCH: ${{ needs.gate.outputs.base }}
+      BRANCH: ${{ needs.implement.outputs.branch }}
+    steps:
+      # No persisted GITHUB_TOKEN: a push with it would not trigger the review
+      # workflow. The push happens below with the Claude App token.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASE_BRANCH }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      # `gh run download` instead of actions/download-artifact: no extra action to pin. Artifacts
+      # of upload-artifact v4+ can be downloaded while the run is still in progress.
+      - name: Download the hand-off
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh run download "$GITHUB_RUN_ID" -n "claude-issue-$ISSUE-handoff" -D "$RUNNER_TEMP/handoff"
+          if [ ! -f "$RUNNER_TEMP/handoff/meta.json" ]; then
+            echo "::error::The hand-off artifact is missing or incomplete (artifacts expire after 7 days). Run the workflow with phase implement instead."
+            exit 1
+          fi
+
+      - name: Restore the branch
+        run: |
+          set -euo pipefail
+          handoff="$RUNNER_TEMP/handoff"
+          # The hand-off must describe this very run: fail instead of publishing something else.
+          if [ "$(jq -r '.branch' "$handoff/meta.json")" != "$BRANCH" ] || [ "$(jq -r '.base' "$handoff/meta.json")" != "$BASE_BRANCH" ]; then
+            echo "::error::meta.json does not match this run ($BRANCH on $BASE_BRANCH)."
+            exit 1
+          fi
+          git bundle verify "$handoff/branch.bundle"
+          git fetch "$handoff/branch.bundle" "refs/heads/$BRANCH:refs/heads/$BRANCH"
+          git switch "$BRANCH"
+          if [ "$(git rev-parse HEAD)" != "$(tr -d '[:space:]' < "$handoff/head.txt")" ]; then
+            echo "::error::The restored $BRANCH does not match head.txt."
+            exit 1
+          fi
+
+      - name: Prepare publish script
+        run: |
+          set -euo pipefail
+          handoff="$RUNNER_TEMP/handoff"
+          title=$(jq -r '.title' "$handoff/meta.json")
+          labels=$(jq -r '.labels' "$handoff/meta.json")
           draft=""
-          [ "$GATES_OK" = "true" ] || draft="--draft"
-          title=$(jq -r '.pr_title' <<<"$RESULT")
+          if [ "$(jq -r '.draft' "$handoff/meta.json")" = "true" ]; then draft="--draft"; fi
 
           # Run later by Claude, so git and gh use the Claude App token.
           {
@@ -469,18 +673,16 @@ jobs:
             printf 'git push --force "https://x-access-token:${token}@github.com/%s.git" "HEAD:refs/heads/%s"\n' "$GITHUB_REPOSITORY" "$BRANCH"
             printf 'existing=$(gh pr list --head %q --state open --json number -q ".[0].number")\n' "$BRANCH"
             echo 'if [ -n "$existing" ]; then'
-            printf '  gh pr edit "$existing" --title %q --body-file %q --add-assignee %q --add-label %q\n' "$title" "$RUNNER_TEMP/pr-body.md" "$OWNER_LOGIN" "$labels"
+            printf '  gh pr edit "$existing" --title %q --body-file %q --add-assignee %q --add-label %q\n' "$title" "$handoff/pr-body.md" "$OWNER_LOGIN" "$labels"
             echo 'else'
-            printf '  gh pr create --head %q --base %q --title %q --body-file %q --assignee %q --label %q %s\n' "$BRANCH" "$BASE_BRANCH" "$title" "$RUNNER_TEMP/pr-body.md" "$OWNER_LOGIN" "$labels" "$draft"
+            printf '  gh pr create --head %q --base %q --title %q --body-file %q --assignee %q --label %q %s\n' "$BRANCH" "$BASE_BRANCH" "$title" "$handoff/pr-body.md" "$OWNER_LOGIN" "$labels" "$draft"
             echo 'fi'
           } > "$RUNNER_TEMP/publish.sh"
           chmod +x "$RUNNER_TEMP/publish.sh"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
 
       # The only way to get the Claude App token is through the action, so a
       # tiny Claude session runs the script prepared above.
       - name: Push and open PR
-        if: steps.prepare.outputs.skip == 'false'
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -497,7 +699,6 @@ jobs:
       # The Claude step reports success even when publish.sh fails (a rejected
       # push, for instance), so check the result instead of trusting it.
       - name: Verify the PR exists
-        if: steps.prepare.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -512,4 +713,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN the implementation failed before opening the PR. See the [run]($RUN_URL)."
+        run: gh issue comment "$ISSUE" --body "@$OWNER_LOGIN publishing the PR failed; the implementation is saved in the run's artifact for 7 days. Use **Re-run failed jobs** on the [run]($RUN_URL) to retry only the publishing."
