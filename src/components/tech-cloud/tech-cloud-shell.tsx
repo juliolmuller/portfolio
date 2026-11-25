@@ -63,9 +63,10 @@ export function TechCloudShell({
   const [selected, setSelected] = useState<CloudTech | null>(null);
   const [near, setNear] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
-  const showCloud = isClient && !reduced && !failed;
-
   const visibleCloud = useMobileCull(cloudItems);
+  // An empty cloud (no skill is `inCloud`, or the phone cull removed them all)
+  // would hide the List and show a blank stage, so fall back to the List.
+  const showCloud = isClient && !reduced && !failed && visibleCloud.length > 0;
 
   const categoryLabels = Object.fromEntries(
     skillCategories.map((key) => [key, t(`categories.${key}`)]),

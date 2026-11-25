@@ -27,15 +27,9 @@ export function toStackItems(skills: readonly Skill[]): {
     url: skill.url,
     priority: skill.priority,
   }));
-  const cloudItems = items.filter(isCloudItem).map((item): CloudTech => ({
-    id: item.id,
-    name: item.name,
-    categories: item.categories,
-    icon: item.icon,
-    brandColor: item.brandColor,
-    url: item.url,
-    priority: item.priority,
-  }));
+  // The same objects, not copies: a repeated reference is serialized once in
+  // the RSC payload, where a remapped copy would ship every cloud item twice.
+  const cloudItems: CloudTech[] = items.filter(isCloudItem);
 
   return { items, cloudItems };
 }

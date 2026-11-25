@@ -52,6 +52,11 @@ describe('toStackItems (#74)', () => {
     expect(result.cloudItems[1]?.categories).toEqual(['language', 'engineering']);
   });
 
+  it('reuses the list objects for the cloud so the payload carries them once', () => {
+    expect(result.cloudItems[0]).toBe(result.items[0]);
+    expect(result.cloudItems[1]).toBe(result.items[1]);
+  });
+
   it('never ships paths to the client', () => {
     expect(JSON.stringify(result)).not.toContain('paths');
     expect(JSON.stringify(result)).not.toContain('M0 0h24');

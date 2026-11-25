@@ -72,6 +72,20 @@ describe('StackList categories (#69)', () => {
     expect(html).toContain('<span class="ps-7.5">bare</span>');
   });
 
+  it('does not indent a group where no item has an icon (#74)', () => {
+    const bare = (id: string): StackItem => ({
+      id,
+      name: id,
+      categories: ['engineering'],
+      inCloud: false,
+      priority: 1,
+    });
+    const html = render([bare('solid'), bare('ci-cd'), tech('ts', ['language'])]);
+
+    expect(listOf(html, 'engineering')).not.toContain('ps-7.5');
+    expect(listOf(html, 'engineering')).toContain('<span>solid</span>');
+  });
+
   it('never renders a practices block (#74)', () => {
     expect(render([tech('ts', ['engineering'])])).not.toContain('stack-practices');
   });
