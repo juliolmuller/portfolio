@@ -69,25 +69,26 @@ export default async function ProjectPage({
   const { slug } = await params;
   const { locale, project } = await loadProject(slug);
   const content = getContent();
-  const [t, tWork, tA11y, tProjects, all, technologies, skills, profile, links, practices] =
+  const [t, tWork, tA11y, tProjects, all, skills, technologies, profile, links, practices] =
     await Promise.all([
       getTranslations('project'),
       getTranslations('work'),
       getTranslations('a11y'),
       getTranslations('projects'),
       content.getProjects(locale),
-      content.getTechnologies(locale),
       content.getSkills(locale),
+      // Technologies and practices feed JSON-LD only until #80.
+      content.getTechnologies(locale),
       content.getProfile(locale),
       content.getFeaturedLinks(locale),
       content.getPractices(locale),
     ]);
 
   const skillNamesFor = nameLookup(skills);
-  const techById = new Map(technologies.map((tech) => [tech.id, tech]));
-  const usedTech = project.techIds
-    .map((id) => techById.get(id))
-    .filter((tech) => tech !== undefined);
+  const skillById = new Map(skills.map((skill) => [skill.id, skill]));
+  const usedSkills = project.skillIds
+    .map((id) => skillById.get(id))
+    .filter((skill) => skill !== undefined);
   const related = relatedProjects(project, all);
   const neighbors = projectNeighbors(project, all);
   const crumbs = [
@@ -209,17 +210,17 @@ export default async function ProjectPage({
                   </Markdown>
                 </section>
               ) : null}
-              {usedTech.length > 0 ? (
+              {usedSkills.length > 0 ? (
                 <section>
-                  <h2 className="text-h3">{t('technologies')}</h2>
+                  <h2 className="text-h3">{t('skills')}</h2>
                   <ul className="mt-4 flex flex-wrap gap-2">
-                    {usedTech.map((tech) => (
+                    {usedSkills.map((skill) => (
                       <li
-                        key={tech.id}
+                        key={skill.id}
                         className="inline-flex items-center gap-2 rounded-full border border-line px-3 py-1.5 text-small text-text-1"
                       >
-                        <TechIcon icon={tech.icon} className="text-text-2" />
-                        {tech.name}
+                        {skill.icon ? <TechIcon icon={skill.icon} className="text-text-2" /> : null}
+                        {skill.name}
                       </li>
                     ))}
                   </ul>

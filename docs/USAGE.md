@@ -79,6 +79,8 @@ A project can only reference existing technologies. In **Technologies**, check t
 | Cover image               | JPEG, PNG, WebP or AVIF ≤ 4 MB. Alt text in both languages is required. Set the focal point so crops keep the subject | Without a cover a generated one is used                                                                                                                                                                                                                                        |
 | Gallery                   | Up to 12 images, each with alt text and an optional caption                                                           | Opens in the lightbox                                                                                                                                                                                                                                                          |
 
+On the project page, the Skills section lists the project's skills (with their icon when they have one, by name otherwise), and Related projects are ranked by how many skills they share. The project form's **Technologies** picker does not change this section: until the skill links become editable, they are added by `bun run skills:migrate` (see [SANITY.md](./SANITY.md#skills-migration)), so a new project shows no Skills section until then.
+
 Click **Save and publish**. The project is live at `/en/projects/<slug>` and `/pt/projects/<slug>`.
 
 ### Step 3: check it
@@ -114,7 +116,7 @@ Not editable in the admin (change the code and redeploy):
 
 ### Skills
 
-**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet. In fixtures mode the Skills list starts with a copy of every technology and practice.
+**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive most of the public site until the switch; so far the Stack section, the experience chips in the resume and the project pages read skills. In fixtures mode the Skills list starts with a copy of every technology and practice.
 
 **Icon.** Choose Simple Icons, Devicon, Custom SVG or Monogram, with the same search and live preview as technologies, or **No icon**. A monogram left empty is generated from the English name. **Skills cloud.** "Show in the skills cloud" is only available once an icon is set (a name for Simple Icons and Devicon, an applied SVG for Custom SVG, or a monogram); choosing No icon turns it off, and the server never stores it without an icon. Prominence and Brand color only matter in the cloud. The Skills list has an "In cloud" column (Yes/No) you can filter on.
 

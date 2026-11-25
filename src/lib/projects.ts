@@ -117,16 +117,16 @@ export function projectsLink(query: ProjectsQuery): {
 }
 
 /**
- * Up to `limit` other projects, ranked by shared technologies then `order`.
+ * Up to `limit` other projects, ranked by shared skills then `order`.
  */
 export function relatedProjects<
-  T extends { id: string; order: number; techIds: readonly string[] },
+  T extends { id: string; order: number; skillIds: readonly string[] },
 >(current: T, all: readonly T[], limit = 3): T[] {
   return all
     .filter((project) => project.id !== current.id)
     .map((project) => ({
       project,
-      score: project.techIds.filter((id) => current.techIds.includes(id)).length,
+      score: project.skillIds.filter((id) => current.skillIds.includes(id)).length,
     }))
     .sort((left, right) => right.score - left.score || left.project.order - right.project.order)
     .slice(0, limit)
