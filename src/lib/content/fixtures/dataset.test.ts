@@ -48,6 +48,17 @@ describe('fixture dataset', () => {
     expect(() => skillRef('Nope')).toThrow('Nope');
   });
 
+  it('gives every project skill references that mirror its technologies', () => {
+    const skillIds = new Set(dataset.skill.map((skill) => skill.id));
+
+    for (const project of dataset.project) {
+      const projectSkills = project.skillIds ?? [];
+
+      expect(projectSkills).toEqual((project.techIds ?? []).map(skillIdFor));
+      expect(projectSkills.every((id) => skillIds.has(id))).toBe(true);
+    }
+  });
+
   it.each(documentTypes)('every %s document passes strict validation', (type) => {
     for (const document of dataset[type]) {
       const result = documentSchemas[type].safeParse(document);

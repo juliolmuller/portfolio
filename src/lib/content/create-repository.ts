@@ -165,6 +165,7 @@ export function createRepository(
       previousSlugs: string[];
       rev?: string | undefined;
       role: { en: string; pt: string };
+      skillIds: string[];
       slug: string;
       status: 'archived' | 'in-progress' | 'live' | 'private';
       summary: { en: string; pt: string };

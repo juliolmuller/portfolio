@@ -42,11 +42,12 @@ export const singletonTypes = ['profile', 'contact', 'resume'] as const;
 
 /**
  * Storage fields that have no field-level twin in the zod contract:
- * `technologies` are references (zod checks `techIds` exist), and resume files
- * are assets that the read path resolves to URLs.
+ * `technologies` and `skills` are references (zod checks `techIds` and
+ * `skillIds`), and resume files are assets that the read path resolves to
+ * URLs.
  */
 export const UNVALIDATED_FIELDS: Readonly<Record<string, readonly string[]>> = {
-  project: ['technologies'],
+  project: ['technologies', 'skills'],
   experience: ['technologies'],
   resume: ['file'],
 };

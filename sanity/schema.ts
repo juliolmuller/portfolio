@@ -50,6 +50,10 @@ const technologyRefs = field('technologies', 'array', {
   of: [{ type: 'reference', to: [{ type: 'technology' }] }],
 });
 
+const skillRefs = field('skills', 'array', {
+  of: [{ type: 'reference', to: [{ type: 'skill' }] }],
+});
+
 const common = [
   field('order', 'number', { initialValue: 0 }),
   field('visible', 'boolean', { initialValue: true }),
@@ -225,6 +229,7 @@ const documents: SchemaType[] = [
         options: list(['live', 'in-progress', 'archived', 'private']),
       }),
       technologyRefs,
+      skillRefs,
       image('cover'),
       field('gallery', 'array', {
         of: [
