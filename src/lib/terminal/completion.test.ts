@@ -52,7 +52,9 @@ describe('complete', () => {
     expect((await candidates('cat projects/or')).candidates).toEqual([
       'projects/orbit-dashboard.md',
     ]);
-    expect((await candidates('cat ', '~/stack')).candidates).toContain('frontend.txt');
+    expect((await candidates('cat ', '~/stack')).candidates).toEqual(
+      expect.arrayContaining(['frontend.txt', 'engineering.txt']),
+    );
   });
 
   it('completes project slugs, sections, languages and flags', async () => {
@@ -65,6 +67,7 @@ describe('complete', () => {
     expect((await candidates('projects --kind w')).candidates).toEqual(['web']);
     expect((await candidates('projects open ti')).candidates).toEqual(['tidy-desk']);
     expect((await candidates('skills --category fr')).candidates).toEqual(['frontend']);
+    expect((await candidates('skills --category en')).candidates).toEqual(['engineering']);
     expect((await candidates('help ab')).candidates).toEqual(['about']);
   });
 

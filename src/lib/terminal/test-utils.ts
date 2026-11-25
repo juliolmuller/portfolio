@@ -38,31 +38,18 @@ export async function snapshotSourceOf(
   repository: ContentRepository,
   locale: AppLocale,
 ): Promise<SnapshotSource> {
-  const [
-    profile,
-    contact,
-    resume,
-    links,
-    recommended,
-    projects,
-    experience,
-    education,
-    skills,
-    technologies,
-    practices,
-  ] = await Promise.all([
-    repository.getProfile(locale),
-    repository.getContact(locale),
-    repository.getResume(),
-    repository.getFeaturedLinks(locale),
-    repository.getRecommendedProfiles(locale),
-    repository.getProjects(locale),
-    repository.getExperience(locale),
-    repository.getEducation(locale),
-    repository.getSkills(locale),
-    repository.getTechnologies(locale),
-    repository.getPractices(locale),
-  ]);
+  const [profile, contact, resume, links, recommended, projects, experience, education, skills] =
+    await Promise.all([
+      repository.getProfile(locale),
+      repository.getContact(locale),
+      repository.getResume(),
+      repository.getFeaturedLinks(locale),
+      repository.getRecommendedProfiles(locale),
+      repository.getProjects(locale),
+      repository.getExperience(locale),
+      repository.getEducation(locale),
+      repository.getSkills(locale),
+    ]);
 
   return {
     locale,
@@ -75,8 +62,6 @@ export async function snapshotSourceOf(
     experience,
     education,
     skills,
-    technologies,
-    practices,
   };
 }
 

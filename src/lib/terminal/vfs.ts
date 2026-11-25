@@ -1,3 +1,4 @@
+import { skillCategories } from '@/lib/content/taxonomy';
 import { formatPartialDate } from '@/lib/format';
 
 import { type ContentSnapshot } from './snapshot';
@@ -50,16 +51,6 @@ export interface VirtualFS {
   stat(path: string): 'dir' | 'file' | null;
   tree(path: string): string[];
 }
-
-const CATEGORY_FILES = [
-  'language',
-  'frontend',
-  'backend',
-  'data',
-  'cloud',
-  'integration',
-  'ai',
-] as const;
 
 export function buildVfs(snapshot: ContentSnapshot, t: Translate): VirtualFS {
   const nodes = new Map<string, DirNode | FileNode>();
@@ -134,7 +125,7 @@ export function buildVfs(snapshot: ContentSnapshot, t: Translate): VirtualFS {
       ]),
       entry.technologies.length > 0 ? '' : undefined,
       entry.technologies.length > 0
-        ? `${t('project.technologies')}: ${entry.technologies.join(', ')}`
+        ? `${t('project.skills')}: ${entry.technologies.join(', ')}`
         : undefined,
     ]);
   }
@@ -165,7 +156,7 @@ export function buildVfs(snapshot: ContentSnapshot, t: Translate): VirtualFS {
       project.outcome,
       '',
       project.technologies.length > 0
-        ? `${t('project.technologies')}: ${project.technologies.join(', ')}`
+        ? `${t('project.skills')}: ${project.technologies.join(', ')}`
         : undefined,
       project.links.live ? `URL: ${project.links.live}` : undefined,
       project.links.repo ? `${t('project.repository')}: ${project.links.repo}` : undefined,
@@ -173,16 +164,12 @@ export function buildVfs(snapshot: ContentSnapshot, t: Translate): VirtualFS {
   }
 
   dir(`${HOME}/stack`);
-  for (const category of CATEGORY_FILES) {
-    const names = snapshot.technologies
-      .filter((tech) => tech.category === category)
-      .map((tech) => tech.name);
+  for (const category of skillCategories) {
+    const names = snapshot.skills
+      .filter((skill) => skill.categories.includes(category))
+      .map((skill) => skill.name);
 
     if (names.length > 0) file(`${HOME}/stack/${category}.txt`, names);
-  }
-
-  if (snapshot.practices.length > 0) {
-    file(`${HOME}/stack/practices.txt`, snapshot.practices);
   }
 
   const kindOf = (path: string): 'dir' | 'file' | null => nodes.get(path)?.type ?? null;

@@ -18,6 +18,8 @@ describe('GET /api/terminal-content', () => {
       skills: Array<{ categories: string[]; name: string }>;
     };
 
+    expect(body).not.toHaveProperty('technologies');
+    expect(body).not.toHaveProperty('practices');
     expect(body.skills.length).toBeGreaterThan(0);
 
     for (const skill of body.skills) {

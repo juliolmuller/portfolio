@@ -27,8 +27,6 @@ test('stack list is in the first HTML', async ({ request }) => {
   expect(html).toContain('Redis');
   expect(html).toContain('REST API design');
   expect(html).toContain('Software engineering');
-  // `stack.practicesTitle` still ships in the client messages (the terminal
-  // uses it until #82), so only the rendered heading proves the block is gone.
   expect(html).not.toContain('>Practices and concepts</h3>');
   expect(html).not.toContain('id="stack-practices"');
   expect(html).not.toContain('>Cloud</button>');

@@ -38,7 +38,17 @@ describe.each(['en', 'pt'] as const)('buildVfs (%s)', (locale) => {
     ]);
     expect(vfs.list('~/projects').map((e) => e.name)).not.toContain('scratch-pad.md');
     expect(vfs.list('~/experience')).toHaveLength(snapshot.experience.length);
-    expect(vfs.list('~/stack').map((e) => e.name)).toContain('frontend.txt');
+
+    const stack = vfs.list('~/stack').map((e) => e.name);
+
+    expect(stack).toContain('frontend.txt');
+    expect(stack).toContain('engineering.txt');
+    expect(stack).not.toContain('practices.txt');
+    expect(vfs.read('~/stack/engineering.txt')?.text).toContain('SOLID');
+    expect(vfs.read('~/stack/frontend.txt')?.text).toContain('React');
+    expect(vfs.read('~/projects/orbit-dashboard.md')?.text).toContain(
+      `${translator(locale)('project.skills')}:`,
+    );
     expect(vfs.stat('~/projects')).toBe('dir');
     expect(vfs.stat('~/about.md')).toBe('file');
     expect(vfs.stat('~/nope')).toBeNull();

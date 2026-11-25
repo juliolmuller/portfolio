@@ -4,13 +4,11 @@ import {
   type Education,
   type Experience,
   type FeaturedLink,
-  type Practice,
   type Profile,
   type ProjectSummary,
   type RecommendedProfile,
   type Resume,
   type Skill,
-  type Technology,
 } from '@/lib/content';
 
 /**
@@ -50,7 +48,6 @@ export interface ContentSnapshot {
     url: string;
   }>;
   locale: AppLocale;
-  practices: string[];
   profile: {
     bio: string;
     displayName: string;
@@ -80,7 +77,6 @@ export interface ContentSnapshot {
   recommended: Array<{ name: string; note: string; role: string; url: string }>;
   resume: Record<AppLocale, boolean>;
   skills: Array<Pick<Skill, 'categories' | 'name'>>;
-  technologies: Array<{ category: string; name: string }>;
 }
 
 export interface SnapshotSource {
@@ -89,13 +85,11 @@ export interface SnapshotSource {
   experience: Experience[];
   links: FeaturedLink[];
   locale: AppLocale;
-  practices: Practice[];
   profile: null | Profile;
   projects: ProjectSummary[];
   recommended: RecommendedProfile[];
   resume: null | Resume;
   skills: Skill[];
-  technologies: Technology[];
 }
 
 export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
@@ -173,11 +167,6 @@ export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
       name,
       categories: [...categories],
     })),
-    technologies: source.technologies.map(({ name, category }) => ({
-      name,
-      category,
-    })),
-    practices: source.practices.map((practice) => practice.label),
   };
 }
 
@@ -193,7 +182,5 @@ export function emptySnapshot(locale: AppLocale): ContentSnapshot {
     experience: [],
     education: [],
     skills: [],
-    technologies: [],
-    practices: [],
   };
 }

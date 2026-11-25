@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import { type AppLocale } from '@/i18n/routing';
+import { createRepository } from '@/lib/content/create-repository';
+import { createFixtureDataset } from '@/lib/content/fixtures/dataset';
+import { techId } from '@/lib/content/fixtures/ids';
+import { createFixtureSource } from '@/lib/content/fixtures/source';
+import { skillIdFor } from '@/lib/content/migrations/skills';
 
 import { type Command } from './commands/types';
 import { defaultRegistry, publicCommands } from './registry';
-import { createHarness, flatten } from './test-utils';
+import { buildSnapshot } from './snapshot';
+import { createHarness, flatten, snapshotSourceOf, translator } from './test-utils';
 
 const LOCALES: AppLocale[] = ['en', 'pt'];
 
@@ -79,11 +85,16 @@ describe.each(LOCALES)('commands (%s)', (locale) => {
     expect(flatten(await harness.run('following'))).toBe(recommended);
   });
 
-  it('skills groups technologies and never shows levels', async () => {
+  it('skills groups skills by category and never shows levels', async () => {
     const harness = await createHarness(locale);
     const all = flatten(await harness.run('skills'));
 
     expect(all).toContain('TypeScript');
+    expect(all).toContain('PostgreSQL');
+    expect(all).toContain(translator(locale)('stack.categories.engineering'));
+    expect(all).toContain('SOLID');
+    expect(all).not.toContain('Practices and concepts');
+    expect(all).not.toContain('Práticas e conceitos');
     expect(all).not.toMatch(/%|★/);
 
     const frontend = flatten(await harness.run('skills --category frontend'));
@@ -91,7 +102,33 @@ describe.each(LOCALES)('commands (%s)', (locale) => {
     expect(frontend).toContain('React');
     expect(frontend).not.toContain('PostgreSQL');
     expect(flatten(await harness.run('stack --category=frontend'))).toBe(frontend);
+
+    const engineering = flatten(await harness.run('skills --category engineering'));
+
+    expect(engineering).toContain('SOLID');
+    expect(engineering).not.toContain('React');
+
+    const labelPrefix = translator(locale)('stack.categories.engineering').slice(0, 4);
+
+    expect(flatten(await harness.run(`skills --category ${labelPrefix}`))).toBe(engineering);
     expect(flatten(await harness.run('skills --category nope'))).toContain('nope');
+    expect(flatten(await harness.run('skills --category nope'))).toContain('engineering');
+  });
+
+  it('skills leaves out a hidden skill', async () => {
+    const react = skillIdFor(techId('React'));
+    const dataset = createFixtureDataset();
+
+    for (const skill of dataset.skill) {
+      if (skill.id === react) skill.visible = false;
+    }
+
+    const repository = createRepository(createFixtureSource(dataset), { warn: () => {} });
+    const snapshot = buildSnapshot(await snapshotSourceOf(repository, locale));
+    const harness = await createHarness(locale, { loadContent: async () => snapshot });
+
+    // "React Native" stays; only the exact name must be gone.
+    expect(flatten(await harness.run('skills'))).not.toMatch(/(^|· )React( ·|$)/m);
   });
 
   it('projects lists visible projects only and filters', async () => {

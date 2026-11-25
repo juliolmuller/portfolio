@@ -321,6 +321,10 @@ test.describe('shell', () => {
     await expect(logOf(page)).toContainText('Curitiba');
     await run(page, 'skills --category frontend');
     await expect(logOf(page)).toContainText('React');
+    await run(page, 'skills --category engineering');
+    await expect(logOf(page)).toContainText('SOLID');
+    await run(page, 'cat ~/stack/engineering.txt');
+    await expect(logOf(page)).toContainText('SOLID');
   });
 
   test('persists across reload; closing ends the log but keeps history', async ({ page }) => {
