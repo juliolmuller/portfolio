@@ -30,6 +30,23 @@ async function firstProject(store: ReturnType<typeof setup>['store']): Promise<A
 }
 
 describe('save', () => {
+  it('keeps experience skill ids on save', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('experience');
+    const doc = (await store.get('experience', first!.id))!;
+    const result = await service.save(
+      'experience',
+      doc.id,
+      { ...doc, collapsedByDefault: !doc['collapsedByDefault'] },
+      doc.rev,
+    );
+    const after = (await store.get('experience', doc.id))!;
+
+    expect(result.ok).toBe(true);
+    expect((doc['skillIds'] as string[]).length).toBeGreaterThan(0);
+    expect(after['skillIds']).toEqual(doc['skillIds']);
+  });
+
   it('updates a singleton, bumps the revision and revalidates', async () => {
     const { store, service, revalidated, audits } = setup();
     const before = (await store.get('profile', 'profile'))!;
@@ -291,6 +308,23 @@ describe('save', () => {
     });
   });
 
+  it('rejects project skills that do not exist', async () => {
+    const { store, service } = setup();
+    const project = await firstProject(store);
+    const unknown = await service.save(
+      'project',
+      project.id,
+      { ...project, skillIds: [...(project['skillIds'] as string[]), 'skill.nope'] },
+      project.rev,
+    );
+    const count = (project['skillIds'] as string[]).length;
+
+    expect(unknown).toMatchObject({
+      ok: false,
+      fieldErrors: { [`skillIds.${count}`]: 'Unknown skill' },
+    });
+  });
+
   it('drops blank optional fields and blank list rows', async () => {
     const { store, service } = setup();
     const link = (await store.list('featuredLink'))[0]!;
@@ -332,6 +366,33 @@ describe('remove, flags and order', () => {
 
     if (!result.ok && result.kind === 'in-use') {
       expect(result.references.map((ref) => ref.id)).toContain(project.id);
+    }
+  });
+
+  it('blocks deleting a skill linked from a project and lists who uses it', async () => {
+    const { store, service } = setup();
+    const project = await firstProject(store);
+    const skillId = (project['skillIds'] as string[])[0]!;
+    const result = await service.remove('skill', skillId);
+
+    expect(result).toMatchObject({ ok: false, kind: 'in-use' });
+
+    if (!result.ok && result.kind === 'in-use') {
+      expect(result.references.map((ref) => ref.id)).toContain(project.id);
+    }
+  });
+
+  it('blocks deleting a skill linked from an experience entry and lists who uses it', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('experience');
+    const job = (await store.get('experience', first!.id))!;
+    const skillId = (job['skillIds'] as string[])[0]!;
+    const result = await service.remove('skill', skillId);
+
+    expect(result).toMatchObject({ ok: false, kind: 'in-use' });
+
+    if (!result.ok && result.kind === 'in-use') {
+      expect(result.references.map((ref) => ref.id)).toContain(job.id);
     }
   });
 

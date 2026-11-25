@@ -1,6 +1,7 @@
 import { type DocumentInput } from '../../schema';
 import { L, meta } from '../helpers';
 import { techId } from '../ids';
+import { skillRef } from './skills';
 
 export const experience: Array<DocumentInput<'experience'>> = [
   {
@@ -34,6 +35,9 @@ export const experience: Array<DocumentInput<'experience'>> = [
     techIds: ['TypeScript', 'React', 'Next.js', 'Node.js', 'PostgreSQL', 'AWS', 'Docker'].map(
       techId,
     ),
+    skillIds: ['TypeScript', 'React', 'Next.js', 'Node.js', 'PostgreSQL', 'AWS', 'Docker'].map(
+      skillRef,
+    ),
     collapsedByDefault: false,
     order: 10,
     visible: true,
@@ -65,6 +69,7 @@ export const experience: Array<DocumentInput<'experience'>> = [
       },
     ],
     techIds: ['TypeScript', 'Vue.js', 'Nuxt', 'GraphQL', 'Google Cloud'].map(techId),
+    skillIds: ['TypeScript', 'Vue.js', 'Nuxt', 'GraphQL', 'Google Cloud'].map(skillRef),
     collapsedByDefault: false,
     order: 20,
     visible: true,
@@ -96,6 +101,7 @@ export const experience: Array<DocumentInput<'experience'>> = [
       },
     ],
     techIds: ['JavaScript', 'PHP', 'SQL', 'AngularJS', 'VBA'].map(techId),
+    skillIds: ['JavaScript', 'PHP', 'SQL', 'AngularJS', 'VBA'].map(skillRef),
     collapsedByDefault: true,
     order: 30,
     visible: true,

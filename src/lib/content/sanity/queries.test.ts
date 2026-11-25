@@ -32,6 +32,20 @@ const fetchGroq = createMemoryGroqFetch(
   createSanityMemoryDataset({ ...createFixtureDataset(), skill: [full, minimal] }),
 );
 
+describe('admin experience projection', () => {
+  it('reads the stored skill references back as skillIds', async () => {
+    const job = createFixtureDataset().experience[0];
+
+    if (!job) throw new Error('Expected a fixture experience');
+
+    const row = await fetchGroq(adminGetQuery('experience'), { id: job.id }, []);
+
+    expect(job.skillIds?.length).toBeGreaterThan(0);
+    expect(row).toMatchObject({ skillIds: job.skillIds });
+    expect(parseDocument('experience', row)).toEqual(documentSchemas.experience.parse(job));
+  });
+});
+
 describe('admin skill projection', () => {
   it.each([
     ['a full skill', full],

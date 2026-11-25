@@ -25,6 +25,36 @@ describe('fixtures admin store', () => {
     expect((await store.list('skill')).map((doc) => doc.id)).not.toContain(skill.id);
   });
 
+  it('keeps project skill ids on read-back', async () => {
+    const dataset = createFixtureDataset();
+    const store = createFixturesAdminStore(dataset, { readOnlyReason: 'test', writable: true });
+    const project = dataset.project[0];
+
+    if (!project) throw new Error('Expected a fixture project');
+
+    const skillIds = (project.skillIds ?? []).slice(0, 2);
+
+    await store.patch('project', project.id, { skillIds });
+
+    await expect(store.get('project', project.id)).resolves.toMatchObject({ skillIds });
+  });
+
+  it('keeps experience skill ids on read-back', async () => {
+    const dataset = createFixtureDataset();
+    const store = createFixturesAdminStore(dataset, { readOnlyReason: 'test', writable: true });
+    const job = dataset.experience[0];
+
+    if (!job) throw new Error('Expected a fixture experience');
+
+    const skillIds = (job.skillIds ?? []).slice(0, 2);
+
+    expect(skillIds).toHaveLength(2);
+
+    await store.patch('experience', job.id, { skillIds });
+
+    await expect(store.get('experience', job.id)).resolves.toMatchObject({ skillIds });
+  });
+
   it('lists documents by order, like the Sanity admin query', async () => {
     const store = createFixturesAdminStore(createFixtureDataset(), {
       readOnlyReason: 'test',

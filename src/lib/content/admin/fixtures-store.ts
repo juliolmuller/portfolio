@@ -135,7 +135,12 @@ export function createFixturesAdminStore(
       const found: Reference[] = [];
       for (const type of ['project', 'experience'] as const) {
         for (const doc of collection(type)) {
-          if (((doc['techIds'] as string[] | undefined) ?? []).includes(id)) {
+          const linked = [
+            ...((doc['techIds'] as string[] | undefined) ?? []),
+            ...((doc['skillIds'] as string[] | undefined) ?? []),
+          ];
+
+          if (linked.includes(id)) {
             found.push({ type, id: doc.id, label: labelOf(doc) });
           }
         }

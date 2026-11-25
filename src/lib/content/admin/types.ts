@@ -52,7 +52,7 @@ export interface AdminStore {
   readonly readOnlyReason: null | string;
 
   /**
-   * Documents that refer to `id` (technologies in use).
+   * Documents that refer to `id` (technologies and skills in use).
    */
   referencesTo(id: string): Promise<Reference[]>;
   remove(type: DocumentType, id: string, expectedRev?: string): Promise<WriteResult>;

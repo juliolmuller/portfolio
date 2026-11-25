@@ -410,6 +410,7 @@ export const projectSchema = z
     kind: z.enum(projectKinds),
     status: z.enum(projectStatuses),
     techIds: z.array(documentIdSchema).max(24).default([]),
+    skillIds: z.array(documentIdSchema).max(32).default([]),
     cover: imageSchema.optional(),
     gallery: z.array(galleryItemSchema).max(12).default([]),
     links: z
@@ -434,6 +435,14 @@ export const projectSchema = z
         code: 'custom',
         path: ['techIds'],
         message: 'Duplicate technology',
+      });
+    }
+
+    if (!isUnique(project.skillIds)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['skillIds'],
+        message: 'Duplicate skill',
       });
     }
 
@@ -470,6 +479,11 @@ export const experienceSchema = z.object({
     .max(32)
     .default([])
     .refine(isUnique, { message: 'Duplicate technology' }),
+  skillIds: z
+    .array(documentIdSchema)
+    .max(48)
+    .default([])
+    .refine(isUnique, { message: 'Duplicate skill' }),
   collapsedByDefault: z.boolean().default(false),
   order: orderSchema,
   visible: visibleSchema,

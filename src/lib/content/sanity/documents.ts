@@ -228,6 +228,7 @@ const converters: Converters = {
       kind: doc.kind,
       status: doc.status,
       technologies: references(doc.id, 'technologies', doc.techIds),
+      skills: references(doc.id, 'skills', doc.skillIds),
       cover: optional(doc.cover, (cover) => image(assets, cover)),
       gallery: (doc.gallery ?? []).map((item, index) => ({
         _key: key(doc.id, 'gallery', index),
@@ -267,6 +268,7 @@ const converters: Converters = {
         }),
       ),
       technologies: references(doc.id, 'technologies', doc.techIds),
+      skills: references(doc.id, 'skills', doc.skillIds),
       collapsedByDefault: doc.collapsedByDefault ?? false,
       order: doc.order,
       visible: doc.visible ?? true,
