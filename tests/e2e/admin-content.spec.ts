@@ -338,9 +338,9 @@ test.describe('singletons and lists', () => {
     await fillBoth(page, 'roles.0.title', 'Tester', 'Testador');
     await field(page, 'roles.0.start').fill('2024-01');
     await fillBoth(page, 'roles.0.summary', long);
-    // D90: the counter shows only the 5000 cap; the site clamps by lines.
+    // D90: the counter shows only the 5000 cap; the 400-character note is gone.
     await expect(field(page, 'roles.0.summary.en')).toHaveAccessibleDescription(
-      new RegExp(`${long.length}/5000`),
+      `${long.length}/5000`,
     );
     // Re-reading the technologies keeps the unsaved form state.
     await page.getByRole('button', { name: 'Refresh the list' }).click();

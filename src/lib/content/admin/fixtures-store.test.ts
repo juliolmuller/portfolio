@@ -25,26 +25,20 @@ describe('fixtures admin store', () => {
     expect((await store.list('skill')).map((doc) => doc.id)).not.toContain(skill.id);
   });
 
-  it('lists documents by order, then id, like the Sanity query', async () => {
+  it('lists documents by order, like the Sanity admin query', async () => {
     const store = createFixturesAdminStore(createFixtureDataset(), {
       readOnlyReason: 'test',
       writable: true,
     });
-    const make = (slug: string, order: number): ReturnType<typeof documentSchemas.skill.parse> =>
-      documentSchemas.skill.parse({
-        ...meta('skill', slug),
-        order,
-        name: L(slug, slug),
-        categories: ['engineering'],
-      });
-    const late = make('list-late', 30);
-    const early = make('list-early', 10);
+    const [first, second] = (await store.list('practice')).map((doc) => doc.id);
 
-    await store.write('skill', late, { isNew: true });
-    await store.write('skill', early, { isNew: true });
-    expect((await store.list('skill')).map((doc) => doc.id)).toEqual([early.id, late.id]);
+    if (!first || !second) throw new Error('Expected at least two practices');
 
-    await store.patch('skill', late.id, { order: 5 });
-    expect((await store.list('skill')).map((doc) => doc.id)).toEqual([late.id, early.id]);
+    await store.patch('practice', first, { order: 999_990 });
+    await store.patch('practice', second, { order: 999_980 });
+
+    const ids = (await store.list('practice')).map((doc) => doc.id);
+
+    expect(ids.slice(-2)).toEqual([second, first]);
   });
 });

@@ -114,7 +114,7 @@ Not editable in the admin (change the code and redeploy):
 
 ### Skills
 
-**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet.
+**Skills → New skill.** Name in both languages (60 characters). Categories: tick one or more; the first one ticked is the main category and the list shows them in stored order (untick and re-tick to change the main one). Website (optional, https only). Visible. Technologies and Practices still drive the public site until the switch, so skills don't appear publicly yet. In fixtures mode the Skills list starts with a copy of every technology and practice.
 
 **Icon.** Choose Simple Icons, Devicon, Custom SVG or Monogram, with the same search and live preview as technologies, or **No icon**. A monogram left empty is generated from the English name. **Skills cloud.** "Show in the skills cloud" is only available once an icon is set (a name for Simple Icons and Devicon, an applied SVG for Custom SVG, or a monogram); choosing No icon turns it off, and the server never stores it without an icon. Prominence and Brand color only matter in the cloud. The Skills list has an "In cloud" column (Yes/No) you can filter on.
 
