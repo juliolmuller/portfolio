@@ -1,8 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import {
   CheckboxGroup,
   LocalizedField,
@@ -15,7 +12,7 @@ import {
 import { useForm } from '../editor/form';
 import { ImageField } from '../editor/image-field';
 import { ListEditor } from '../editor/list-editor';
-import { smallButton } from '../editor/styles';
+import { PickHint } from '../editor/pick-hint';
 import { type Option } from './career';
 
 const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
@@ -34,7 +31,6 @@ interface GalleryItem {
 }
 
 export function ProjectForm({ skillOptions }: { skillOptions: Option[] }): React.JSX.Element {
-  const router = useRouter();
   const form = useForm();
   const gallery = ((form.get('gallery') as GalleryItem[] | undefined) ?? []).flatMap((item) =>
     item.asset ? [{ ...item.asset, alt: item.alt?.en ?? '' }] : [],
@@ -122,19 +118,7 @@ export function ProjectForm({ skillOptions }: { skillOptions: Option[] }): React
           label="Skills"
           options={skillOptions}
           max={32}
-          hint={
-            <>
-              Missing one? Add it in{' '}
-              <Link href="/admin/skills" target="_blank" prefetch={false} className="underline">
-                Skills (opens in a new tab)
-              </Link>
-              , then{' '}
-              {/* refresh() re-reads skillOptions on the server and keeps the unsaved form state. */}
-              <button type="button" onClick={() => router.refresh()} className={smallButton}>
-                Refresh the list
-              </button>
-            </>
-          }
+          hint={<PickHint href="/admin/skills" label="Skills" />}
         />
       </Section>
 

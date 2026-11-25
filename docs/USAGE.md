@@ -49,9 +49,9 @@ How every area behaves:
 
 ## 3. Add a portfolio item
 
-### Step 1: make sure its technologies exist
+### Step 1: make sure its skills exist
 
-A project can only reference existing technologies. In **Technologies**, check that every tool it used is there. If one is missing: **New technology** → name, category, priority (1 and 2 appear everywhere; 3 is left out of the cloud on phones but stays in the List view), official site (optional). Icon: search the built-in sets (Simple Icons, Devicon), paste a single-colour SVG (strokes and transforms are refused; convert to filled shapes first), or leave empty for a two-letter monogram. **Save and publish**.
+A project can only reference existing skills. In **Skills**, check that every tool and practice it used is there. If one is missing: **New skill** → name in both languages, categories (the first ticked is the main one), icon optional (search Simple Icons or Devicon, paste a single-colour SVG, use a monogram, or choose No icon), **Show in the skills cloud** (needs an icon), priority, website (optional), then **Save and publish**. You can also do it while editing: the form links to Skills in a new tab, then click **Refresh the list**. The technologies a project stored before the switch are kept untouched and are no longer shown here; the project page already reads skills, while the Work cards and the projects list still read those technologies until they move too.
 
 ### Step 2: create the project
 
@@ -75,7 +75,7 @@ A project can only reference existing technologies. In **Technologies**, check t
 | Outcome (optional)        | Where it ended up                                                                                                     | 400                                                    |
 | Full write-up (optional)  | Markdown: headings, lists, links, code, gallery pictures (`![alt](gallery:1)`). Raw HTML and scripts are removed      | Under 150 words per language is flagged as a thin page |
 | Live URL / Repository URL | `https://` links only                                                                                                 | Live adds the "Visit app" button                       |
-| Technologies              | Pick from the list (step 1)                                                                                           | Up to 24                                               |
+| Skills                    | Pick from the list (step 1)                                                                                           | Up to 32                                               |
 | Cover image               | JPEG, PNG, WebP or AVIF ≤ 4 MB. Alt text in both languages is required. Set the focal point so crops keep the subject | Without a cover a generated one is used                |
 | Gallery                   | Up to 12 images, each with alt text and an optional caption                                                           | Opens in the lightbox                                  |
 
