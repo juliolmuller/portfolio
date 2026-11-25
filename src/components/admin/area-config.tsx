@@ -39,7 +39,8 @@ export interface AreaConfig {
    */
   needsSkills?: boolean;
   /**
-   * The form picks technologies: the page loads `techOptions`.
+   * The form picks technologies: the page loads `techOptions`. Unused since
+   * #72; goes with #85.
    */
   needsTechnologies?: boolean;
 }
@@ -156,12 +157,12 @@ export const AREA_CONFIG: Record<string, AreaConfig> = {
     defaults: () => ({
       location: blank(),
       roles: [{ title: blank(), start: '', summary: blank(), bullets: [] }],
-      techIds: [],
+      skillIds: [],
       collapsedByDefault: false,
       visible: true,
     }),
     Form: ExperienceForm,
-    needsTechnologies: true,
+    needsSkills: true,
   },
 
   education: {

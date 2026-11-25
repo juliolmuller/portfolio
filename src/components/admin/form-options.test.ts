@@ -11,7 +11,7 @@ const store = createFixturesAdminStore(createFixtureDataset(), {
 });
 
 describe('loadFormOptions', () => {
-  it('gives projects sorted skill options and no technologies', async () => {
+  it('gives sorted skill options and no technologies', async () => {
     const options = await loadFormOptions(store, { needsSkills: true });
     const skills = await store.list('skill');
     const labels = options.skillOptions.map((option) => option.label);
@@ -31,7 +31,7 @@ describe('loadFormOptions', () => {
     expect(option?.label).toBe((first['name'] as { en: string }).en);
   });
 
-  it('gives experience technologies and no skills', async () => {
+  it('gives technologies only when asked', async () => {
     const options = await loadFormOptions(store, { needsTechnologies: true });
 
     expect(options.skillOptions).toEqual([]);

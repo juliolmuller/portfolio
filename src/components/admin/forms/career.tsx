@@ -18,7 +18,7 @@ export interface Option {
 
 const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
 
-export function ExperienceForm({ techOptions }: { techOptions: Option[] }): React.JSX.Element {
+export function ExperienceForm({ skillOptions }: { skillOptions: Option[] }): React.JSX.Element {
   return (
     <>
       <Section title="Company">
@@ -86,13 +86,13 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
         </ListEditor>
       </Section>
 
-      <Section title="Technologies">
+      <Section title="Skills">
         <CheckboxGroup
-          path="techIds"
-          label="Technologies used"
-          options={techOptions}
-          max={32}
-          hint={<PickHint href="/admin/technologies" label="Technologies" />}
+          path="skillIds"
+          label="Skills used"
+          options={skillOptions}
+          max={48}
+          hint={<PickHint href="/admin/skills" label="Skills" />}
         />
       </Section>
     </>

@@ -47,6 +47,26 @@ describe('save', () => {
     expect(after['skillIds']).toEqual(doc['skillIds']);
   });
 
+  it('keeps experience tech ids when skill ids change', async () => {
+    const { store, service } = setup();
+    const docs = await Promise.all(
+      (await store.list('experience')).map(
+        async (item) => (await store.get('experience', item.id))!,
+      ),
+    );
+    const doc = docs.find(
+      (entry) => ((entry['techIds'] as string[] | undefined) ?? []).length > 0,
+    )!;
+    const skillIds = (doc['skillIds'] as string[]).slice(0, 2);
+    const result = await service.save('experience', doc.id, { ...doc, skillIds }, doc.rev);
+    const after = (await store.get('experience', doc.id))!;
+
+    expect(result.ok).toBe(true);
+    expect((doc['techIds'] as string[]).length).toBeGreaterThan(0);
+    expect(after['techIds']).toEqual(doc['techIds']);
+    expect(after['skillIds']).toEqual(skillIds);
+  });
+
   it('keeps project tech ids when skill ids change', async () => {
     const { store, service } = setup();
     const docs = await Promise.all(
