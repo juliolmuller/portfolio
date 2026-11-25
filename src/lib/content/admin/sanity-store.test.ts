@@ -234,6 +234,13 @@ describe('sanity admin store setSkillLinks', () => {
     expect(await store.setSkillLinks(changes)).toEqual({ ok: false, reason: 'conflict' });
   });
 
+  it('maps a missing owner to missing', async () => {
+    const { client } = fakeClient({ failWith: 404 });
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+
+    expect(await store.setSkillLinks(changes)).toEqual({ ok: false, reason: 'missing' });
+  });
+
   it('does nothing without changes', async () => {
     const { client } = fakeClient();
     const store = createSanityAdminStore(client, { dataset: 'development' });

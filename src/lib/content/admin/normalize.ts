@@ -28,6 +28,16 @@ export function pruneEmpty(value: unknown): unknown {
 
 export type FieldErrors = Record<string, string>;
 
+/**
+ * Human name of a stored document in admin messages: the English title, else
+ * the company (experience), else the id.
+ */
+export function labelOf(doc: { id: string } & Record<string, unknown>): string {
+  const title = doc['title'] as { en?: string } | undefined;
+
+  return title?.en ?? (doc['company'] as string | undefined) ?? doc.id;
+}
+
 interface IssueLike {
   code: string;
   maximum?: bigint | number;

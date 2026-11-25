@@ -1,4 +1,10 @@
-import { type DocumentOf, type DocumentType, type FileAsset, type ImageAsset } from '../schema';
+import {
+  type DocumentOf,
+  type DocumentType,
+  type FileAsset,
+  type ImageAsset,
+  type SKILL_LINK_CAPS,
+} from '../schema';
 
 /**
  * What the admin reads: the schema shape without validation, so a document that
@@ -20,7 +26,7 @@ export interface Reference {
   type: string;
 }
 
-export type SkillLinkOwner = 'education' | 'experience' | 'project';
+export type SkillLinkOwner = keyof typeof SKILL_LINK_CAPS;
 
 export interface SkillLinkChange {
   expectedRev: string;

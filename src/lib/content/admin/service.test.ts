@@ -678,11 +678,88 @@ describe('saveSkillUsage', () => {
     const result = await service.saveSkillUsage(skill, usage);
 
     expect(result).toMatchObject({ ok: false, kind: 'invalid' });
-    expect(JSON.stringify(result)).toContain('already links 24 skills');
+    expect(JSON.stringify(result)).toContain('already has the maximum of 24 skills');
     expect(JSON.stringify(result)).toContain(
       (entry['title'] as { en: string } | undefined)?.en ?? entry.id,
     );
     expect(await owners(store)).toEqual(before);
+  });
+
+  it('rejects a usage with a missing owner list instead of unlinking everywhere', async () => {
+    const { store, service, revalidated, audits } = setup();
+    const { all, skill } = await pickSkill(store);
+    const { project: _project, ...partial } = usageOf(all, skill);
+    const result = await service.saveSkillUsage(skill, partial as never);
+
+    expect(result).toMatchObject({ ok: false, kind: 'invalid' });
+    expect(result).toHaveProperty('fieldErrors.project');
+    expect(await owners(store)).toEqual(all);
+    expect(revalidated).toEqual([]);
+    expect(audits).toEqual([]);
+  });
+
+  it('points a field error at the row the caller sent, even after a repeated id', async () => {
+    const { store, service } = setup();
+    const { all, skill } = await pickSkill(store);
+    const result = await service.saveSkillUsage(skill, {
+      ...usageOf(all, skill),
+      project: ['project.unknown', 'project.unknown', 'project.other'],
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      kind: 'invalid',
+      fieldErrors: {
+        'project.0': 'Unknown project',
+        'project.1': 'Unknown project',
+        'project.2': 'Unknown project',
+      },
+    });
+  });
+
+  it.each([
+    ['project', 32],
+    ['experience', 48],
+  ] as const)('refuses to exceed the %s cap of %i', async (type, cap) => {
+    const { store, service } = setup();
+    const { all, skill } = await pickSkill(store);
+    const entry = all[type].find((doc) => !skillsOf(doc).includes(skill))!;
+    const filler = Array.from({ length: cap }, (_, index) => `skill.filler-${index}`);
+
+    await store.setSkillLinks([{ type, id: entry.id, skillIds: filler, expectedRev: entry.rev! }]);
+
+    const before = await owners(store);
+    const usage = usageOf(before, skill);
+
+    usage[type].push(entry.id);
+
+    const result = await service.saveSkillUsage(skill, usage);
+
+    expect(result).toMatchObject({ ok: false, kind: 'invalid' });
+    expect(JSON.stringify(result)).toContain(`already has the maximum of ${cap} skills`);
+    expect(await owners(store)).toEqual(before);
+  });
+
+  it('forwards a missing owner reported by the store', async () => {
+    const { store, revalidated, audits } = setup();
+    const { all, skill } = await pickSkill(store);
+    const entry = all.education.find((doc) => !skillsOf(doc).includes(skill))!;
+    const usage = usageOf(all, skill);
+
+    usage.education.push(entry.id);
+
+    const service = createAdminService(
+      { ...store, setSkillLinks: async () => ({ ok: false, reason: 'missing' }) },
+      {
+        revalidate: (type) => revalidated.push(type),
+        audit: (event) => audits.push(event.action),
+        now: () => new Date(),
+      },
+    );
+
+    expect(await service.saveSkillUsage(skill, usage)).toEqual({ ok: false, kind: 'missing' });
+    expect(revalidated).toEqual([]);
+    expect(audits).toEqual([]);
   });
 
   it('leaves every owner unchanged on a conflict', async () => {

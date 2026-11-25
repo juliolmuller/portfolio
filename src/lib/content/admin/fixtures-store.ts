@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import { type FixtureDataset } from '../fixtures/dataset';
 import { stripNulls } from '../pipeline';
 import { type DocumentType } from '../schema';
+import { labelOf } from './normalize';
 import { type AdminDoc, type AdminStore, type Reference, type WriteResult } from './types';
 
 /**
@@ -24,12 +25,6 @@ function byOrder(a: Stored, b: Stored): number {
   const delta = Number(a['order'] ?? 0) - Number(b['order'] ?? 0);
 
   return delta === 0 ? a.id.localeCompare(b.id) : delta;
-}
-
-function labelOf(doc: Stored): string {
-  const title = doc['title'] as { en?: string } | undefined;
-
-  return title?.en ?? (doc['company'] as string | undefined) ?? doc.id;
 }
 
 /**
@@ -132,20 +127,21 @@ export function createFixturesAdminStore(
     },
 
     async setSkillLinks(changes): Promise<WriteResult> {
-      const docs: Stored[] = [];
+      const writes: Array<{ doc: Stored; skillIds: string[] }> = [];
 
+      // Check every revision first, so a stale one leaves every owner untouched.
       for (const change of changes) {
         const doc = find(change.type, change.id);
         const problem = check(doc, change.expectedRev);
 
         if (problem || !doc) return problem ?? { ok: false, reason: 'missing' };
 
-        docs.push(doc);
+        writes.push({ doc, skillIds: [...change.skillIds] });
       }
 
       let rev = '';
-      for (const [index, doc] of docs.entries()) {
-        doc['skillIds'] = [...(changes[index]?.skillIds ?? [])];
+      for (const { doc, skillIds } of writes) {
+        doc['skillIds'] = skillIds;
         rev = stamp(doc);
       }
 
