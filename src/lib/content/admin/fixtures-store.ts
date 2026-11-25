@@ -16,6 +16,16 @@ type Stored = AdminDoc;
 const INITIAL_REV = 'initial';
 const nextRev = (): string => crypto.randomUUID().slice(0, 8);
 
+/**
+ * Same order as the Sanity admin query (`order asc, _id asc`), so a reorder
+ * survives a reload. Documents without `order` keep a stable id order.
+ */
+function byOrder(a: Stored, b: Stored): number {
+  const delta = Number(a['order'] ?? 0) - Number(b['order'] ?? 0);
+
+  return delta === 0 ? a.id.localeCompare(b.id) : delta;
+}
+
 function labelOf(doc: Stored): string {
   const title = doc['title'] as { en?: string } | undefined;
 
@@ -64,10 +74,9 @@ export function createFixturesAdminStore(
     async list(
       type,
     ): Promise<Array<{ id: string; isFixture?: boolean; rev: string; updatedAt?: string }>> {
-      return structuredClone(collection(type)).map((doc) => ({
-        ...(stripNulls(doc) as Stored),
-        rev: revOf(doc),
-      }));
+      return structuredClone(collection(type))
+        .map((doc) => ({ ...(stripNulls(doc) as Stored), rev: revOf(doc) }))
+        .sort(byOrder);
     },
 
     async get(

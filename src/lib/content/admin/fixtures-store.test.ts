@@ -24,4 +24,21 @@ describe('fixtures admin store', () => {
     await expect(store.remove('skill', skill.id)).resolves.toMatchObject({ ok: true });
     expect((await store.list('skill')).map((doc) => doc.id)).not.toContain(skill.id);
   });
+
+  it('lists documents by order, like the Sanity admin query', async () => {
+    const store = createFixturesAdminStore(createFixtureDataset(), {
+      readOnlyReason: 'test',
+      writable: true,
+    });
+    const [first, second] = (await store.list('practice')).map((doc) => doc.id);
+
+    if (!first || !second) throw new Error('Expected at least two practices');
+
+    await store.patch('practice', first, { order: 999_990 });
+    await store.patch('practice', second, { order: 999_980 });
+
+    const ids = (await store.list('practice')).map((doc) => doc.id);
+
+    expect(ids.slice(-2)).toEqual([second, first]);
+  });
 });
