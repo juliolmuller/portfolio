@@ -412,17 +412,30 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
     it('drops and logs unknown skill references', async () => {
       const missing = fixtureId('skill', 'Missing skill');
       const { repository, logger } = setup((dataset) => {
-        const orbit = dataset.project.find((project) => project.slug === 'orbit-dashboard');
-
-        orbit?.skillIds?.push(missing);
+        for (const owner of [...dataset.project, ...dataset.experience, ...dataset.education]) {
+          owner.skillIds?.push(missing);
+        }
       });
-      const [orbit] = await repository.getProjects('en');
+      const projects = await repository.getProjects('en');
+      const lookup = await repository.getProject('en', 'orbit-dashboard');
+      const experience = await repository.getExperience('en');
+      const education = await repository.getEducation('en');
+      const [orbit] = projects;
+      const [lumen] = experience;
+      const [degree] = education;
 
-      expect(orbit?.skillIds).not.toContain(missing);
-      expect(logger.warnings).toContainEqual({
-        event: 'unknown-skill',
-        details: { id: orbit?.id, skillId: missing },
-      });
+      for (const owner of [...projects, ...experience, ...education]) {
+        expect(owner.skillIds).not.toContain(missing);
+      }
+
+      expect(lookup.status === 'found' && lookup.project.skillIds).not.toContain(missing);
+
+      for (const owner of [orbit, lumen, degree]) {
+        expect(logger.warnings).toContainEqual({
+          event: 'unknown-skill',
+          details: { id: owner?.id, skillId: missing },
+        });
+      }
     });
 
     it('skips and logs an invalid document', async () => {
