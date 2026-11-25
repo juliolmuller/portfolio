@@ -382,6 +382,20 @@ describe('remove, flags and order', () => {
     }
   });
 
+  it('blocks deleting a skill linked from an experience entry and lists who uses it', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('experience');
+    const job = (await store.get('experience', first!.id))!;
+    const skillId = (job['skillIds'] as string[])[0]!;
+    const result = await service.remove('skill', skillId);
+
+    expect(result).toMatchObject({ ok: false, kind: 'in-use' });
+
+    if (!result.ok && result.kind === 'in-use') {
+      expect(result.references.map((ref) => ref.id)).toContain(job.id);
+    }
+  });
+
   it('deletes an unused document and refuses singletons', async () => {
     const { store, service, audits } = setup();
     const practice = (await store.list('practice'))[0]!;

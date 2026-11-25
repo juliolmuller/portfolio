@@ -48,6 +48,8 @@ describe('fixtures admin store', () => {
 
     const skillIds = (job.skillIds ?? []).slice(0, 2);
 
+    expect(skillIds).toHaveLength(2);
+
     await store.patch('experience', job.id, { skillIds });
 
     await expect(store.get('experience', job.id)).resolves.toMatchObject({ skillIds });
