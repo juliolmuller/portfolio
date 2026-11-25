@@ -139,6 +139,10 @@ test('tap on a front icon announces its name', async ({ page }, info) => {
   await expect(page.locator('#stack [aria-live="polite"]')).toContainText(name ?? '');
 });
 
+/**
+ * Guard for the cloud switching to skills (#74): whatever logo URLs the stack
+ * draws must resolve, whichever collection they come from.
+ */
 test('every logo the stack requests resolves', async ({ page }) => {
   const statuses: number[] = [];
 
