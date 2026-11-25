@@ -34,7 +34,7 @@ export default async function AreaPage({
         title={area.label}
         singleton
       >
-        <config.Form techOptions={[]} />
+        <config.Form skillOptions={[]} techOptions={[]} />
       </DocumentEditor>
     );
   }

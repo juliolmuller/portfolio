@@ -1,5 +1,8 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
 import {
   CheckboxGroup,
   LocalizedField,
@@ -12,6 +15,7 @@ import {
 import { useForm } from '../editor/form';
 import { ImageField } from '../editor/image-field';
 import { ListEditor } from '../editor/list-editor';
+import { smallButton } from '../editor/styles';
 import { type Option } from './career';
 
 const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
@@ -29,7 +33,8 @@ interface GalleryItem {
   asset?: { height: number; lqip?: string; url: string; width: number };
 }
 
-export function ProjectForm({ techOptions }: { techOptions: Option[] }): React.JSX.Element {
+export function ProjectForm({ skillOptions }: { skillOptions: Option[] }): React.JSX.Element {
+  const router = useRouter();
   const form = useForm();
   const gallery = ((form.get('gallery') as GalleryItem[] | undefined) ?? []).flatMap((item) =>
     item.asset ? [{ ...item.asset, alt: item.alt?.en ?? '' }] : [],
@@ -109,10 +114,28 @@ export function ProjectForm({ techOptions }: { techOptions: Option[] }): React.J
         />
       </Section>
 
-      <Section title="Links and stack">
+      <Section title="Links and skills">
         <TextField path="links.live" label="Live URL (optional)" type="url" />
         <TextField path="links.repo" label="Repository URL (optional)" type="url" />
-        <CheckboxGroup path="techIds" label="Technologies" options={techOptions} max={24} />
+        <CheckboxGroup
+          path="skillIds"
+          label="Skills"
+          options={skillOptions}
+          max={32}
+          hint={
+            <>
+              Missing one? Add it in{' '}
+              <Link href="/admin/skills" target="_blank" prefetch={false} className="underline">
+                Skills (opens in a new tab)
+              </Link>
+              , then{' '}
+              {/* refresh() re-reads skillOptions on the server and keeps the unsaved form state. */}
+              <button type="button" onClick={() => router.refresh()} className={smallButton}>
+                Refresh the list
+              </button>
+            </>
+          }
+        />
       </Section>
 
       <Section title="Images">
