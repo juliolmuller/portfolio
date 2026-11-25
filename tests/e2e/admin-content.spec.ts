@@ -472,6 +472,7 @@ test.describe('singletons and lists', () => {
     await expect(toggle).toBeDisabled();
 
     await field(page, 'iconSource').selectOption('custom-svg');
+    await expect(toggle).toBeDisabled();
     await page
       .locator('#svg-source')
       .fill('<svg viewBox="0 0 24 24"><path d="M2 2h20v20H2Z"/></svg>');

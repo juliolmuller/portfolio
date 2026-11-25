@@ -11,13 +11,32 @@ import {
   TextField,
   ToggleField,
 } from '../editor/fields';
-import { useForm } from '../editor/form';
+import { type FormApi, useForm } from '../editor/form';
 import { TechIconFields } from '../editor/icon-fields';
 import { PROMINENCE_OPTIONS } from './stack';
 
+/**
+ * An icon counts once its source has what the schema asks for (a name for
+ * Simple Icons and Devicon, an applied SVG for Custom SVG); a monogram is
+ * always generated.
+ */
+function hasIcon(form: FormApi): boolean {
+  switch (form.get('iconSource')) {
+    case 'custom-svg':
+      return Boolean(form.get('customSvg'));
+    case 'devicon':
+    case 'simple-icons':
+      return Boolean(form.get('iconSlug'));
+    case 'monogram':
+      return true;
+    default:
+      return false;
+  }
+}
+
 export function SkillForm(): React.JSX.Element {
   const form = useForm();
-  const hasIcon = Boolean(form.get('iconSource'));
+  const iconSet = hasIcon(form);
 
   return (
     <>
@@ -39,9 +58,9 @@ export function SkillForm(): React.JSX.Element {
         <ToggleField
           path="showInCloud"
           label="Show in the skills cloud"
-          disabled={!hasIcon}
+          disabled={!iconSet}
           hint={
-            hasIcon
+            iconSet
               ? 'Shown in the 3D cloud on the home page.'
               : 'Add an icon to show this skill in the cloud.'
           }

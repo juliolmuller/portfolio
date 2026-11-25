@@ -163,6 +163,46 @@ describe('save', () => {
     expect(stored['showInCloud']).toBe(true);
   });
 
+  it('drops the icon and the cloud flag when a skill is saved again without an icon', async () => {
+    const { store, service } = setup();
+    const created = await service.save('skill', null, {
+      name: { en: 'Fading skill', pt: 'Habilidade que perde o icone' },
+      categories: ['frontend'],
+      iconSource: 'simple-icons',
+      iconSlug: 'react',
+      showInCloud: true,
+      visible: true,
+    });
+
+    expect(created).toMatchObject({ ok: true });
+
+    const id = created.ok ? created.id : '';
+    const before = (await store.get('skill', id))!;
+
+    expect(before['iconSlug']).toBe('react');
+    expect(before['showInCloud']).toBe(true);
+
+    const result = await service.save(
+      'skill',
+      id,
+      {
+        name: { en: 'Fading skill', pt: 'Habilidade que perde o icone' },
+        categories: ['frontend'],
+        showInCloud: true,
+        visible: true,
+      },
+      before.rev,
+    );
+
+    expect(result).toMatchObject({ ok: true });
+
+    const after = (await store.get('skill', id))!;
+
+    expect(after['iconSource']).toBeUndefined();
+    expect(after['iconSlug']).toBeUndefined();
+    expect(after['showInCloud']).toBe(false);
+  });
+
   it('rejects a custom-SVG skill without an SVG', async () => {
     const { service } = setup();
     const result = await service.save('skill', null, {

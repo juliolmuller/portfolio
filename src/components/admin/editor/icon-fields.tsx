@@ -106,8 +106,11 @@ export function TechIconFields({
   const [loaded, setLoaded] = useState<{
     brandColor?: string;
     icon: TechIcon;
+    source: string;
   } | null>(null);
-  const preview = source ? loaded : null;
+  // A preview belongs to the source that produced it: a stale one never shows
+  // after "No icon" or a source change.
+  const preview = loaded?.source === source ? loaded : null;
   const [svgText, setSvgText] = useState('');
   const [svgError, setSvgError] = useState('');
 
@@ -124,7 +127,7 @@ export function TechIconFields({
         ...(monogram ? { monogram } : {}),
       }).catch(() => null);
 
-      if (live) setLoaded(result);
+      if (live) setLoaded(result ? { ...result, source } : null);
     }, 250);
 
     return (): void => {
