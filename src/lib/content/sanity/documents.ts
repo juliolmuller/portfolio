@@ -89,7 +89,7 @@ function image(
   };
 }
 
-function references(
+export function references(
   id: string,
   field: string,
   ids: readonly string[] = [],

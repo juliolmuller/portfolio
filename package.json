@@ -22,6 +22,7 @@
     "sanity:schema": "bun scripts/sanity-schema.ts",
     "fixtures:generate": "bun scripts/generate-fixtures.ts && eslint --fix src/lib/content/fixtures/assets.generated.ts",
     "sanity:seed": "bun --conditions=react-server scripts/seed-sanity.ts",
+    "skills:migrate": "bun --conditions=react-server scripts/migrate-skills.ts",
     "admin:hash": "bun --conditions=react-server scripts/admin-hash.ts",
     "prepare": "husky",
     "admin:smoke": "bun --conditions=react-server scripts/admin-smoke.ts",
