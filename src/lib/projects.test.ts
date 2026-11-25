@@ -70,7 +70,7 @@ describe('projects listing helpers', () => {
 });
 
 describe('relatedProjects and neighbors', () => {
-  it('ranks by shared technologies and wraps neighbors', async () => {
+  it('ranks by shared skills and wraps neighbors', async () => {
     const projects = await repository.getProjects('en');
     const orbit = projects.find((project) => project.slug === 'orbit-dashboard');
 
@@ -78,8 +78,11 @@ describe('relatedProjects and neighbors', () => {
 
     const related = relatedProjects(orbit, projects, 3);
 
-    expect(related).toHaveLength(3);
-    expect(related.map((project) => project.slug)).not.toContain('orbit-dashboard');
+    expect(related.map((project) => project.slug)).toEqual([
+      'pocket-ledger',
+      'pay-bridge',
+      'lint-kit',
+    ]);
 
     const neighbors = projectNeighbors(orbit, projects);
 
@@ -87,5 +90,33 @@ describe('relatedProjects and neighbors', () => {
     expect(neighbors?.next.slug).toBeDefined();
     expect(neighbors?.previous.id).not.toBe(orbit.id);
     expect(neighbors?.next.id).not.toBe(orbit.id);
+  });
+});
+
+describe('relatedProjects ranking', () => {
+  const item = (
+    id: string,
+    order: number,
+    skillIds: string[],
+    techIds: string[] = [],
+  ): { id: string; order: number; skillIds: string[]; techIds: string[] } => ({
+    id,
+    order,
+    skillIds,
+    techIds,
+  });
+
+  it('follows skillIds, not techIds, with order as tie-break', () => {
+    const current = item('a', 0, ['s1', 's2'], ['t1']);
+    const all = [
+      current,
+      item('b', 1, ['s9'], ['t1']),
+      item('c', 3, ['s1']),
+      item('d', 2, ['s1']),
+      item('e', 4, ['s1', 's2']),
+    ];
+
+    expect(relatedProjects(current, all).map((p) => p.id)).toEqual(['e', 'd', 'c']);
+    expect(relatedProjects(current, all, 2).map((p) => p.id)).toEqual(['e', 'd']);
   });
 });

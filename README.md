@@ -68,7 +68,7 @@ Visual snapshots run in CI; locally use `VISUAL=1 bun run test:e2e visual.spec.t
 
 ## Known limitations
 
-- Lighthouse performance, LCP and TBT are enforced at regression floors, not at the original targets; initial JS is ~191 KB gzip against a 150 KB goal (D58, D60).
+- Lighthouse performance, LCP and TBT are enforced at regression floors, not at the original targets; Home's initial JS is ~196 KB gzip against a 150 KB goal (D58, D60, D83).
 - The login rate limiter is per instance (in memory) and trusts `X-Forwarded-For`.
 - PDF scanning does not inspect compressed object streams.
 - The admin's unsaved-changes guard cannot intercept the browser's Back button.

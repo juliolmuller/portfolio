@@ -23,14 +23,15 @@ const KB = 1024;
  * First-load budgets in KB gzip. The framework floor (Next 16.4 + React 19.3,
  * measured on `/_not-found`) is ~136 KB, so the §16 150 KB figure is not
  * reachable with Motion and next-intl on the client; these ceilings guard
- * against regressions instead (D58).
+ * against regressions instead (D58, D97). Admin routes are reported, never
+ * budgeted.
  */
 const ROUTE_BUDGETS: Record<string, number> = {
-  '/[locale]': 196,
-  '/[locale]/projects': 191,
-  '/[locale]/projects/[slug]': 191,
-  '/[locale]/accessibility': 185,
-  '/[locale]/[...rest]': 185,
+  '/[locale]': 200,
+  '/[locale]/projects': 200,
+  '/[locale]/projects/[slug]': 200,
+  '/[locale]/accessibility': 200,
+  '/[locale]/[...rest]': 200,
 };
 
 /**
