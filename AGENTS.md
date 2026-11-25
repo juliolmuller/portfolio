@@ -78,7 +78,7 @@ Run the relevant gates before saying something works. For UI work, run the dev s
 - Visible `:focus-visible` ring (2px `accent-2`, offset 2px) never hidden by the header or terminal; no keyboard traps except true modals (native `<dialog>` + `showModal()`).
 - Contrast: body text 7:1, other text 4.5:1, UI/focus 3:1. `src/styles/tokens.test.ts` guards tokens; extend it before using `text-3` on a new surface.
 - Honor `prefers-reduced-motion`, the "Pause animations" toggle, `prefers-contrast: more`, `forced-colors` (add the `decorative` class to decorative layers) and `prefers-reduced-transparency`. No flashing above 3 Hz.
-- Polite live regions for toasts, filter results, copy confirmations, terminal output and tech-cloud captions. Content stays fully visible without JavaScript.
+- Polite live regions for toasts, filter results, copy confirmations, terminal output and skills cloud captions. Content stays fully visible without JavaScript.
 - Verify with `@axe-core/playwright`: zero violations.
 
 **Security and privacy**
