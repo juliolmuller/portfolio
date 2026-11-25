@@ -13,7 +13,7 @@ import {
   type ExperienceRole,
   type FeaturedLink,
   type Resume as ResumeFiles,
-  type Technology,
+  type Skill,
 } from '@/lib/content';
 import { formatPartialDate } from '@/lib/format';
 
@@ -28,7 +28,7 @@ interface ResumeProps {
   links: FeaturedLink[];
   locale: AppLocale;
   resume: null | ResumeFiles;
-  technologies: Technology[];
+  skills: Skill[];
 }
 
 const linkClass =
@@ -98,7 +98,7 @@ export async function Resume({
   locale,
   experience,
   education,
-  technologies,
+  skills,
   resume,
   links,
 }: ResumeProps): Promise<React.JSX.Element> {
@@ -107,7 +107,7 @@ export async function Resume({
     getTranslations('a11y'),
     getTranslations('header'),
   ]);
-  const names = new Map(technologies.map((tech) => [tech.id, tech.name]));
+  const names = new Map(skills.map((skill) => [skill.id, skill.name]));
   const labels = { more: t('more'), less: t('less') };
   const linkedIn = ownLinkedIn(links);
   const resumeLocales = [locale, ...routing.locales.filter((other) => other !== locale)].filter(
@@ -121,9 +121,11 @@ export async function Resume({
           <ol className="space-y-4">
             {experience.map((entry) => {
               const [first, ...rest] = entry.roles;
-              const stack = entry.techIds
-                .map((id) => names.get(id))
-                .filter((name): name is string => Boolean(name));
+              const stack = entry.skillIds.flatMap((id) => {
+                const name = names.get(id);
+
+                return name ? [{ id, name }] : [];
+              });
               const details = (
                 <>
                   {first ? <RoleBody role={first} labels={labels} /> : null}
@@ -141,10 +143,10 @@ export async function Resume({
                   ))}
                   {stack.length > 0 ? (
                     <div className="mt-5">
-                      <p className="sr-only">{t('technologies')}</p>
+                      <p className="sr-only">{t('skills')}</p>
                       <ul className="flex flex-wrap gap-2">
-                        {stack.map((name) => (
-                          <li key={name}>
+                        {stack.map(({ id, name }) => (
+                          <li key={id}>
                             <Chip>{name}</Chip>
                           </li>
                         ))}

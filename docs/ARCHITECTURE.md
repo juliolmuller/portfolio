@@ -86,7 +86,7 @@ pages / components / terminal snapshot / sitemap / admin
 
 ## Terminal and window manager
 
-- `src/lib/terminal` is pure TS (tokenizer, output AST, virtual file system, registry, async-generator engine, completion, history). The React shell in `src/components/terminal` is one lazy chunk; strings are a lazy per-locale catalog. Content comes from `GET /api/terminal-content?locale=` (`no-store`, `noindex`; no phone, icons, file URLs or hidden items) (D50).
+- `src/lib/terminal` is pure TS (tokenizer, output AST, virtual file system, registry, async-generator engine, completion, history). The React shell in `src/components/terminal` is one lazy chunk; strings are a lazy per-locale catalog. Content comes from `GET /api/terminal-content?locale=` (`no-store`, `noindex`; no phone, icons, file URLs or hidden items; carries skills by name and categories, and project and experience technology names come from skill references; the `technologies` catalog still feeds the stack commands, so hiding a skill does not hide it there) (D50).
 - **Secret commands** (`su`, `admin`, `logout`) live in a separate dynamically imported module, English only, never in catalogs; without a session they are byte-identical to unknown commands. Secret lines are volatile (never stored, never in history) (D52).
 - The window manager (`src/lib/window-manager` geometry, `src/stores/window-store.ts`) writes gesture styles straight to the DOM in rAF and commits on release; `Esc` reverts; snap uses hysteresis (8 px arm / 32 px release) (D49, D63). State persists in `sessionStorage` (`jm.window.<id>.v1`, `jm.terminal.v1`).
 
@@ -114,16 +114,16 @@ Server-rendered HTML, unique metadata and canonical/hreflang per page, JSON-LD, 
 
 ## Quality gates
 
-| Gate                        | What it enforces                                                                                                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lint` (`--max-warnings=0`) | ESLint 9 + jsx-a11y strict, Sanity/groq-js import bans                                                                                         |
-| `typecheck`                 | `next typegen` + `tsc --noEmit`                                                                                                                |
-| `test`                      | Vitest: core libs, schemas, both adapters, auth, JSON-LD, token contrast                                                                       |
-| `i18n:check`, `icons:audit` | Same keys/placeholders in both catalogs and fixtures; every technology has an icon or monogram                                                 |
-| `check:bundle`              | Home ≤ 196 KB gzip first load, projects/detail ≤ 191, lazy chunks (terminal ≤ 20, secret ≤ 3, sphere ≤ 10); admin path/server-only leaks (D58) |
-| `check:seo`                 | Crawls every sitemap URL with JS off (D32)                                                                                                     |
-| `test:e2e`                  | Playwright on a fixtures production build, port 3100; axe on Chromium (D23)                                                                    |
-| `lhci`                      | Accessibility/SEO = 1, best-practices ≥ 0.95, CLS ≤ 0.05; regression floors for performance ≥ 0.85, LCP ≤ 3.8 s, TBT ≤ 350 ms (D60)            |
+| Gate                        | What it enforces                                                                                                                                                     |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lint` (`--max-warnings=0`) | ESLint 9 + jsx-a11y strict, Sanity/groq-js import bans                                                                                                               |
+| `typecheck`                 | `next typegen` + `tsc --noEmit`                                                                                                                                      |
+| `test`                      | Vitest: core libs, schemas, both adapters, auth, JSON-LD, token contrast                                                                                             |
+| `i18n:check`, `icons:audit` | Same keys/placeholders in both catalogs and fixtures; every technology has an icon or monogram                                                                       |
+| `check:bundle`              | Public routes ≤ 200 KB gzip first load (admin reported, not budgeted), lazy chunks (terminal ≤ 20, secret ≤ 3, sphere ≤ 10); admin path/server-only leaks (D58, D97) |
+| `check:seo`                 | Crawls every sitemap URL with JS off (D32)                                                                                                                           |
+| `test:e2e`                  | Playwright on a fixtures production build, port 3100; axe on Chromium (D23)                                                                                          |
+| `lhci`                      | Accessibility/SEO = 1, best-practices ≥ 0.95, CLS ≤ 0.05; regression floors for performance ≥ 0.85, LCP ≤ 3.8 s, TBT ≤ 350 ms (D60)                                  |
 
 ## Known limitations
 

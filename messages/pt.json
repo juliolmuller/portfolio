@@ -377,7 +377,7 @@
     "experienceTab": "Experiência",
     "educationTab": "Formação",
     "present": "Atual",
-    "technologies": "Tecnologias",
+    "skills": "Habilidades",
     "more": "Mostrar mais",
     "less": "Mostrar menos",
     "kinds": {
@@ -470,6 +470,7 @@
     "outcome": "Resultado",
     "details": "A história completa",
     "technologies": "Tecnologias",
+    "skills": "Habilidades",
     "gallery": "Galeria",
     "openImage": "Abrir imagem {index} de {total}: {alt}",
     "closeImage": "Fechar",
