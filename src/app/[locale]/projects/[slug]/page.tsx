@@ -69,20 +69,16 @@ export default async function ProjectPage({
   const { slug } = await params;
   const { locale, project } = await loadProject(slug);
   const content = getContent();
-  const [t, tWork, tA11y, tProjects, all, skills, technologies, profile, links, practices] =
-    await Promise.all([
-      getTranslations('project'),
-      getTranslations('work'),
-      getTranslations('a11y'),
-      getTranslations('projects'),
-      content.getProjects(locale),
-      content.getSkills(locale),
-      // Technologies and practices feed JSON-LD only until #80.
-      content.getTechnologies(locale),
-      content.getProfile(locale),
-      content.getFeaturedLinks(locale),
-      content.getPractices(locale),
-    ]);
+  const [t, tWork, tA11y, tProjects, all, skills, profile, links] = await Promise.all([
+    getTranslations('project'),
+    getTranslations('work'),
+    getTranslations('a11y'),
+    getTranslations('projects'),
+    content.getProjects(locale),
+    content.getSkills(locale),
+    content.getProfile(locale),
+    content.getFeaturedLinks(locale),
+  ]);
 
   const skillNamesFor = nameLookup(skills);
   const skillById = new Map(skills.map((skill) => [skill.id, skill]));
@@ -100,8 +96,8 @@ export default async function ProjectPage({
 
   const jsonLd = graph(
     websiteNode(locale),
-    ...(profile ? [personNode({ locale, profile, links, technologies, practices })] : []),
-    projectNode(locale, project, technologies),
+    ...(profile ? [personNode({ locale, profile, links, skills })] : []),
+    projectNode(locale, project, skills),
     breadcrumbNode(locale, crumbs, `${url}#crumbs`),
   );
 

@@ -69,31 +69,18 @@ function newest(...dates: Array<string | undefined>): string {
 export default async function HomePage(): Promise<React.JSX.Element> {
   const locale = await currentLocale();
   const content = getContent();
-  const [
-    profile,
-    contact,
-    resume,
-    links,
-    recommended,
-    projects,
-    experience,
-    education,
-    technologies,
-    practices,
-    skills,
-  ] = await Promise.all([
-    content.getProfile(locale),
-    content.getContact(locale),
-    content.getResume(),
-    content.getFeaturedLinks(locale),
-    content.getRecommendedProfiles(locale),
-    content.getProjects(locale),
-    content.getExperience(locale),
-    content.getEducation(locale),
-    content.getTechnologies(locale),
-    content.getPractices(locale),
-    content.getSkills(locale),
-  ]);
+  const [profile, contact, resume, links, recommended, projects, experience, education, skills] =
+    await Promise.all([
+      content.getProfile(locale),
+      content.getContact(locale),
+      content.getResume(),
+      content.getFeaturedLinks(locale),
+      content.getRecommendedProfiles(locale),
+      content.getProjects(locale),
+      content.getExperience(locale),
+      content.getEducation(locale),
+      content.getSkills(locale),
+    ]);
   const featured = featuredProjects(projects);
   const listId = `${absoluteUrl(localizedPath(locale))}#work`;
   const nextSection = profile ? 'about' : 'stack';
@@ -102,7 +89,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
     websiteNode(locale),
     ...(profile
       ? [
-          personNode({ locale, profile, links, technologies, practices }),
+          personNode({ locale, profile, links, skills }),
           profilePageNode(
             locale,
             newest(
