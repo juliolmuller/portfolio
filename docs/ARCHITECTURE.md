@@ -92,7 +92,7 @@ pages / components / terminal snapshot / sitemap / admin
 
 ## Technology cloud
 
-Server resolves each technology and skill to a content-hashed SVG file served from `/tech-icons/<hash>.svg` (`?fill=` for the geoid; technologies leave in #91), so no icon paths reach the client or the HTML twice (D59). The geoid is a full-bleed ellipsoid (`80svh`, min 600 px) with frame-time-scaled motion, yaw-only drag, category chips and exclusive filtering (D37–D45, D66). SSR, no-JS, reduced motion and Pause animations render the grouped List view. Icon resolution order: Simple Icons → Devicon-plain → monogram (D13).
+Server resolves each technology and skill to a content-hashed SVG file served from `/tech-icons/<hash>.svg` (`?fill=` for the geoid; technologies leave in #91), so no icon paths reach the client or the HTML twice (D59). The geoid is a full-bleed ellipsoid (`80svh`, min 600 px) with frame-time-scaled motion, yaw-only drag, category chips and exclusive filtering (D37–D45, D66). SSR, no-JS, reduced motion and Pause animations render the grouped List view. Icon resolution order: Simple Icons → Devicon-plain → monogram (D13). The data comes from skills (`getSkills`): `toStackItems` splits the List items (all visible skills) from the cloud items (`inCloud`) on the server, and only icon URLs reach the client (#74).
 
 ## Security
 
