@@ -197,8 +197,8 @@ test.describe('education skills (#77)', () => {
 
       const cards = page.locator('#education > ul > li');
 
-      await expect(cards.nth(0).locator('ul.flex-wrap li')).toHaveText([...expectedChips[locale]]);
-      await expect(cards.nth(2).locator('ul.flex-wrap')).toHaveCount(0);
+      await expect(cards.nth(0).locator('ul li')).toHaveText([...expectedChips[locale]]);
+      await expect(cards.nth(2).locator('ul')).toHaveCount(0);
     });
   }
 

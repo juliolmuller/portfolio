@@ -178,6 +178,7 @@ describe('Resume education skills (#77)', () => {
   it('renders one list when only one entry has skills', async () => {
     const html = await renderEducation([degree('x', ['a']), degree('y', [])], all);
 
-    expect(html.split('<ul class="flex flex-wrap gap-2">')).toHaveLength(2);
+    expect(chips(html)).toEqual(['Alpha']);
+    expect(html.match(/sr-only">skills/g)).toHaveLength(1);
   });
 });
