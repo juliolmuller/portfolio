@@ -6,61 +6,17 @@ import { createFixtureDataset } from '@/lib/content/fixtures/dataset';
 import { techId } from '@/lib/content/fixtures/ids';
 import { createFixtureSource } from '@/lib/content/fixtures/source';
 import { skillIdFor } from '@/lib/content/migrations/skills';
-import { type ContentRepository } from '@/lib/content/repository';
 
-import { buildSnapshot, type ContentSnapshot, type SnapshotSource } from './snapshot';
-import { fixtureSnapshot } from './test-utils';
+import { buildSnapshot, type ContentSnapshot } from './snapshot';
+import { fixtureSnapshot, snapshotSourceOf } from './test-utils';
 
-async function sourceOf(repository: ContentRepository, locale: AppLocale): Promise<SnapshotSource> {
-  const [
-    profile,
-    contact,
-    resume,
-    links,
-    recommended,
-    projects,
-    experience,
-    education,
-    skills,
-    technologies,
-    practices,
-  ] = await Promise.all([
-    repository.getProfile(locale),
-    repository.getContact(locale),
-    repository.getResume(),
-    repository.getFeaturedLinks(locale),
-    repository.getRecommendedProfiles(locale),
-    repository.getProjects(locale),
-    repository.getExperience(locale),
-    repository.getEducation(locale),
-    repository.getSkills(locale),
-    repository.getTechnologies(locale),
-    repository.getPractices(locale),
-  ]);
-
-  return {
-    locale,
-    profile,
-    contact,
-    resume,
-    links,
-    recommended,
-    projects,
-    experience,
-    education,
-    skills,
-    technologies,
-    practices,
-  };
-}
-
-function snapshotWith(
+async function snapshotWith(
   dataset: ReturnType<typeof createFixtureDataset>,
   locale: AppLocale,
 ): Promise<ContentSnapshot> {
   const repository = createRepository(createFixtureSource(dataset), { warn: () => {} });
 
-  return sourceOf(repository, locale).then(buildSnapshot);
+  return buildSnapshot(await snapshotSourceOf(repository, locale));
 }
 
 describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
@@ -86,7 +42,7 @@ describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
     const repository = createRepository(createFixtureSource(), {
       warn: () => {},
     });
-    const source = await sourceOf(repository, locale);
+    const source = await snapshotSourceOf(repository, locale);
     const snapshot = buildSnapshot({
       ...source,
       contact: source.contact && { ...source.contact, phone: '+55 41 99999-0000' },
@@ -112,7 +68,9 @@ describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
     }
   });
 
-  it('never lets a hidden skill reach the snapshot', async () => {
+  // The legacy `technologies` catalog is a separate collection that the stack
+  // commands still read, so it is deliberately not asserted here.
+  it('drops a hidden skill from skills and from project and experience technologies', async () => {
     const react = skillIdFor(techId('React'));
     const visibleRepository = createRepository(createFixtureSource(), { warn: () => {} });
     const hiddenName = (await visibleRepository.getSkills(locale)).find(

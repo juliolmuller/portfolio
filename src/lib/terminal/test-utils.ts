@@ -3,6 +3,7 @@ import { createTranslator } from 'next-intl';
 import { type AppLocale } from '@/i18n/routing';
 import { createRepository } from '@/lib/content/create-repository';
 import { createFixtureSource } from '@/lib/content/fixtures/source';
+import { type ContentRepository } from '@/lib/content/repository';
 import { type KvItem, type LinkItem, type OutputNode, type Span } from '@/lib/terminal/output';
 
 import enMessages from '../../../messages/en.json';
@@ -10,7 +11,7 @@ import ptMessages from '../../../messages/pt.json';
 import { type Command, type CommandActions, type SessionInfo } from './commands/types';
 import { type EngineDeps, execute } from './engine';
 import { createRegistry, defaultRegistry } from './registry';
-import { buildSnapshot, type ContentSnapshot } from './snapshot';
+import { buildSnapshot, type ContentSnapshot, type SnapshotSource } from './snapshot';
 import { type Translate } from './vfs';
 
 const catalogs = { en: enMessages, pt: ptMessages };
@@ -30,10 +31,13 @@ export function translator(locale: AppLocale): Translate {
   return t as unknown as Translate;
 }
 
-export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapshot> {
-  const repository = createRepository(createFixtureSource(), {
-    warn: () => {},
-  });
+/**
+ * Every public read the snapshot is built from, for one locale.
+ */
+export async function snapshotSourceOf(
+  repository: ContentRepository,
+  locale: AppLocale,
+): Promise<SnapshotSource> {
   const [
     profile,
     contact,
@@ -60,7 +64,7 @@ export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapsho
     repository.getPractices(locale),
   ]);
 
-  return buildSnapshot({
+  return {
     locale,
     profile,
     contact,
@@ -73,7 +77,15 @@ export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapsho
     skills,
     technologies,
     practices,
+  };
+}
+
+export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapshot> {
+  const repository = createRepository(createFixtureSource(), {
+    warn: () => {},
   });
+
+  return buildSnapshot(await snapshotSourceOf(repository, locale));
 }
 
 export interface Harness {

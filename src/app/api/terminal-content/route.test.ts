@@ -21,6 +21,7 @@ describe('GET /api/terminal-content', () => {
     expect(body.skills.length).toBeGreaterThan(0);
 
     for (const skill of body.skills) {
+      expect(Object.keys(skill).sort()).toEqual(['categories', 'name']);
       expect(skill.name).not.toBe('');
       expect(skill.categories.length).toBeGreaterThan(0);
     }
