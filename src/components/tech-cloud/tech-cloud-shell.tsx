@@ -7,14 +7,13 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { cn } from '@/lib/cn';
 import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
-import { type Practice } from '@/lib/content/types';
 import { useReducedMotionPreference } from '@/lib/motion-preference';
 
 import { countByCategory, matchesCategory } from './categories';
 import { type CloudTech } from './geoid-sphere';
 import { StackList } from './stack-list';
 import { geoidStageClassName } from './stage';
-import { type StackTech } from './types';
+import { type StackItem } from './types';
 
 const GeoidSphere = dynamic(() => import('./geoid-sphere').then((module) => module.GeoidSphere), {
   ssr: false,
@@ -22,18 +21,6 @@ const GeoidSphere = dynamic(() => import('./geoid-sphere').then((module) => modu
     <div aria-hidden="true" className={`${geoidStageClassName} rounded-[50%] bg-surface-1/40`} />
   ),
 });
-
-function toCloudTech(tech: StackTech): CloudTech {
-  return {
-    id: tech.id,
-    name: tech.name,
-    categories: tech.categories,
-    icon: tech.icon,
-    brandColor: tech.brandColor,
-    url: tech.url,
-    priority: tech.priority,
-  };
-}
 
 const NARROW_QUERY = '(max-width: 767px)';
 
@@ -58,11 +45,11 @@ function useMobileCull(technologies: CloudTech[]): CloudTech[] {
 }
 
 export function TechCloudShell({
-  technologies,
-  practices,
+  items,
+  cloudItems,
 }: {
-  practices: Practice[];
-  technologies: StackTech[];
+  cloudItems: CloudTech[];
+  items: StackItem[];
 }): React.JSX.Element {
   const t = useTranslations('stack');
   const reduced = useReducedMotionPreference();
@@ -76,10 +63,10 @@ export function TechCloudShell({
   const [selected, setSelected] = useState<CloudTech | null>(null);
   const [near, setNear] = useState(false);
   const hostRef = useRef<HTMLDivElement>(null);
-  const showCloud = isClient && !reduced && !failed;
-
-  const cloudTechs = useMemo(() => technologies.map(toCloudTech), [technologies]);
-  const visibleCloud = useMobileCull(cloudTechs);
+  const visibleCloud = useMobileCull(cloudItems);
+  // An empty cloud (no skill is `inCloud`, or the phone cull removed them all)
+  // would hide the List and show a blank stage, so fall back to the List.
+  const showCloud = isClient && !reduced && !failed && visibleCloud.length > 0;
 
   const categoryLabels = Object.fromEntries(
     skillCategories.map((key) => [key, t(`categories.${key}`)]),
@@ -120,14 +107,7 @@ export function TechCloudShell({
 
   const counts = useMemo(() => countByCategory(visibleCloud), [visibleCloud]);
 
-  const list = (
-    <StackList
-      technologies={technologies}
-      practices={practices}
-      categoryLabels={categoryLabels}
-      practicesTitle={t('practicesTitle')}
-    />
-  );
+  const list = <StackList items={items} categoryLabels={categoryLabels} />;
 
   const chips = showCloud ? (
     <div
