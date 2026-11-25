@@ -9,6 +9,7 @@ import {
   type ProjectSummary,
   type RecommendedProfile,
   type Resume,
+  type Skill,
   type Technology,
 } from '@/lib/content';
 
@@ -78,6 +79,7 @@ export interface ContentSnapshot {
   }>;
   recommended: Array<{ name: string; note: string; role: string; url: string }>;
   resume: Record<AppLocale, boolean>;
+  skills: Array<Pick<Skill, 'categories' | 'name'>>;
   technologies: Array<{ category: string; name: string }>;
 }
 
@@ -92,12 +94,13 @@ export interface SnapshotSource {
   projects: ProjectSummary[];
   recommended: RecommendedProfile[];
   resume: null | Resume;
+  skills: Skill[];
   technologies: Technology[];
 }
 
 export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
-  const techNames = new Map(source.technologies.map((t) => [t.id, t.name]));
-  const namesOf = (ids: string[]): string[] => ids.flatMap((id) => techNames.get(id) ?? []);
+  const skillNames = new Map(source.skills.map((s) => [s.id, s.name]));
+  const skillNamesOf = (ids: string[]): string[] => ids.flatMap((id) => skillNames.get(id) ?? []);
   const [user = '', domain = ''] = source.contact?.email.split('@') ?? [];
 
   return {
@@ -150,14 +153,14 @@ export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
       highlights: project.highlights,
       ...(project.outcome ? { outcome: project.outcome } : {}),
       links: project.links,
-      technologies: namesOf(project.techIds),
+      technologies: skillNamesOf(project.skillIds),
     })),
     experience: source.experience.map((entry) => ({
       slug: entry.slug,
       company: entry.company,
       ...(entry.location ? { location: entry.location } : {}),
       roles: entry.roles,
-      technologies: namesOf(entry.techIds),
+      technologies: skillNamesOf(entry.skillIds),
     })),
     education: source.education.map(({ kind, title, institution, start, end }) => ({
       kind,
@@ -165,6 +168,10 @@ export function buildSnapshot(source: SnapshotSource): ContentSnapshot {
       institution,
       ...(start ? { start } : {}),
       ...(end ? { end } : {}),
+    })),
+    skills: source.skills.map(({ name, categories }) => ({
+      name,
+      categories: [...categories],
     })),
     technologies: source.technologies.map(({ name, category }) => ({
       name,
@@ -185,6 +192,7 @@ export function emptySnapshot(locale: AppLocale): ContentSnapshot {
     projects: [],
     experience: [],
     education: [],
+    skills: [],
     technologies: [],
     practices: [],
   };

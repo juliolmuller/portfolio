@@ -24,6 +24,7 @@ export async function GET(request: Request): Promise<NextResponse<unknown>> {
     projects,
     experience,
     education,
+    skills,
     technologies,
     practices,
   ] = await Promise.all([
@@ -35,6 +36,7 @@ export async function GET(request: Request): Promise<NextResponse<unknown>> {
     content.getProjects(locale),
     content.getExperience(locale),
     content.getEducation(locale),
+    content.getSkills(locale),
     content.getTechnologies(locale),
     content.getPractices(locale),
   ]);
@@ -50,6 +52,7 @@ export async function GET(request: Request): Promise<NextResponse<unknown>> {
       projects,
       experience,
       education,
+      skills,
       technologies,
       practices,
     }),
