@@ -381,9 +381,7 @@ describe('save', () => {
       ok: false,
       fieldErrors: { [`skillIds.${original.length}`]: 'Unknown skill' },
     });
-    expect(((await store.get('education', entry.id))!['skillIds'] as string[]) ?? []).toEqual(
-      original,
-    );
+    expect((await store.get('education', entry.id))!['skillIds'] ?? []).toEqual(original);
   });
 
   it('drops blank optional fields and blank list rows', async () => {
@@ -475,6 +473,23 @@ describe('remove, flags and order', () => {
     if (!result.ok && result.kind === 'in-use') {
       expect(result.references.map((ref) => ref.id)).toContain(job.id);
     }
+  });
+
+  it('deletes a skill that no project, experience or education entry links', async () => {
+    const { store, service, audits } = setup();
+    const created = await service.save('skill', null, {
+      name: { en: 'Unused skill', pt: 'Habilidade sem uso' },
+      categories: ['frontend'],
+      visible: true,
+    });
+
+    expect(created.ok).toBe(true);
+
+    if (!created.ok) return;
+
+    expect(await service.remove('skill', created.id)).toEqual({ ok: true });
+    expect(await store.get('skill', created.id)).toBeNull();
+    expect(audits.at(-1)).toBe('skill:delete');
   });
 
   it('deletes an unused document and refuses singletons', async () => {
