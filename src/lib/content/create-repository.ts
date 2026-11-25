@@ -2,7 +2,7 @@ import 'server-only';
 
 import { resolveLinkIcon, resolveTechIcon } from './icons/resolve';
 import { contentLogger, type ContentLogger } from './log';
-import { createTechFilter, parseCollection, parseDocument } from './pipeline';
+import { createSkillFilter, createTechFilter, parseCollection, parseDocument } from './pipeline';
 import { type ContentRepository } from './repository';
 import {
   type ContentLocale,
@@ -20,8 +20,8 @@ import { type ImageRef, type Project, type ProjectLookup, type ProjectSummary } 
  */
 export interface ContentSource {
   contact(): Promise<unknown>;
-  education(): Promise<unknown[]>;
-  experience(): Promise<{ entries: unknown[]; technologies: unknown[] }>;
+  education(): Promise<EducationRead>;
+  experience(): Promise<ExperienceRead>;
   featuredLinks(): Promise<unknown[]>;
   readonly name: 'fixtures' | 'sanity';
   practices(): Promise<unknown[]>;
@@ -40,8 +40,26 @@ export interface ContentSource {
   technologies(): Promise<unknown[]>;
 }
 
+export interface EducationRead {
+  entries: unknown[];
+  /**
+   * `{ id, visible }` for every skill.
+   */
+  skills: unknown[];
+}
+
+export interface ExperienceRead {
+  entries: unknown[];
+  skills: unknown[];
+  technologies: unknown[];
+}
+
 export interface ProjectsRead {
   projects: unknown[];
+  /**
+   * `{ id, visible }` for every skill.
+   */
+  skills: unknown[];
   /**
    * `{ id, visible }` for every technology.
    */
@@ -90,7 +108,7 @@ function uniqueBySlug(projects: ProjectDocument[], logger: ContentLogger): Proje
 
 function toSummary(
   project: ProjectDocument,
-  techIds: string[],
+  ids: { skillIds: string[]; techIds: string[] },
   locale: ContentLocale,
 ): ProjectSummary {
   return defined({
@@ -103,7 +121,8 @@ function toSummary(
     year: project.year,
     kind: project.kind,
     status: project.status,
-    techIds,
+    techIds: ids.techIds,
+    skillIds: ids.skillIds,
     cover: image(project.cover, locale),
     links: defined({ ...project.links }),
     title: pick(project.title, locale),
@@ -118,9 +137,13 @@ function toSummary(
   });
 }
 
-function toProject(project: ProjectDocument, techIds: string[], locale: ContentLocale): Project {
+function toProject(
+  project: ProjectDocument,
+  ids: { skillIds: string[]; techIds: string[] },
+  locale: ContentLocale,
+): Project {
   return defined({
-    ...toSummary(project, techIds, locale),
+    ...toSummary(project, ids, locale),
     gallery: project.gallery.map((item) =>
       defined({
         ...(image(item, locale) as ImageRef),
@@ -136,52 +159,16 @@ export function createRepository(
   logger: ContentLogger = contentLogger,
 ): ContentRepository {
   async function readProjects(): Promise<{
-    filterTech: (ownerId: string, techIds: readonly string[]) => string[];
-    projects: Array<{
-      approach: { en: string; pt: string };
-      body?: { en: string; pt: string } | undefined;
-      context: { en: string; pt: string };
-      cover?:
-        | {
-            alt: { en: string; pt: string };
-            asset: { height: number; lqip?: string | undefined; url: string; width: number };
-            focal?: { x: number; y: number } | undefined;
-          }
-        | undefined;
-      featured: boolean;
-      gallery: Array<{
-        alt: { en: string; pt: string };
-        asset: { height: number; lqip?: string | undefined; url: string; width: number };
-        caption?: { en: string; pt: string } | undefined;
-        focal?: { x: number; y: number } | undefined;
-      }>;
-      highlights: Array<{ en: string; pt: string }>;
-      id: string;
-      isFixture?: boolean | undefined;
-      kind: 'automation' | 'desktop' | 'integration' | 'mobile' | 'open-source' | 'web';
-      links: { live?: string | undefined; repo?: string | undefined };
-      order: number;
-      outcome?: { en: string; pt: string } | undefined;
-      previousSlugs: string[];
-      rev?: string | undefined;
-      role: { en: string; pt: string };
-      skillIds: string[];
-      slug: string;
-      status: 'archived' | 'in-progress' | 'live' | 'private';
-      summary: { en: string; pt: string };
-      tagline: { en: string; pt: string };
-      techIds: string[];
-      title: { en: string; pt: string };
-      updatedAt: string;
-      visible: boolean;
-      year: number;
-    }>;
+    filterSkill: (ownerId: string, ids: readonly string[]) => string[];
+    filterTech: (ownerId: string, ids: readonly string[]) => string[];
+    projects: ProjectDocument[];
   }> {
     const read = await source.projects();
     const filterTech = createTechFilter(read.technologies, logger);
+    const filterSkill = createSkillFilter(read.skills, logger);
     const projects = uniqueBySlug(parseCollection('project', read.projects, logger), logger);
 
-    return { projects, filterTech };
+    return { projects, filterTech, filterSkill };
   }
 
   return {
@@ -347,23 +334,38 @@ export function createRepository(
     },
 
     async getProjects(locale): Promise<ProjectSummary[]> {
-      const { projects, filterTech } = await readProjects();
+      const { projects, filterTech, filterSkill } = await readProjects();
 
       return projects.map((project) =>
-        toSummary(project, filterTech(project.id, project.techIds), locale),
+        toSummary(
+          project,
+          {
+            techIds: filterTech(project.id, project.techIds),
+            skillIds: filterSkill(project.id, project.skillIds),
+          },
+          locale,
+        ),
       );
     },
 
     async getProject(locale, slug): Promise<ProjectLookup> {
       const read = await source.projectsBySlug(slug);
       const filterTech = createTechFilter(read.technologies, logger);
+      const filterSkill = createSkillFilter(read.skills, logger);
       const candidates = parseCollection('project', read.projects, logger);
       const current = candidates.find((project) => project.slug === slug);
 
       if (current) {
         return {
           status: 'found',
-          project: toProject(current, filterTech(current.id, current.techIds), locale),
+          project: toProject(
+            current,
+            {
+              techIds: filterTech(current.id, current.techIds),
+              skillIds: filterSkill(current.id, current.skillIds),
+            },
+            locale,
+          ),
         };
       }
 
@@ -396,12 +398,14 @@ export function createRepository(
           summary: string;
           title: string;
         }>;
+        skillIds: string[];
         slug: string;
         techIds: string[];
       }>
     > {
       const read = await source.experience();
       const filterTech = createTechFilter(read.technologies, logger);
+      const filterSkill = createSkillFilter(read.skills, logger);
       const entries = parseCollection('experience', read.entries, logger);
       const slugs = uniqueSlugs(entries.map((entry) => entry.company));
 
@@ -422,6 +426,7 @@ export function createRepository(
             }),
           ),
           techIds: filterTech(entry.id, entry.techIds),
+          skillIds: filterSkill(entry.id, entry.skillIds),
           collapsedByDefault: entry.collapsedByDefault,
           order: entry.order,
         }),
@@ -435,12 +440,15 @@ export function createRepository(
         institution: string;
         kind: 'certification' | 'degree';
         order: number;
+        skillIds: string[];
         start: string | undefined;
         title: string;
         url: string | undefined;
       }>
     > {
-      const entries = parseCollection('education', await source.education(), logger);
+      const read = await source.education();
+      const filterSkill = createSkillFilter(read.skills, logger);
+      const entries = parseCollection('education', read.entries, logger);
 
       return entries.map((entry) =>
         defined({
@@ -451,6 +459,7 @@ export function createRepository(
           start: entry.start,
           end: entry.end,
           url: entry.url,
+          skillIds: filterSkill(entry.id, entry.skillIds),
           order: entry.order,
         }),
       );

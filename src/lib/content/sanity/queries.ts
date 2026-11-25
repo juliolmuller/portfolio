@@ -14,6 +14,8 @@ const VISIBLE = /* groq */ `visible != false`;
 
 const TECH_REFS = /* groq */ `*[_type == "technology"]{ "id": _id, visible }`;
 
+const SKILL_REFS = /* groq */ `*[_type == "skill"]{ "id": _id, visible }`;
+
 const PROFILE_FIELDS = /* groq */ `
   ${META}, displayName, jobTitle, heroLead, titleFont,
   "photo": photo{ ${IMAGE} },
@@ -92,7 +94,8 @@ export const RECOMMENDED_QUERY = /* groq */ `*[_type == "recommendedProfile" && 
 
 export const PROJECTS_QUERY = /* groq */ `{
   "projects": *[_type == "project" && ${VISIBLE}] | order(order asc){ ${PROJECT_SUMMARY} },
-  "technologies": ${TECH_REFS}
+  "technologies": ${TECH_REFS},
+  "skills": ${SKILL_REFS}
 }`;
 
 export const PROJECTS_BY_SLUG_QUERY = /* groq */ `{
@@ -100,16 +103,21 @@ export const PROJECTS_BY_SLUG_QUERY = /* groq */ `{
     ${PROJECT_SUMMARY},
     ${PROJECT_LONG_FORM}
   },
-  "technologies": ${TECH_REFS}
+  "technologies": ${TECH_REFS},
+  "skills": ${SKILL_REFS}
 }`;
 
 export const EXPERIENCE_QUERY = /* groq */ `{
   "entries": *[_type == "experience" && ${VISIBLE}] | order(order asc){${EXPERIENCE_FIELDS}
   },
-  "technologies": ${TECH_REFS}
+  "technologies": ${TECH_REFS},
+  "skills": ${SKILL_REFS}
 }`;
 
-export const EDUCATION_QUERY = /* groq */ `*[_type == "education" && ${VISIBLE}] | order(order asc){${EDUCATION_FIELDS}
+export const EDUCATION_QUERY = /* groq */ `{
+  "entries": *[_type == "education" && ${VISIBLE}] | order(order asc){${EDUCATION_FIELDS}
+  },
+  "skills": ${SKILL_REFS}
 }`;
 
 export const TECHNOLOGIES_QUERY = /* groq */ `*[_type == "technology" && ${VISIBLE}] | order(order asc, name asc){${TECHNOLOGY_FIELDS}
