@@ -6,6 +6,12 @@ import { categoryOptions } from '../category-labels';
 import { LocalizedField, Section, SelectField, TextField, ToggleField } from '../editor/fields';
 import { TechIconFields } from '../editor/icon-fields';
 
+export const PROMINENCE_OPTIONS = [
+  { value: 1, label: '1 · Core (largest)' },
+  { value: 2, label: '2 · Regular' },
+  { value: 3, label: '3 · Occasional (smallest)' },
+];
+
 export function TechnologyForm(): React.JSX.Element {
   return (
     <>
@@ -16,11 +22,7 @@ export function TechnologyForm(): React.JSX.Element {
           path="priority"
           label="Prominence"
           hint="How large it appears in the technology cloud."
-          options={[
-            { value: 1, label: '1 · Core (largest)' },
-            { value: 2, label: '2 · Regular' },
-            { value: 3, label: '3 · Occasional (smallest)' },
-          ]}
+          options={PROMINENCE_OPTIONS}
         />
         <TextField path="url" label="Website (optional)" type="url" />
         <TextField

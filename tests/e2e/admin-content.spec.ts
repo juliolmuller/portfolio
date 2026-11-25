@@ -458,6 +458,90 @@ test.describe('singletons and lists', () => {
     }
   });
 
+  test('a skill with a custom SVG: previewed, cloud toggle enabled, saved, deleted', async ({
+    page,
+  }) => {
+    const name = `E2E skill svg ${Math.random().toString(36).slice(2, 7)}`;
+    const toggle = page.getByLabel('Show in the skills cloud');
+
+    await signIn(page);
+    await openEditor(page, '/admin/skills/new');
+    await field(page, 'name.en').fill(name);
+    await page.getByText('Copy', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Copy English to Portuguese' }).click();
+    await page.getByLabel('Frontend', { exact: true }).check();
+    await expect(toggle).toBeDisabled();
+
+    await field(page, 'iconSource').selectOption('custom-svg');
+    await expect(toggle).toBeDisabled();
+    await page
+      .locator('#svg-source')
+      .fill('<svg viewBox="0 0 24 24"><path d="M2 2h20v20H2Z"/></svg>');
+    await page.getByRole('button', { name: 'Use this SVG' }).click();
+    await expect(page.getByRole('img', { name: 'Icon preview' })).toBeVisible();
+    await expect(toggle).toBeEnabled();
+    await toggle.check();
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+
+    await page.goto('/admin/skills');
+    await expect(page.locator('tbody tr').filter({ hasText: name })).toContainText('Yes');
+    await page.locator('tbody tr').filter({ hasText: name }).getByRole('link', { name }).click();
+    await hydrated(page);
+    await openDeleteDialog(page);
+    await page.getByLabel('Confirmation text').fill(name);
+    await page.getByRole('button', { name: 'Delete permanently' }).click();
+    await expect(page).toHaveURL(/\/admin\/skills$/);
+  });
+
+  test('the skills cloud toggle is off and disabled without an icon', async ({ page }) => {
+    const name = `E2E skill none ${Math.random().toString(36).slice(2, 7)}`;
+    const toggle = page.getByLabel('Show in the skills cloud');
+
+    await signIn(page);
+    await openEditor(page, '/admin/skills/new');
+    await field(page, 'name.en').fill(name);
+    await page.getByText('Copy', { exact: true }).first().click();
+    await page.getByRole('button', { name: 'Copy English to Portuguese' }).click();
+    await page.getByLabel('Frontend', { exact: true }).check();
+    await field(page, 'iconSource').selectOption('monogram');
+    await toggle.check();
+    await field(page, 'iconSource').selectOption('');
+    await expect(toggle).not.toBeChecked();
+    await expect(toggle).toBeDisabled();
+    await expect(page.getByText('Add an icon to show this skill in the cloud')).toBeVisible();
+    await page.getByRole('button', { name: 'Save and publish' }).click();
+    await published(page);
+
+    await page.goto('/admin/skills');
+    await expect(page.locator('tbody tr').filter({ hasText: name })).toContainText('No');
+    await page.locator('tbody tr').filter({ hasText: name }).getByRole('link', { name }).click();
+    await hydrated(page);
+    await openDeleteDialog(page);
+    await page.getByLabel('Confirmation text').fill(name);
+    await page.getByRole('button', { name: 'Delete permanently' }).click();
+    await expect(page).toHaveURL(/\/admin\/skills$/);
+  });
+
+  test('the skill editor passes axe with every icon source', async ({ page, browserName }) => {
+    test.skip(browserName === 'webkit', 'axe runs on Chromium only, as in the editors test');
+    await signIn(page);
+    await openEditor(page, '/admin/skills/new');
+
+    for (const source of ['', 'simple-icons', 'devicon', 'custom-svg', 'monogram']) {
+      await field(page, 'iconSource').selectOption(source);
+
+      const results = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+        .analyze();
+
+      expect(
+        results.violations.map((v) => v.id),
+        `icon source "${source}"`,
+      ).toEqual([]);
+    }
+  });
+
   test('a concurrent edit opens the conflict dialog; overwrite wins', async ({ page, context }) => {
     const label = `E2E conflict ${Math.random().toString(36).slice(2, 7)}`;
 
