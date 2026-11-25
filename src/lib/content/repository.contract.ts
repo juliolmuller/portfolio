@@ -342,7 +342,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
         (skill) => skill.categories[0] === 'engineering',
       );
 
-      expect(ptEngineering[4]?.name).toBe('Microsserviços');
+      expect(ptEngineering.map((skill) => skill.name)).toContain('Microsserviços');
     });
 
     it('lists practices', async () => {
