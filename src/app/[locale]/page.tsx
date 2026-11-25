@@ -128,7 +128,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
           locale={locale}
           experience={experience}
           education={education}
-          technologies={technologies}
+          skills={skills}
           resume={resume}
           links={links}
         />
