@@ -281,6 +281,7 @@ const documents: SchemaType[] = [
       field('start', 'string', { description: 'YYYY or YYYY-MM' }),
       field('end', 'string', { description: 'YYYY or YYYY-MM' }),
       field('url', 'url'),
+      skillRefs,
       ...common,
     ],
   },

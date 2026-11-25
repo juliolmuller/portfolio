@@ -80,6 +80,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
     education,
     technologies,
     practices,
+    skills,
   ] = await Promise.all([
     content.getProfile(locale),
     content.getContact(locale),
@@ -91,6 +92,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
     content.getEducation(locale),
     content.getTechnologies(locale),
     content.getPractices(locale),
+    content.getSkills(locale),
   ]);
   const featured = featuredProjects(projects);
   const listId = `${absoluteUrl(localizedPath(locale))}#work`;
@@ -119,7 +121,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       <JsonLd data={jsonLd} />
       <Hero profile={profile} nextSection={nextSection} />
       {profile ? <About locale={locale} profile={profile} /> : null}
-      {technologies.length > 0 ? <Stack technologies={technologies} practices={practices} /> : null}
+      {skills.length > 0 ? <Stack skills={skills} /> : null}
       {featured.length > 0 ? <Work projects={featured} technologies={technologies} /> : null}
       {experience.length > 0 || education.length > 0 ? (
         <Resume

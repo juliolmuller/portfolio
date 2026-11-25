@@ -49,6 +49,7 @@ export const singletonTypes = ['profile', 'contact', 'resume'] as const;
 export const UNVALIDATED_FIELDS: Readonly<Record<string, readonly string[]>> = {
   project: ['technologies', 'skills'],
   experience: ['technologies', 'skills'],
+  education: ['skills'],
   resume: ['file'],
 };
 

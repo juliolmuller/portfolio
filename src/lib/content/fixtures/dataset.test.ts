@@ -2,7 +2,7 @@ import { icons as lucideIcons } from 'lucide-react';
 
 import { skillIdFor } from '../migrations/skills';
 import { documentSchemas, documentTypes } from '../schema';
-import { skillRef } from './data/skills';
+import { practiceSkillRef, skillRef } from './data/skills';
 import { createFixtureDataset } from './dataset';
 
 const dataset = createFixtureDataset();
@@ -69,6 +69,28 @@ describe('fixture dataset', () => {
       expect(jobSkills).toEqual((job.techIds ?? []).map(skillIdFor));
       expect(jobSkills.every((id) => skillIds.has(id))).toBe(true);
     }
+  });
+
+  it('resolves practiceSkillRef to the practice copy and rejects unknown labels', () => {
+    const solution = dataset.skill.find((skill) => skill.name.en === 'Solution architecture');
+
+    expect(practiceSkillRef('Solution architecture')).toBe(solution?.id);
+    expect(() => practiceSkillRef('Nope')).toThrow('Nope');
+  });
+
+  it('gives education entries existing skill references', () => {
+    const skillIds = new Set(dataset.skill.map((skill) => skill.id));
+
+    for (const entry of dataset.education) {
+      expect((entry.skillIds ?? []).every((id) => skillIds.has(id))).toBe(true);
+    }
+
+    expect(dataset.education.some((entry) => (entry.skillIds ?? []).length > 1)).toBe(true);
+    expect(
+      dataset.education.some(
+        (entry) => entry.kind === 'certification' && (entry.skillIds ?? []).length > 0,
+      ),
+    ).toBe(true);
   });
 
   it.each(documentTypes)('every %s document passes strict validation', (type) => {

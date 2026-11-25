@@ -1,7 +1,7 @@
 import { practiceToSkill, skillIdFor, technologyToSkill } from '../../migrations/skills';
 import { documentSchemas, type SkillInput } from '../../schema';
 import { FIXTURE_UPDATED_AT } from '../helpers';
-import { techId } from '../ids';
+import { fixtureId, techId } from '../ids';
 import { practices } from './practices';
 import { technologies } from './technologies';
 
@@ -32,4 +32,16 @@ export function skillRef(name: string): string {
   if (!technologyNames.has(name)) throw new Error(`Unknown fixture technology "${name}"`);
 
   return skillIdFor(techId(name));
+}
+
+const practiceLabels = new Set(practices.map((practice) => practice.label.en));
+
+/**
+ * Id of the skill copy of a fixture practice, by its English label. Throws on
+ * an unknown label so a typo fails at load time instead of dangling.
+ */
+export function practiceSkillRef(label: string): string {
+  if (!practiceLabels.has(label)) throw new Error(`Unknown fixture practice "${label}"`);
+
+  return skillIdFor(fixtureId('practice', label));
 }

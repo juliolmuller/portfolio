@@ -1,38 +1,18 @@
 import { getTranslations } from 'next-intl/server';
 
 import { TechCloudShell } from '@/components/tech-cloud/tech-cloud-shell';
-import { type StackTech } from '@/components/tech-cloud/types';
+import { toStackItems } from '@/components/tech-cloud/to-stack-items';
 import { SectionHeader } from '@/components/ui/section-header';
-import { type Practice, type Technology } from '@/lib/content';
-import { toPublicIcon } from '@/lib/content/icon-src';
+import { type Skill } from '@/lib/content';
 
 /**
- * Only what the client needs: icon URLs, never paths (D59).
+ * Stack section, fed by skills only (#74): List is the SSR / reduced-motion
+ * baseline (every visible skill); the geoid cloud is a client enhancement (D37)
+ * showing the `inCloud` ones.
  */
-function toStackTech(tech: Technology): StackTech {
-  return {
-    id: tech.id,
-    name: tech.name,
-    categories: [tech.category],
-    icon: toPublicIcon(tech.icon),
-    brandColor: tech.brandColor,
-    url: tech.url,
-    priority: tech.priority,
-  };
-}
-
-/**
- * Stack section: List is the SSR / reduced-motion baseline; the geoid cloud is
- * a client enhancement (D37).
- */
-export async function Stack({
-  technologies,
-  practices,
-}: {
-  practices: Practice[];
-  technologies: Technology[];
-}): Promise<React.JSX.Element> {
+export async function Stack({ skills }: { skills: Skill[] }): Promise<React.JSX.Element> {
   const t = await getTranslations('stack');
+  const { items, cloudItems } = toStackItems(skills);
 
   return (
     <section
@@ -49,7 +29,7 @@ export async function Stack({
           lead={t('lead')}
         />
       </div>
-      <TechCloudShell technologies={technologies.map(toStackTech)} practices={practices} />
+      <TechCloudShell items={items} cloudItems={cloudItems} />
     </section>
   );
 }

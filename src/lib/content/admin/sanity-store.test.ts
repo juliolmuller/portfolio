@@ -116,6 +116,27 @@ describe('sanity admin store writes', () => {
     ).not.toContain('skills');
   });
 
+  it('writes education skill ids as references and keeps the field set', async () => {
+    const degree = createFixtureDataset().education[0] as unknown as DocumentOf<'education'>;
+    const { client, calls } = fakeClient({
+      current: { _id: degree.id, _rev: 'r1', skills: [] },
+    });
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+    const result = await store.write('education', degree, { isNew: false, expectedRev: 'r1' });
+    const values = calls.find((call) => call[0] === 'setValues')?.[1] as Record<string, unknown>;
+    const skills = values['skills'] as Array<{ _ref: string; _type: string }>;
+
+    expect(result).toEqual({ ok: true, rev: 'r2' });
+    expect(degree.skillIds.length).toBeGreaterThan(0);
+    expect(skills.map((reference) => reference._type)).toEqual(
+      degree.skillIds.map(() => 'reference'),
+    );
+    expect(skills.map((reference) => reference._ref)).toEqual(degree.skillIds);
+    expect(
+      calls.filter((call) => call[0] === 'unset').flatMap((call) => call[1] as string[]),
+    ).not.toContain('skills');
+  });
+
   it('maps a 409 to a conflict, or to "exists" when creating', async () => {
     const stale = fakeClient({ failWith: 409, current: { _id: link.id } });
 
