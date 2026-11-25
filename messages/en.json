@@ -470,6 +470,7 @@
     "outcome": "Outcome",
     "details": "The full story",
     "technologies": "Technologies",
+    "skills": "Skills",
     "gallery": "Gallery",
     "openImage": "Open image {index} of {total}: {alt}",
     "closeImage": "Close",
