@@ -1,5 +1,5 @@
 import { getContent } from '@/lib/content';
-import { iconHash, renderIconSvg } from '@/lib/content/icon-src';
+import { findIconByHash, renderIconSvg } from '@/lib/content/icon-src';
 
 const FILE = /^([0-9a-z]{14})\.svg$/;
 const FILL = /^[0-9a-f]{6}$/;
@@ -7,10 +7,11 @@ const FILL = /^[0-9a-f]{6}$/;
 const notFound = (): Response => new Response(null, { status: 404 });
 
 /**
- * Content-addressed technology logos (D59). The name is a hash of the paths, so
- * a changed icon gets a new URL and each file can be cached forever. Only
- * visible technologies resolve. The document holds nothing but `<path>`
- * elements built from sanitized data (D54), so it cannot carry script.
+ * Content-addressed skill and technology logos (D59). The name is a hash of the
+ * paths, so a changed icon gets a new URL and each file can be cached forever.
+ * Only visible skills and technologies resolve. The document holds nothing but
+ * `<path>` elements built from sanitized data (D54), so it cannot carry
+ * script.
  */
 export async function GET(
   request: Request,
@@ -25,12 +26,18 @@ export async function GET(
 
   if (fill !== undefined && !FILL.test(fill)) return notFound();
 
-  const technologies = await getContent().getTechnologies('en');
-  const icon = technologies
-    .map((tech) => tech.icon)
-    .find((candidate) => 'paths' in candidate && iconHash(candidate) === hash);
+  const content = getContent();
+  // Technologies are dropped in #91; skills then hold every logo.
+  const [skills, technologies] = await Promise.all([
+    content.getSkills('en'),
+    content.getTechnologies('en'),
+  ]);
+  const icon = findIconByHash(
+    [...skills.map((skill) => skill.icon), ...technologies.map((tech) => tech.icon)],
+    hash,
+  );
 
-  if (!icon || !('paths' in icon)) return notFound();
+  if (!icon) return notFound();
 
   return new Response(renderIconSvg(icon, fill), {
     headers: {
