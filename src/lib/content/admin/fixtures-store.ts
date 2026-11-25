@@ -133,7 +133,7 @@ export function createFixturesAdminStore(
 
     async referencesTo(id): Promise<Reference[]> {
       const found: Reference[] = [];
-      for (const type of ['project', 'experience'] as const) {
+      for (const type of ['project', 'experience', 'education'] as const) {
         for (const doc of collection(type)) {
           const linked = [
             ...((doc['techIds'] as string[] | undefined) ?? []),
