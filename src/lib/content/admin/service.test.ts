@@ -197,6 +197,23 @@ describe('save', () => {
     });
   });
 
+  it('rejects project skills that do not exist', async () => {
+    const { store, service } = setup();
+    const project = await firstProject(store);
+    const unknown = await service.save(
+      'project',
+      project.id,
+      { ...project, skillIds: [...(project['skillIds'] as string[]), 'skill.nope'] },
+      project.rev,
+    );
+    const count = (project['skillIds'] as string[]).length;
+
+    expect(unknown).toMatchObject({
+      ok: false,
+      fieldErrors: { [`skillIds.${count}`]: 'Unknown skill' },
+    });
+  });
+
   it('drops blank optional fields and blank list rows', async () => {
     const { store, service } = setup();
     const link = (await store.list('featuredLink'))[0]!;
@@ -233,6 +250,19 @@ describe('remove, flags and order', () => {
     const project = await firstProject(store);
     const techId = (project['techIds'] as string[])[0]!;
     const result = await service.remove('technology', techId);
+
+    expect(result).toMatchObject({ ok: false, kind: 'in-use' });
+
+    if (!result.ok && result.kind === 'in-use') {
+      expect(result.references.map((ref) => ref.id)).toContain(project.id);
+    }
+  });
+
+  it('blocks deleting a skill linked from a project and lists who uses it', async () => {
+    const { store, service } = setup();
+    const project = await firstProject(store);
+    const skillId = (project['skillIds'] as string[])[0]!;
+    const result = await service.remove('skill', skillId);
 
     expect(result).toMatchObject({ ok: false, kind: 'in-use' });
 

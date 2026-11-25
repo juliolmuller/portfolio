@@ -123,6 +123,14 @@ export function createAdminService(
       });
     }
 
+    if (type === 'project') {
+      const known = new Set((await store.list('skill')).map((skill) => skill.id));
+
+      (doc['skillIds'] as string[]).forEach((skillId, index) => {
+        if (!known.has(skillId)) errors[`skillIds.${index}`] = 'Unknown skill';
+      });
+    }
+
     return errors;
   }
 
@@ -215,7 +223,7 @@ export function createAdminService(
 
       if (!existing) return { ok: false, kind: 'missing' };
 
-      if (type === 'technology') {
+      if (type === 'technology' || type === 'skill') {
         const references = await store.referencesTo(id);
 
         if (references.length > 0) return { ok: false, kind: 'in-use', references };
