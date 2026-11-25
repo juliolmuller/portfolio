@@ -1,22 +1,22 @@
 import { ArrowRight } from 'lucide-react';
 import { getTranslations } from 'next-intl/server';
 
+import { nameLookup } from '@/components/portfolio/names';
 import { ProjectCard } from '@/components/portfolio/project-card';
-import { techNameLookup } from '@/components/portfolio/tech-names';
 import { ButtonLink } from '@/components/ui/button';
 import { Reveal } from '@/components/ui/reveal';
 import { SectionHeader } from '@/components/ui/section-header';
-import { type ProjectSummary, type Technology } from '@/lib/content';
+import { type ProjectSummary, type Skill } from '@/lib/content';
 
 export async function Work({
   projects,
-  technologies,
+  skills,
 }: {
   projects: ProjectSummary[];
-  technologies: Technology[];
+  skills: Skill[];
 }): Promise<React.JSX.Element> {
   const t = await getTranslations('work');
-  const namesFor = techNameLookup(technologies);
+  const skillNamesFor = nameLookup(skills);
 
   return (
     <section id="work" aria-labelledby="work-title" className="section-y">
@@ -40,7 +40,7 @@ export async function Work({
           {projects.map((project, index) => (
             <li key={project.id}>
               <Reveal index={index % 3} className="h-full">
-                <ProjectCard project={project} techNames={namesFor(project.techIds)} />
+                <ProjectCard project={project} skillNames={skillNamesFor(project.skillIds)} />
               </Reveal>
             </li>
           ))}

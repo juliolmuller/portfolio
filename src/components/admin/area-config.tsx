@@ -12,6 +12,11 @@ import { PracticeForm, TechnologyForm } from './forms/stack';
 
 type Values = Record<string, unknown>;
 
+export interface FormOptions {
+  skillOptions: Option[];
+  techOptions: Option[];
+}
+
 export interface AreaConfig {
   cells(doc: AdminDoc): string[];
   /**
@@ -23,12 +28,19 @@ export interface AreaConfig {
    */
   defaults(): Values;
   filterColumns?: number[];
-  Form: ComponentType<{ techOptions: Option[] }>;
+  Form: ComponentType<FormOptions>;
   hasFeatured?: boolean;
   /**
    * Text to type before deleting, and the editor title.
    */
   name(doc: AdminDoc): string;
+  /**
+   * The form picks skills: the page loads `skillOptions`.
+   */
+  needsSkills?: boolean;
+  /**
+   * The form picks technologies: the page loads `techOptions`.
+   */
   needsTechnologies?: boolean;
 }
 
@@ -123,12 +135,12 @@ export const AREA_CONFIG: Record<string, AreaConfig> = {
       status: 'live',
       featured: false,
       visible: true,
-      techIds: [],
+      skillIds: [],
       gallery: [],
       highlights: [blank(), blank(), blank()],
     }),
     Form: ProjectForm,
-    needsTechnologies: true,
+    needsSkills: true,
   },
 
   experience: {

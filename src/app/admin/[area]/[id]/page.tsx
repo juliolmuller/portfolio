@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { AREA_CONFIG } from '@/components/admin/area-config';
 import { findArea, segmentToId } from '@/components/admin/areas';
 import { DocumentEditor } from '@/components/admin/editor/form';
+import { loadFormOptions } from '@/components/admin/form-options';
 import { requireAdmin } from '@/lib/auth/session';
 import { getAdminStore } from '@/lib/content/admin';
 
@@ -22,12 +23,7 @@ export default async function EditPage({
 
   if (!doc) notFound();
 
-  const techOptions = config.needsTechnologies
-    ? (await store.list('technology')).map((tech) => ({
-        value: tech.id,
-        label: String(tech['name'] ?? tech.id),
-      }))
-    : [];
+  const options = await loadFormOptions(store, config);
 
   return (
     <DocumentEditor
@@ -40,7 +36,7 @@ export default async function EditPage({
       title={`Edit ${config.name(doc) || area.singular}`}
       deleteConfirm={config.name(doc) || doc.id}
     >
-      <config.Form techOptions={techOptions} />
+      <config.Form {...options} />
     </DocumentEditor>
   );
 }

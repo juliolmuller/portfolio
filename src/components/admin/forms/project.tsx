@@ -12,6 +12,7 @@ import {
 import { useForm } from '../editor/form';
 import { ImageField } from '../editor/image-field';
 import { ListEditor } from '../editor/list-editor';
+import { PickHint } from '../editor/pick-hint';
 import { type Option } from './career';
 
 const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
@@ -29,7 +30,7 @@ interface GalleryItem {
   asset?: { height: number; lqip?: string; url: string; width: number };
 }
 
-export function ProjectForm({ techOptions }: { techOptions: Option[] }): React.JSX.Element {
+export function ProjectForm({ skillOptions }: { skillOptions: Option[] }): React.JSX.Element {
   const form = useForm();
   const gallery = ((form.get('gallery') as GalleryItem[] | undefined) ?? []).flatMap((item) =>
     item.asset ? [{ ...item.asset, alt: item.alt?.en ?? '' }] : [],
@@ -109,10 +110,16 @@ export function ProjectForm({ techOptions }: { techOptions: Option[] }): React.J
         />
       </Section>
 
-      <Section title="Links and stack">
+      <Section title="Links and skills">
         <TextField path="links.live" label="Live URL (optional)" type="url" />
         <TextField path="links.repo" label="Repository URL (optional)" type="url" />
-        <CheckboxGroup path="techIds" label="Technologies" options={techOptions} max={24} />
+        <CheckboxGroup
+          path="skillIds"
+          label="Skills"
+          options={skillOptions}
+          max={32}
+          hint={<PickHint href="/admin/skills" label="Skills" />}
+        />
       </Section>
 
       <Section title="Images">
