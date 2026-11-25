@@ -43,6 +43,7 @@ const RECOMMENDED_FIELDS = /* groq */ `
 const PROJECT_SUMMARY = /* groq */ `
   ${META}, "slug": slug.current, previousSlugs, featured, visible, order,
   year, kind, status, "techIds": technologies[]._ref,
+  "skillIds": skills[]._ref,
   "cover": cover{ ${IMAGE} },
   links{ live, repo },
   title, tagline, summary, role, context, approach, highlights, outcome`;

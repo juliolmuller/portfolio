@@ -1,6 +1,7 @@
 import { type DocumentInput } from '../../schema';
 import { fixtureImage, L, meta } from '../helpers';
 import { techId } from '../ids';
+import { skillRef } from './skills';
 
 const ORBIT_BODY_EN = `## Why this concept exists
 
@@ -89,6 +90,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'web',
     status: 'live',
     techIds: ['TypeScript', 'React', 'Next.js', 'PostgreSQL', 'Redis'].map(techId),
+    skillIds: ['TypeScript', 'React', 'Next.js', 'PostgreSQL', 'Redis'].map(skillRef),
     cover: fixtureImage(
       'project-orbit-dashboard-cover',
       L(
@@ -190,6 +192,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'mobile',
     status: 'in-progress',
     techIds: ['TypeScript', 'React', 'Node.js', 'PostgreSQL'].map(techId),
+    skillIds: ['TypeScript', 'React', 'Node.js', 'PostgreSQL'].map(skillRef),
     cover: fixtureImage(
       'project-pocket-ledger-cover',
       L(
@@ -244,6 +247,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'desktop',
     status: 'archived',
     techIds: ['TypeScript', 'Node.js', 'Go'].map(techId),
+    skillIds: ['TypeScript', 'Node.js', 'Go'].map(skillRef),
     cover: fixtureImage(
       'project-tidy-desk-cover',
       L(
@@ -296,6 +300,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'automation',
     status: 'private',
     techIds: ['Python', 'Excel / Power Query', 'SharePoint', 'Power BI'].map(techId),
+    skillIds: ['Python', 'Excel / Power Query', 'SharePoint', 'Power BI'].map(skillRef),
     title: L('Invoice Bot', 'Invoice Bot'),
     tagline: L(
       'Back-office automation for supplier invoices.',
@@ -341,6 +346,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'integration',
     status: 'live',
     techIds: ['Node.js', 'TypeScript', 'Stripe', 'RabbitMQ', 'PostgreSQL'].map(techId),
+    skillIds: ['Node.js', 'TypeScript', 'Stripe', 'RabbitMQ', 'PostgreSQL'].map(skillRef),
     cover: fixtureImage(
       'project-pay-bridge-cover',
       L(
@@ -403,6 +409,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'open-source',
     status: 'live',
     techIds: ['TypeScript', 'Node.js', 'Git', 'GitHub'].map(techId),
+    skillIds: ['TypeScript', 'Node.js', 'Git', 'GitHub'].map(skillRef),
     cover: fixtureImage(
       'project-lint-kit-cover',
       L(
@@ -455,6 +462,7 @@ export const projects: Array<DocumentInput<'project'>> = [
     kind: 'web',
     status: 'in-progress',
     techIds: ['Vue.js'].map(techId),
+    skillIds: ['Vue.js'].map(skillRef),
     title: L('Scratch Pad', 'Scratch Pad'),
     tagline: L(
       'A hidden experiment that must never appear in public.',

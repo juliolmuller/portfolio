@@ -27,7 +27,10 @@ function fakeClient(
   const builder = {
     ifRevisionId: vi.fn((rev: string) => (calls.push(['ifRevisionId', rev]), builder)),
     set: vi.fn(
-      (fields: Record<string, unknown>) => (calls.push(['set', Object.keys(fields)]), builder),
+      (fields: Record<string, unknown>) => (
+        calls.push(['set', Object.keys(fields)], ['setValues', fields]),
+        builder
+      ),
     ),
     unset: vi.fn((keys: string[]) => (calls.push(['unset', keys]), builder)),
     commit: vi.fn(fail),
@@ -66,6 +69,32 @@ describe('sanity admin store writes', () => {
     expect(result).toEqual({ ok: true, rev: 'r2' });
     expect(calls).toContainEqual(['ifRevisionId', 'r1']);
     expect(calls).toContainEqual(['unset', ['staleField']]);
+  });
+
+  it('writes project skill ids as references and keeps the field set', async () => {
+    // Fixture images are local files; only Sanity CDN assets can be referenced.
+    const project = {
+      ...createFixtureDataset().project[0],
+      cover: undefined,
+      gallery: [],
+    } as unknown as DocumentOf<'project'>;
+    const { client, calls } = fakeClient({
+      current: { _id: project.id, _rev: 'r1', skills: [] },
+    });
+    const store = createSanityAdminStore(client, { dataset: 'development' });
+    const result = await store.write('project', project, { isNew: false, expectedRev: 'r1' });
+    const values = calls.find((call) => call[0] === 'setValues')?.[1] as Record<string, unknown>;
+    const skills = values['skills'] as Array<{ _ref: string; _type: string }>;
+
+    expect(result).toEqual({ ok: true, rev: 'r2' });
+    expect(project.skillIds.length).toBeGreaterThan(0);
+    expect(skills.map((reference) => reference._type)).toEqual(
+      project.skillIds.map(() => 'reference'),
+    );
+    expect(skills.map((reference) => reference._ref)).toEqual(project.skillIds);
+    expect(
+      calls.filter((call) => call[0] === 'unset').flatMap((call) => call[1] as string[]),
+    ).not.toContain('skills');
   });
 
   it('maps a 409 to a conflict, or to "exists" when creating', async () => {

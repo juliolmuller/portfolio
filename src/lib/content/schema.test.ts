@@ -150,6 +150,36 @@ describe('content schema', () => {
     );
   });
 
+  describe('project skillIds', () => {
+    const ids = (count: number): string[] =>
+      Array.from(
+        { length: count },
+        (_, index) => `skill.00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      );
+
+    it('rejects duplicates', () => {
+      const [first = ''] = ids(1);
+      const result = projectSchema.safeParse({ ...project, skillIds: [first, first] });
+
+      expect(result.success).toBe(false);
+      expect(!result.success && result.error.issues).toEqual([
+        expect.objectContaining({ path: ['skillIds'], message: 'Duplicate skill' }),
+      ]);
+    });
+
+    it('caps the list at 32', () => {
+      expect(projectSchema.safeParse({ ...project, skillIds: ids(32) }).success).toBe(true);
+      expect(projectSchema.safeParse({ ...project, skillIds: ids(33) }).success).toBe(false);
+    });
+
+    it('defaults to an empty list', () => {
+      const { skillIds: _omitted, ...rest } = project ?? {};
+      const result = projectSchema.safeParse(rest);
+
+      expect(result.success && result.data.skillIds).toEqual([]);
+    });
+  });
+
   it('needs an icon slug for package icon sources', () => {
     expect(
       technologySchema.safeParse({

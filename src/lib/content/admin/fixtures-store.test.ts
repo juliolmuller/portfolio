@@ -25,6 +25,20 @@ describe('fixtures admin store', () => {
     expect((await store.list('skill')).map((doc) => doc.id)).not.toContain(skill.id);
   });
 
+  it('keeps project skill ids on read-back', async () => {
+    const dataset = createFixtureDataset();
+    const store = createFixturesAdminStore(dataset, { readOnlyReason: 'test', writable: true });
+    const project = dataset.project[0];
+
+    if (!project) throw new Error('Expected a fixture project');
+
+    const skillIds = (project.skillIds ?? []).slice(0, 2);
+
+    await store.patch('project', project.id, { skillIds });
+
+    await expect(store.get('project', project.id)).resolves.toMatchObject({ skillIds });
+  });
+
   it('lists documents by order, like the Sanity admin query', async () => {
     const store = createFixturesAdminStore(createFixtureDataset(), {
       readOnlyReason: 'test',
