@@ -136,10 +136,10 @@ export function createAdminService(
       });
     }
 
-    if (type === 'project') {
+    if (type === 'project' || type === 'experience' || type === 'education') {
       const known = new Set((await store.list('skill')).map((skill) => skill.id));
 
-      (doc['skillIds'] as string[]).forEach((skillId, index) => {
+      ((doc['skillIds'] as string[] | undefined) ?? []).forEach((skillId, index) => {
         if (!known.has(skillId)) errors[`skillIds.${index}`] = 'Unknown skill';
       });
     }

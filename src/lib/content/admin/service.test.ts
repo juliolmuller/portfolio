@@ -346,6 +346,46 @@ describe('save', () => {
     });
   });
 
+  it('rejects experience skills that do not exist', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('experience');
+    const job = (await store.get('experience', first!.id))!;
+    const original = job['skillIds'] as string[];
+    const result = await service.save(
+      'experience',
+      job.id,
+      { ...job, skillIds: [...original, 'skill.nope'] },
+      job.rev,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { [`skillIds.${original.length}`]: 'Unknown skill' },
+    });
+    expect((await store.get('experience', job.id))!['skillIds']).toEqual(original);
+  });
+
+  it('rejects education skills that do not exist', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('education');
+    const entry = (await store.get('education', first!.id))!;
+    const original = (entry['skillIds'] as string[] | undefined) ?? [];
+    const result = await service.save(
+      'education',
+      entry.id,
+      { ...entry, skillIds: [...original, 'skill.nope'] },
+      entry.rev,
+    );
+
+    expect(result).toMatchObject({
+      ok: false,
+      fieldErrors: { [`skillIds.${original.length}`]: 'Unknown skill' },
+    });
+    expect(((await store.get('education', entry.id))!['skillIds'] as string[]) ?? []).toEqual(
+      original,
+    );
+  });
+
   it('drops blank optional fields and blank list rows', async () => {
     const { store, service } = setup();
     const link = (await store.list('featuredLink'))[0]!;
@@ -401,6 +441,26 @@ describe('remove, flags and order', () => {
     if (!result.ok && result.kind === 'in-use') {
       expect(result.references.map((ref) => ref.id)).toContain(project.id);
     }
+  });
+
+  it('blocks deleting a skill linked from an education entry and lists who uses it', async () => {
+    const { store, service } = setup();
+    const docs = await Promise.all(
+      (await store.list('education')).map(async (item) => (await store.get('education', item.id))!),
+    );
+    const entry = docs.find((doc) => ((doc['skillIds'] as string[] | undefined) ?? []).length > 0)!;
+    const skillId = (entry['skillIds'] as string[])[0]!;
+    const result = await service.remove('skill', skillId);
+
+    expect(result).toMatchObject({ ok: false, kind: 'in-use' });
+
+    if (!result.ok && result.kind === 'in-use') {
+      expect(result.references).toContainEqual(
+        expect.objectContaining({ type: 'education', id: entry.id }),
+      );
+    }
+
+    expect(await store.get('skill', skillId)).not.toBeNull();
   });
 
   it('blocks deleting a skill linked from an experience entry and lists who uses it', async () => {

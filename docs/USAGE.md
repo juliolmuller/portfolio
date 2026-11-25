@@ -44,7 +44,7 @@ How every area behaves:
 - **Save and publish** publishes at once and refreshes the affected public pages ("Published · public pages refreshed"). There are no drafts.
 - Problems appear in a summary at the top that links to each field. Unsaved changes trigger a warning (it cannot intercept the browser's Back button).
 - If someone saved a newer version, a dialog offers **Reload** or **Overwrite**.
-- **Hide** (switch off Visible) is reversible and answers 404 on the public site; **Delete…** asks you to type the item's name and cannot be undone. A technology used by a project or job cannot be deleted.
+- **Hide** (switch off Visible) is reversible and answers 404 on the public site; **Delete…** asks you to type the item's name and cannot be undone. A technology or skill used by a project, job or education entry cannot be deleted.
 - Images: JPEG, PNG, WebP or AVIF, **up to 4 MB** (Vercel's request limit), re-encoded and stripped of metadata. PDFs: up to 4 MB, checked for scripts. Custom icons are pasted as SVG and reduced to plain filled shapes.
 
 ## 3. Add a portfolio item
