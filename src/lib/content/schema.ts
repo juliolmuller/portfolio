@@ -500,6 +500,11 @@ export const educationSchema = z
     start: partialDateSchema.optional(),
     end: partialDateSchema.optional(),
     url: httpsUrlSchema.optional(),
+    skillIds: z
+      .array(documentIdSchema)
+      .max(24)
+      .default([])
+      .refine(isUnique, { message: 'Duplicate skill' }),
     order: orderSchema,
     visible: visibleSchema,
   })

@@ -283,6 +283,7 @@ const converters: Converters = {
       start: doc.start,
       end: doc.end,
       url: doc.url,
+      skills: references(doc.id, 'skills', doc.skillIds),
       order: doc.order,
       visible: doc.visible ?? true,
     }),

@@ -47,6 +47,27 @@ describe('save', () => {
     expect(after['skillIds']).toEqual(doc['skillIds']);
   });
 
+  it('keeps education skill ids on save', async () => {
+    const { store, service } = setup();
+    const docs = await Promise.all(
+      (await store.list('education')).map(async (item) => (await store.get('education', item.id))!),
+    );
+    const doc = docs.find(
+      (entry) => ((entry['skillIds'] as string[] | undefined) ?? []).length > 0,
+    )!;
+    const result = await service.save(
+      'education',
+      doc.id,
+      { ...doc, visible: !doc['visible'] },
+      doc.rev,
+    );
+    const after = (await store.get('education', doc.id))!;
+
+    expect(result.ok).toBe(true);
+    expect((doc['skillIds'] as string[]).length).toBeGreaterThan(0);
+    expect(after['skillIds']).toEqual(doc['skillIds']);
+  });
+
   it('updates a singleton, bumps the revision and revalidates', async () => {
     const { store, service, revalidated, audits } = setup();
     const before = (await store.get('profile', 'profile'))!;

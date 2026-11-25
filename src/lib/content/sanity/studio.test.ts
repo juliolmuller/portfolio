@@ -180,5 +180,6 @@ describe('sanity/studio.ts', () => {
     expect(fieldValidator('project', { name: 'technologies', type: 'array' })).toBeNull();
     expect(fieldValidator('project', { name: 'skills', type: 'array' })).toBeNull();
     expect(fieldValidator('experience', { name: 'skills', type: 'array' })).toBeNull();
+    expect(fieldValidator('education', { name: 'skills', type: 'array' })).toBeNull();
   });
 });
