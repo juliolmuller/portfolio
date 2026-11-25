@@ -1,3 +1,4 @@
+import { AxeBuilder } from '@axe-core/playwright';
 import { expect, type Page, test } from '@playwright/test';
 
 import { waitForHydration } from './hydration';
@@ -172,5 +173,45 @@ test.describe('experience initial state (D91)', () => {
     await expect(jobs.nth(2)).toHaveAttribute('open', '');
     await jobs.nth(0).locator('summary').first().click();
     await expect(jobs.nth(0)).not.toHaveAttribute('open');
+  });
+});
+
+test.describe('education skills (#77)', () => {
+  const expectedChips = {
+    en: ['SQL', 'SOLID', 'Solution architecture'],
+    pt: ['SQL', 'SOLID', 'Arquitetura de soluções'],
+  } as const;
+
+  async function openEducation(page: Page, locale: 'en' | 'pt'): Promise<void> {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto(`/${locale}`);
+    await waitForHydration(page);
+    await page.locator('#resume').scrollIntoViewIfNeeded();
+    await page.locator('label:has([data-resume-pane=education])').click();
+    await expect(page.locator('#education')).toBeVisible();
+  }
+
+  for (const locale of ['en', 'pt'] as const) {
+    test(`shows the degree skills in ${locale}`, async ({ page }) => {
+      await openEducation(page, locale);
+
+      const cards = page.locator('#education > ul > li');
+
+      await expect(cards.nth(0).locator('ul li')).toHaveText([...expectedChips[locale]]);
+      await expect(cards.nth(2).locator('ul')).toHaveCount(0);
+    });
+  }
+
+  test('Education pane has no axe violations', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'chromium', 'axe runs on Chromium');
+    await openEducation(page, 'en');
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
+      .include('#education')
+      .exclude('[data-reveal=pending]')
+      .analyze();
+
+    expect(results.violations).toEqual([]);
   });
 });
