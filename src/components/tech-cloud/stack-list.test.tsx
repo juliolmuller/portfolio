@@ -4,7 +4,7 @@ import { vi } from 'vitest';
 import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 
 import { StackList } from './stack-list';
-import { type StackTech } from './types';
+import { type StackItem } from './types';
 
 vi.mock('@/components/ui/reveal', () => ({
   Reveal: ({ children }: { children?: React.ReactNode }): React.JSX.Element => (
@@ -20,19 +20,12 @@ const categoryLabels = Object.fromEntries(
   skillCategories.map((key) => [key, `label-${key}`]),
 ) as Record<SkillCategory, string>;
 
-function tech(id: string, categories: SkillCategory[]): StackTech {
-  return { id, name: id, categories, icon: { monogram: 'x' }, priority: 1 };
+function tech(id: string, categories: SkillCategory[]): StackItem {
+  return { id, name: id, categories, icon: { monogram: 'x' }, inCloud: true, priority: 1 };
 }
 
-function render(technologies: StackTech[]): string {
-  return renderToStaticMarkup(
-    <StackList
-      technologies={technologies}
-      practices={[]}
-      categoryLabels={categoryLabels}
-      practicesTitle="Practices"
-    />,
-  );
+function render(items: StackItem[]): string {
+  return renderToStaticMarkup(<StackList items={items} categoryLabels={categoryLabels} />);
 }
 
 function listOf(html: string, category: SkillCategory): string {
@@ -63,6 +56,24 @@ describe('StackList categories (#69)', () => {
     const html = render([tech('ts', ['language'])]);
 
     expect(html).not.toContain('stack-engineering');
+  });
+
+  it('renders an icon-less item by name only, aligned with icon rows (#74)', () => {
+    const bare: StackItem = {
+      id: 'bare',
+      name: 'bare',
+      categories: ['language'],
+      inCloud: false,
+      priority: 1,
+    };
+    const html = render([tech('ts', ['language']), bare]);
+
+    expect(html.match(/<svg/g)).toHaveLength(1);
+    expect(html).toContain('<span class="ps-7.5">bare</span>');
+  });
+
+  it('never renders a practices block (#74)', () => {
+    expect(render([tech('ts', ['engineering'])])).not.toContain('stack-practices');
   });
 
   it('follows the skillCategories order', () => {

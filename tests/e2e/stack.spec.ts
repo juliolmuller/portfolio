@@ -25,6 +25,9 @@ test('stack list is in the first HTML', async ({ request }) => {
   expect(html).toContain('Zustand');
   expect(html).toContain('Redis');
   expect(html).toContain('REST API design');
+  expect(html).toContain('Software engineering');
+  expect(html).not.toContain('Practices and concepts');
+  expect(html).not.toContain('id="stack-practices"');
   expect(html).not.toContain('>Cloud</button>');
   expect(html).not.toContain('>List</button>');
 });
