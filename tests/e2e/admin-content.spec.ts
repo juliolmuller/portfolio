@@ -168,6 +168,8 @@ test.describe('every area', () => {
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Edit');
     await expect(field(page, 'title.en')).toHaveValue(/Pay/);
     await expect(page.getByRole('button', { name: 'Save and publish' })).toBeDisabled();
+    await expect(page.getByRole('group', { name: /^Skills/ })).toBeVisible();
+    await expect(page.getByRole('group', { name: /^Technologies/ })).toHaveCount(0);
   });
 });
 
@@ -199,10 +201,22 @@ test.describe('projects', () => {
         `Destaque ${index + 1}`,
       );
     }
+    for (const name of ['TypeScript', 'PostgreSQL']) {
+      await page.getByRole('searchbox', { name: 'Filter skills' }).fill(name);
+      await page.getByRole('checkbox', { name, exact: true }).check();
+    }
+    await page.getByRole('searchbox', { name: 'Filter skills' }).fill('');
+    await expect(page.getByRole('group', { name: /^Skills/ })).toContainText('2/32');
     await page.getByRole('button', { name: 'Save and publish' }).click();
     await published(page);
     await expectToastClear(page);
     await expect(page).toHaveURL(/\/admin\/projects\/[0-9a-f-]{36}$/);
+
+    await page.reload();
+    await hydrated(page);
+    for (const name of ['TypeScript', 'PostgreSQL']) {
+      await expect(page.getByRole('checkbox', { name, exact: true })).toBeChecked();
+    }
 
     await slow.poll(publicText(page, `/en/projects/${slug}`)).toContain('E2E Project');
     await slow.poll(publicText(page, `/pt/projects/${slug}`)).toContain('Projeto E2E');

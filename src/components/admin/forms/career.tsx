@@ -1,8 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-
 import {
   CheckboxGroup,
   LocalizedField,
@@ -12,7 +9,7 @@ import {
   ToggleField,
 } from '../editor/fields';
 import { ListEditor } from '../editor/list-editor';
-import { smallButton } from '../editor/styles';
+import { PickHint } from '../editor/pick-hint';
 
 export interface Option {
   label: string;
@@ -22,8 +19,6 @@ export interface Option {
 const blank = (): { en: string; pt: string } => ({ en: '', pt: '' });
 
 export function ExperienceForm({ techOptions }: { techOptions: Option[] }): React.JSX.Element {
-  const router = useRouter();
-
   return (
     <>
       <Section title="Company">
@@ -97,24 +92,7 @@ export function ExperienceForm({ techOptions }: { techOptions: Option[] }): Reac
           label="Technologies used"
           options={techOptions}
           max={32}
-          hint={
-            <>
-              Missing one? Add it in{' '}
-              <Link
-                href="/admin/technologies"
-                target="_blank"
-                prefetch={false}
-                className="underline"
-              >
-                Technologies (opens in a new tab)
-              </Link>
-              , then{' '}
-              {/* refresh() re-reads techOptions on the server and keeps the unsaved form state. */}
-              <button type="button" onClick={() => router.refresh()} className={smallButton}>
-                Refresh the list
-              </button>
-            </>
-          }
+          hint={<PickHint href="/admin/technologies" label="Technologies" />}
         />
       </Section>
     </>

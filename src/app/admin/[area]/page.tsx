@@ -4,6 +4,7 @@ import { AREA_CONFIG } from '@/components/admin/area-config';
 import { findArea, idToSegment } from '@/components/admin/areas';
 import { CollectionList } from '@/components/admin/collection-list';
 import { DocumentEditor } from '@/components/admin/editor/form';
+import { loadFormOptions } from '@/components/admin/form-options';
 import { requireAdmin } from '@/lib/auth/session';
 import { getAdminStore } from '@/lib/content/admin';
 
@@ -22,6 +23,7 @@ export default async function AreaPage({
 
   if (area.singleton) {
     const doc = await store.get(area.type, area.type);
+    const options = await loadFormOptions(store, config);
 
     return (
       <DocumentEditor
@@ -34,7 +36,7 @@ export default async function AreaPage({
         title={area.label}
         singleton
       >
-        <config.Form techOptions={[]} />
+        <config.Form {...options} />
       </DocumentEditor>
     );
   }
