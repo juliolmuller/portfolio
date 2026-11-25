@@ -24,4 +24,27 @@ describe('fixtures admin store', () => {
     await expect(store.remove('skill', skill.id)).resolves.toMatchObject({ ok: true });
     expect((await store.list('skill')).map((doc) => doc.id)).not.toContain(skill.id);
   });
+
+  it('lists documents by order, then id, like the Sanity query', async () => {
+    const store = createFixturesAdminStore(createFixtureDataset(), {
+      readOnlyReason: 'test',
+      writable: true,
+    });
+    const make = (slug: string, order: number): ReturnType<typeof documentSchemas.skill.parse> =>
+      documentSchemas.skill.parse({
+        ...meta('skill', slug),
+        order,
+        name: L(slug, slug),
+        categories: ['engineering'],
+      });
+    const late = make('list-late', 30);
+    const early = make('list-early', 10);
+
+    await store.write('skill', late, { isNew: true });
+    await store.write('skill', early, { isNew: true });
+    expect((await store.list('skill')).map((doc) => doc.id)).toEqual([early.id, late.id]);
+
+    await store.patch('skill', late.id, { order: 5 });
+    expect((await store.list('skill')).map((doc) => doc.id)).toEqual([late.id, early.id]);
+  });
 });

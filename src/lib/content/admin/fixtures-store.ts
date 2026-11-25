@@ -64,10 +64,22 @@ export function createFixturesAdminStore(
     async list(
       type,
     ): Promise<Array<{ id: string; isFixture?: boolean; rev: string; updatedAt?: string }>> {
-      return structuredClone(collection(type)).map((doc) => ({
-        ...(stripNulls(doc) as Stored),
-        rev: revOf(doc),
-      }));
+      // Same order as the Sanity list query (`order asc, _id asc`), so a
+      // reorder shows after a reload.
+      const docs: Array<{ rev: string } & Stored> = structuredClone(collection(type)).map(
+        (doc) => ({
+          ...(stripNulls(doc) as Stored),
+          rev: revOf(doc),
+        }),
+      );
+
+      return docs.sort((a, b) => {
+        const byOrder = Number(a['order'] ?? 0) - Number(b['order'] ?? 0);
+
+        if (byOrder !== 0) return byOrder;
+
+        return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+      });
     },
 
     async get(
