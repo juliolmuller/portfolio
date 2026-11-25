@@ -1,5 +1,11 @@
 import { createRecordingLogger } from '../../../tests/support/content-logger';
-import { createTechFilter, fillMissingTranslations, stripNulls } from './pipeline';
+import {
+  createRefFilter,
+  createSkillFilter,
+  createTechFilter,
+  fillMissingTranslations,
+  stripNulls,
+} from './pipeline';
 
 describe('content pipeline', () => {
   it('strips nulls from GROQ results', () => {
@@ -55,6 +61,37 @@ describe('content pipeline', () => {
         event: 'unknown-technology',
         details: { id: 'project.x', techId: 'zzz' },
       },
+    ]);
+  });
+
+  it('keeps visible references in stored order and ignores malformed refs', () => {
+    const logger = createRecordingLogger();
+    const filter = createRefFilter(
+      [
+        null,
+        { visible: true },
+        'x',
+        { id: 'a', visible: true },
+        { id: 'b', visible: false },
+        { id: 'c' },
+      ],
+      { event: 'unknown-skill', key: 'skillId' },
+      logger,
+    );
+
+    expect(filter('project.x', ['c', 'b', 'a', 'zzz'])).toEqual(['c', 'a']);
+    expect(logger.warnings).toEqual([
+      { event: 'unknown-skill', details: { id: 'project.x', skillId: 'zzz' } },
+    ]);
+  });
+
+  it('reports unknown skills under the skill event', () => {
+    const logger = createRecordingLogger();
+    const filter = createSkillFilter([{ id: 'a', visible: true }], logger);
+
+    expect(filter('education.y', ['a', 'nope'])).toEqual(['a']);
+    expect(logger.warnings).toEqual([
+      { event: 'unknown-skill', details: { id: 'education.y', skillId: 'nope' } },
     ]);
   });
 });

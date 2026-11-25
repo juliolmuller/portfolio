@@ -1,4 +1,9 @@
-import { type ContentSource, type ProjectsRead } from '../create-repository';
+import {
+  type ContentSource,
+  type EducationRead,
+  type ExperienceRead,
+  type ProjectsRead,
+} from '../create-repository';
 import { contentTags } from '../tags';
 import {
   CONTACT_QUERY,
@@ -28,13 +33,34 @@ function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+}
+
 function asProjectsRead(value: unknown): ProjectsRead {
-  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const record = asRecord(value);
 
   return {
     projects: asArray(record.projects),
+    skills: asArray(record.skills),
     technologies: asArray(record.technologies),
   };
+}
+
+function asExperienceRead(value: unknown): ExperienceRead {
+  const record = asRecord(value);
+
+  return {
+    entries: asArray(record.entries),
+    skills: asArray(record.skills),
+    technologies: asArray(record.technologies),
+  };
+}
+
+function asEducationRead(value: unknown): EducationRead {
+  const record = asRecord(value);
+
+  return { entries: asArray(record.entries), skills: asArray(record.skills) };
 }
 
 export function createSanitySource(fetchGroq: GroqFetch): ContentSource {
@@ -50,7 +76,11 @@ export function createSanitySource(fetchGroq: GroqFetch): ContentSource {
     recommendedProfiles: () => list(RECOMMENDED_QUERY, [contentTags.recommended]),
     projects: async () =>
       asProjectsRead(
-        await fetchGroq(PROJECTS_QUERY, {}, [contentTags.projects, contentTags.technologies]),
+        await fetchGroq(PROJECTS_QUERY, {}, [
+          contentTags.projects,
+          contentTags.technologies,
+          contentTags.skills,
+        ]),
       ),
     projectsBySlug: async (slug) =>
       asProjectsRead(
@@ -58,21 +88,21 @@ export function createSanitySource(fetchGroq: GroqFetch): ContentSource {
           contentTags.projects,
           contentTags.project(slug),
           contentTags.technologies,
+          contentTags.skills,
         ]),
       ),
-    experience: async (): Promise<{ entries: unknown[]; technologies: unknown[] }> => {
-      const value = await fetchGroq(EXPERIENCE_QUERY, {}, [
-        contentTags.experience,
-        contentTags.technologies,
-      ]);
-      const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-
-      return {
-        entries: asArray(record.entries),
-        technologies: asArray(record.technologies),
-      };
-    },
-    education: () => list(EDUCATION_QUERY, [contentTags.education]),
+    experience: async () =>
+      asExperienceRead(
+        await fetchGroq(EXPERIENCE_QUERY, {}, [
+          contentTags.experience,
+          contentTags.technologies,
+          contentTags.skills,
+        ]),
+      ),
+    education: async () =>
+      asEducationRead(
+        await fetchGroq(EDUCATION_QUERY, {}, [contentTags.education, contentTags.skills]),
+      ),
     technologies: () => list(TECHNOLOGIES_QUERY, [contentTags.technologies]),
     practices: () => list(PRACTICES_QUERY, [contentTags.practices]),
     skills: () => list(SKILLS_QUERY, [contentTags.skills]),

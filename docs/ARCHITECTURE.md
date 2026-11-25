@@ -72,7 +72,7 @@ pages / components / terminal snapshot / sitemap / admin
   createRepository(source)  ← one pipeline (D25):
         │   strip nulls → fill empty pt from en (warn) → strict zod parse (skip+log invalid)
         │   → visibility filter → sort by order,id → drop duplicate slugs
-        │   → drop hidden/unknown technology refs → resolve locale + icons
+        │   → drop hidden/unknown technology and skill refs → resolve locale + icons
    ┌────┴─────┐
  fixtures   sanity (GROQ over fetch)        ← adapters only fetch raw docs
 ```

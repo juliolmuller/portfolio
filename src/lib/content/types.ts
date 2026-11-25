@@ -140,6 +140,10 @@ export interface Project {
   outcome?: string;
   previousSlugs: string[];
   role: string;
+  /**
+   * Visible skills only, in stored order.
+   */
+  skillIds: string[];
   slug: string;
   status: ProjectStatus;
   summary: string;
@@ -184,6 +188,10 @@ export interface Experience {
   order: number;
   roles: ExperienceRole[];
   /**
+   * Visible skills only, in stored order.
+   */
+  skillIds: string[];
+  /**
    * Derived from `company`; unique across visible entries.
    */
   slug: string;
@@ -196,6 +204,10 @@ export interface Education {
   institution: string;
   kind: 'certification' | 'degree';
   order: number;
+  /**
+   * Visible skills only, in stored order.
+   */
+  skillIds: string[];
   start?: string;
   title: string;
   url?: string;
