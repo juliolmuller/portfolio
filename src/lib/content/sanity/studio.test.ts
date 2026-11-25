@@ -179,5 +179,6 @@ describe('sanity/studio.ts', () => {
     expect(json).toContain('"name":"project"');
     expect(fieldValidator('project', { name: 'technologies', type: 'array' })).toBeNull();
     expect(fieldValidator('project', { name: 'skills', type: 'array' })).toBeNull();
+    expect(fieldValidator('experience', { name: 'skills', type: 'array' })).toBeNull();
   });
 });

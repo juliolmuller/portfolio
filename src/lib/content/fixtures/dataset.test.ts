@@ -59,6 +59,18 @@ describe('fixture dataset', () => {
     }
   });
 
+  it('gives every experience skill references that mirror its technologies', () => {
+    const skillIds = new Set(dataset.skill.map((skill) => skill.id));
+
+    for (const job of dataset.experience) {
+      const jobSkills = job.skillIds ?? [];
+
+      expect(jobSkills.length).toBeGreaterThan(0);
+      expect(jobSkills).toEqual((job.techIds ?? []).map(skillIdFor));
+      expect(jobSkills.every((id) => skillIds.has(id))).toBe(true);
+    }
+  });
+
   it.each(documentTypes)('every %s document passes strict validation', (type) => {
     for (const document of dataset[type]) {
       const result = documentSchemas[type].safeParse(document);

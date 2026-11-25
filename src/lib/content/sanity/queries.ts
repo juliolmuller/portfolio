@@ -56,6 +56,7 @@ const EXPERIENCE_FIELDS = /* groq */ `
   ${META}, company, companyUrl, location,
   roles[]{ title, start, end, summary, bullets },
   "techIds": technologies[]._ref,
+  "skillIds": skills[]._ref,
   collapsedByDefault, order, visible`;
 
 const EDUCATION_FIELDS = /* groq */ `

@@ -30,6 +30,23 @@ async function firstProject(store: ReturnType<typeof setup>['store']): Promise<A
 }
 
 describe('save', () => {
+  it('keeps experience skill ids on save', async () => {
+    const { store, service } = setup();
+    const [first] = await store.list('experience');
+    const doc = (await store.get('experience', first!.id))!;
+    const result = await service.save(
+      'experience',
+      doc.id,
+      { ...doc, collapsedByDefault: !doc['collapsedByDefault'] },
+      doc.rev,
+    );
+    const after = (await store.get('experience', doc.id))!;
+
+    expect(result.ok).toBe(true);
+    expect((doc['skillIds'] as string[]).length).toBeGreaterThan(0);
+    expect(after['skillIds']).toEqual(doc['skillIds']);
+  });
+
   it('updates a singleton, bumps the revision and revalidates', async () => {
     const { store, service, revalidated, audits } = setup();
     const before = (await store.get('profile', 'profile'))!;
