@@ -1,10 +1,67 @@
 import { describe, expect, it } from 'vitest';
 
+import { type AppLocale } from '@/i18n/routing';
 import { createRepository } from '@/lib/content/create-repository';
+import { createFixtureDataset } from '@/lib/content/fixtures/dataset';
+import { techId } from '@/lib/content/fixtures/ids';
 import { createFixtureSource } from '@/lib/content/fixtures/source';
+import { skillIdFor } from '@/lib/content/migrations/skills';
+import { type ContentRepository } from '@/lib/content/repository';
 
-import { buildSnapshot } from './snapshot';
+import { buildSnapshot, type ContentSnapshot, type SnapshotSource } from './snapshot';
 import { fixtureSnapshot } from './test-utils';
+
+async function sourceOf(repository: ContentRepository, locale: AppLocale): Promise<SnapshotSource> {
+  const [
+    profile,
+    contact,
+    resume,
+    links,
+    recommended,
+    projects,
+    experience,
+    education,
+    skills,
+    technologies,
+    practices,
+  ] = await Promise.all([
+    repository.getProfile(locale),
+    repository.getContact(locale),
+    repository.getResume(),
+    repository.getFeaturedLinks(locale),
+    repository.getRecommendedProfiles(locale),
+    repository.getProjects(locale),
+    repository.getExperience(locale),
+    repository.getEducation(locale),
+    repository.getSkills(locale),
+    repository.getTechnologies(locale),
+    repository.getPractices(locale),
+  ]);
+
+  return {
+    locale,
+    profile,
+    contact,
+    resume,
+    links,
+    recommended,
+    projects,
+    experience,
+    education,
+    skills,
+    technologies,
+    practices,
+  };
+}
+
+function snapshotWith(
+  dataset: ReturnType<typeof createFixtureDataset>,
+  locale: AppLocale,
+): Promise<ContentSnapshot> {
+  const repository = createRepository(createFixtureSource(dataset), { warn: () => {} });
+
+  return sourceOf(repository, locale).then(buildSnapshot);
+}
 
 describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
   it('contains only public, visible, localized content', async () => {
@@ -29,43 +86,10 @@ describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
     const repository = createRepository(createFixtureSource(), {
       warn: () => {},
     });
-    const contact = await repository.getContact(locale);
+    const source = await sourceOf(repository, locale);
     const snapshot = buildSnapshot({
-      ...(await Promise.all([
-        repository.getProfile(locale),
-        repository.getResume(),
-        repository.getFeaturedLinks(locale),
-        repository.getRecommendedProfiles(locale),
-        repository.getProjects(locale),
-        repository.getExperience(locale),
-        repository.getEducation(locale),
-        repository.getTechnologies(locale),
-        repository.getPractices(locale),
-      ]).then(
-        ([
-          profile,
-          resume,
-          links,
-          recommended,
-          projects,
-          experience,
-          education,
-          technologies,
-          practices,
-        ]) => ({
-          profile,
-          resume,
-          links,
-          recommended,
-          projects,
-          experience,
-          education,
-          technologies,
-          practices,
-        }),
-      )),
-      locale,
-      contact: contact && { ...contact, phone: '+55 41 99999-0000' },
+      ...source,
+      contact: source.contact && { ...source.contact, phone: '+55 41 99999-0000' },
     });
     const json = JSON.stringify(snapshot);
 
@@ -73,5 +97,72 @@ describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
     expect(json).not.toContain('phone');
     expect(json).not.toContain('/fixtures/');
     expect(json).not.toContain('viewBox');
+  });
+
+  it('includes visible skills with name and categories only', async () => {
+    const repository = createRepository(createFixtureSource(), { warn: () => {} });
+    const snapshot = await fixtureSnapshot(locale);
+
+    expect(snapshot.skills.length).toBeGreaterThan(0);
+    expect(snapshot.skills).toHaveLength((await repository.getSkills(locale)).length);
+
+    for (const skill of snapshot.skills) {
+      expect(Object.keys(skill).sort()).toEqual(['categories', 'name']);
+      expect(skill.categories.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('never lets a hidden skill reach the snapshot', async () => {
+    const react = skillIdFor(techId('React'));
+    const visibleRepository = createRepository(createFixtureSource(), { warn: () => {} });
+    const hiddenName = (await visibleRepository.getSkills(locale)).find(
+      (skill) => skill.id === react,
+    )?.name;
+    const dataset = createFixtureDataset();
+
+    for (const skill of dataset.skill) {
+      if (skill.id === react) skill.visible = false;
+    }
+
+    const snapshot = await snapshotWith(dataset, locale);
+    const orbit = snapshot.projects.find((project) => project.slug === 'orbit-dashboard');
+
+    expect(hiddenName).toBeTruthy();
+    expect(snapshot.skills.map((skill) => skill.name)).not.toContain(hiddenName);
+    expect(orbit?.technologies.length).toBeGreaterThan(0);
+    expect(orbit?.technologies).not.toContain(hiddenName);
+
+    for (const entry of snapshot.experience) {
+      expect(entry.technologies).not.toContain(hiddenName);
+    }
+  });
+
+  it('names project and experience technologies from skillIds', async () => {
+    const repository = createRepository(createFixtureSource(), { warn: () => {} });
+    const snapshot = await fixtureSnapshot(locale);
+    const skillNames = new Map((await repository.getSkills(locale)).map((s) => [s.id, s.name]));
+    const technologyNames = new Map(
+      (await repository.getTechnologies(locale)).map((t) => [t.id, t.name]),
+    );
+    const projects = await repository.getProjects(locale);
+    const experience = await repository.getExperience(locale);
+
+    for (const project of projects) {
+      expect(snapshot.projects.find((p) => p.slug === project.slug)?.technologies).toEqual(
+        project.skillIds.map((id) => skillNames.get(id)),
+      );
+    }
+
+    for (const entry of experience) {
+      expect(snapshot.experience.find((e) => e.slug === entry.slug)?.technologies).toEqual(
+        entry.skillIds.map((id) => skillNames.get(id)),
+      );
+    }
+
+    const orbit = projects.find((project) => project.slug === 'orbit-dashboard');
+
+    expect(snapshot.projects.find((p) => p.slug === 'orbit-dashboard')?.technologies).toEqual(
+      orbit?.techIds.map((id) => technologyNames.get(id)),
+    );
   });
 });

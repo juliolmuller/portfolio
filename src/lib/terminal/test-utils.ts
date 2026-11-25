@@ -43,6 +43,7 @@ export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapsho
     projects,
     experience,
     education,
+    skills,
     technologies,
     practices,
   ] = await Promise.all([
@@ -54,6 +55,7 @@ export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapsho
     repository.getProjects(locale),
     repository.getExperience(locale),
     repository.getEducation(locale),
+    repository.getSkills(locale),
     repository.getTechnologies(locale),
     repository.getPractices(locale),
   ]);
@@ -68,6 +70,7 @@ export async function fixtureSnapshot(locale: AppLocale): Promise<ContentSnapsho
     projects,
     experience,
     education,
+    skills,
     technologies,
     practices,
   });
