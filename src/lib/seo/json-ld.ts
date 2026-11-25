@@ -17,11 +17,10 @@ import { owner } from '@/config/site';
 import { type AppLocale, localeTags } from '@/i18n/routing';
 import {
   type FeaturedLink,
-  type Practice,
   type Profile,
   type Project,
   type ProjectSummary,
-  type Technology,
+  type Skill,
 } from '@/lib/content';
 
 import { plainText } from './text';
@@ -46,21 +45,18 @@ export function graph(...nodes: Thing[]): Graph {
 
 const ref = (id: string): { '@id': string } => ({ '@id': id });
 
+type SkillName = Pick<Skill, 'id' | 'name'>;
+
+const uniqueNames = (names: readonly string[]): string[] => [...new Set(names)];
+
 interface PersonInput {
   links: FeaturedLink[];
   locale: AppLocale;
-  practices: Practice[];
   profile: Profile;
-  technologies: Technology[];
+  skills: readonly SkillName[];
 }
 
-export function personNode({
-  locale,
-  profile,
-  links,
-  technologies,
-  practices,
-}: PersonInput): Person {
+export function personNode({ locale, profile, links, skills }: PersonInput): Person {
   const firstParagraph = profile.bio.split(/\n{2,}/)[0] ?? profile.bio;
 
   return {
@@ -76,10 +72,8 @@ export function personNode({
     'sameAs': links
       .filter((link) => link.isOwnProfile && link.url.startsWith('https:'))
       .map((link) => link.url),
-    'knowsAbout': [
-      ...technologies.map((tech) => tech.name),
-      ...practices.map((practice) => practice.label),
-    ],
+    // Visible skills in repository order; the first occurrence of a name wins.
+    'knowsAbout': uniqueNames(skills.map((skill) => skill.name)),
     'knowsLanguage': profile.spokenLanguages,
     'address': {
       '@type': 'PostalAddress',
@@ -193,10 +187,10 @@ export function collectionPageNode(
 export function projectNode(
   locale: AppLocale,
   project: Project,
-  technologies: readonly Technology[],
+  skills: readonly SkillName[],
 ): CreativeWork | SoftwareApplication {
   const url = projectUrl(locale, project.slug);
-  const names = new Map(technologies.map((tech) => [tech.id, tech.name]));
+  const names = new Map(skills.map((skill) => [skill.id, skill.name]));
   const base = {
     '@id': `${url}#work`,
     'name': project.title,
@@ -208,10 +202,9 @@ export function projectNode(
     'creator': ref(PERSON_ID),
     'dateModified': project.updatedAt,
     'inLanguage': localeTags[locale],
-    'keywords': project.techIds
-      .map((id) => names.get(id))
-      .filter((name): name is string => Boolean(name))
-      .join(', '),
+    'keywords': uniqueNames(
+      project.skillIds.map((id) => names.get(id)).filter((name): name is string => Boolean(name)),
+    ).join(', '),
   };
 
   if (project.links.live) {

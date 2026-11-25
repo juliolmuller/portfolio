@@ -71,14 +71,12 @@ export default async function ProjectsPage({
   if (!parsed.ok) notFound();
 
   const content = getContent();
-  const [t, projects, technologies, skills, profile, links, practices] = await Promise.all([
+  const [t, projects, skills, profile, links] = await Promise.all([
     getTranslations('projects'),
     content.getProjects(locale).then(indexOrder),
-    content.getTechnologies(locale),
     content.getSkills(locale),
     content.getProfile(locale),
     content.getFeaturedLinks(locale),
-    content.getPractices(locale),
   ]);
 
   const { kind, page } = parsed.query;
@@ -103,7 +101,7 @@ export default async function ProjectsPage({
 
   const jsonLd = graph(
     websiteNode(locale),
-    ...(profile ? [personNode({ locale, profile, links, technologies, practices })] : []),
+    ...(profile ? [personNode({ locale, profile, links, skills })] : []),
     collectionPageNode(locale, path, t('title'), t('intro'), {
       breadcrumbId,
       listId,

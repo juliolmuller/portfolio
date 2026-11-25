@@ -19,11 +19,10 @@ import { SITE_URL } from './urls';
 const repository = createRepository(createFixtureSource());
 
 async function homeGraph(): Promise<Graph> {
-  const [profile, links, technologies, practices, projects] = await Promise.all([
+  const [profile, links, skills, projects] = await Promise.all([
     repository.getProfile('en'),
     repository.getFeaturedLinks('en'),
-    repository.getTechnologies('en'),
-    repository.getPractices('en'),
+    repository.getSkills('en'),
     repository.getProjects('en'),
   ]);
 
@@ -31,7 +30,7 @@ async function homeGraph(): Promise<Graph> {
 
   return graph(
     websiteNode('en'),
-    personNode({ locale: 'en', profile, links, technologies, practices }),
+    personNode({ locale: 'en', profile, links, skills }),
     profilePageNode('en', profile.updatedAt),
     projectListNode('en', projects, `${SITE_URL}/en#work`),
   );
@@ -126,9 +125,99 @@ describe('home graph', () => {
   });
 });
 
+const knownNames = (person: unknown): string[] => (person as { knowsAbout: string[] }).knowsAbout;
+
+describe('knowsAbout', () => {
+  it.each(['en', 'pt'] as const)(
+    'equals the former technologies + practices list (%s)',
+    async (locale) => {
+      const [profile, links, skills, technologies, practices] = await Promise.all([
+        repository.getProfile(locale),
+        repository.getFeaturedLinks(locale),
+        repository.getSkills(locale),
+        repository.getTechnologies(locale),
+        repository.getPractices(locale),
+      ]);
+
+      if (!profile) throw new Error('fixture profile missing');
+
+      const legacy = [...technologies.map((t) => t.name), ...practices.map((p) => p.label)];
+      const knowsAbout = knownNames(personNode({ locale, profile, links, skills }));
+
+      // Same names; the order is the skills repository order. Ties in `order`
+      // between categories break by id, and skill ids are derived (D93), so
+      // tied entries can sit differently than in the technologies list.
+      expect(knowsAbout).toEqual(skills.map((skill) => skill.name));
+      expect([...knowsAbout].sort()).toEqual([...legacy].sort());
+      expect(new Set(legacy).size).toBe(legacy.length);
+    },
+  );
+
+  it('de-duplicates repeated names, keeping the first position', async () => {
+    const profile = await repository.getProfile('en');
+
+    if (!profile) throw new Error('fixture profile missing');
+
+    const knowsAbout = knownNames(
+      personNode({
+        locale: 'en',
+        profile,
+        links: [],
+        skills: [
+          { id: 'a', name: 'TypeScript' },
+          { id: 'b', name: 'Testing' },
+          { id: 'c', name: 'TypeScript' },
+        ],
+      }),
+    );
+
+    expect(knowsAbout).toEqual(['TypeScript', 'Testing']);
+  });
+});
+
 describe('projectNode', () => {
+  it.each(['en', 'pt'] as const)('keeps the former keywords (%s)', async (locale) => {
+    const [skills, technologies, projects] = await Promise.all([
+      repository.getSkills(locale),
+      repository.getTechnologies(locale),
+      repository.getProjects(locale),
+    ]);
+    const names = new Map(technologies.map((tech) => [tech.id, tech.name]));
+
+    expect(projects.length).toBeGreaterThan(0);
+
+    for (const summary of projects) {
+      const found = await repository.getProject(locale, summary.slug);
+
+      if (found.status !== 'found') throw new Error('fixture project missing');
+
+      const legacy = found.project.techIds
+        .map((id) => names.get(id))
+        .filter(Boolean)
+        .join(', ');
+
+      expect(projectNode(locale, found.project, skills)).toMatchObject({ keywords: legacy });
+    }
+  });
+
+  it('skips unknown skill ids', async () => {
+    const skills = await repository.getSkills('en');
+    const found = await repository.getProject('en', 'orbit-dashboard');
+
+    if (found.status !== 'found') throw new Error('fixture project missing');
+
+    const base = projectNode('en', found.project, skills);
+    const extra = projectNode(
+      'en',
+      { ...found.project, skillIds: [...found.project.skillIds, 'missing-id'] },
+      skills,
+    );
+
+    expect(extra).toMatchObject({ keywords: (base as { keywords: string }).keywords });
+  });
+
   it('is a SoftwareApplication only when live', async () => {
-    const technologies = await repository.getTechnologies('en');
+    const skills = await repository.getSkills('en');
     const live = await repository.getProject('en', 'orbit-dashboard');
     const notLive = await repository.getProject('en', 'tidy-desk');
 
@@ -136,11 +225,11 @@ describe('projectNode', () => {
       throw new Error('fixture projects missing');
     }
 
-    const app = projectNode('en', live.project, technologies);
+    const app = projectNode('en', live.project, skills);
 
     expect(app['@type']).toBe('SoftwareApplication');
     expect(app).toMatchObject({ operatingSystem: 'Web' });
-    expect(projectNode('en', notLive.project, technologies)['@type']).toBe('CreativeWork');
+    expect(projectNode('en', notLive.project, skills)['@type']).toBe('CreativeWork');
   });
 
   it('builds breadcrumbs with absolute items', () => {

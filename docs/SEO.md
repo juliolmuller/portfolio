@@ -8,7 +8,7 @@ What the site emits for search engines, how it is verified, and what to do at la
 - Self-referencing canonical, hreflang `en` / `pt-BR` / `x-default` → `/en`.
 - `/` answers 307 to `/en` or `/pt` (cookie → `Accept-Language` → `en`; `Vary: Accept-Language, Cookie`, `private, no-store`) and is never advertised: not in the sitemap, canonicals, hreflang, internal links or JSON-LD URLs.
 - Open Graph + Twitter (`summary_large_image`). Dynamic `opengraph-image` / `twitter-image` (1200×630) per page via `next/og`.
-- JSON-LD (`WebSite.url` is the locale home with a stable `@id`, D88): Home = WebSite + Person + ProfilePage + featured ItemList. Index = CollectionPage + ItemList + BreadcrumbList. Detail = CreativeWork or SoftwareApplication + BreadcrumbList. Email and phone are never included.
+- JSON-LD (`WebSite.url` is the locale home with a stable `@id`, D88): Home = WebSite + Person + ProfilePage + featured ItemList. Index = CollectionPage + ItemList + BreadcrumbList. Detail = CreativeWork or SoftwareApplication + BreadcrumbList. `Person.knowsAbout` lists the visible skill names (repository order, de-duplicated) and a project's `keywords` come from its `skillIds`. Email and phone are never included.
 - `sitemap.xml`: every public URL in both locales, `lastModified` from content, cover images, no hidden items, no admin, no `changefreq`/`priority`.
 - `llms.txt`: Markdown (`text/plain`, `noindex`), H1 = display name, summary from `site.ts`, links to Home, Projects and Accessibility in both locales; no repository content (D85).
 - `robots.txt`: allow `/`, `Disallow: /api/`, absolute sitemap. The admin path is not mentioned.
