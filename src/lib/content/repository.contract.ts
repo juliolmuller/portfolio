@@ -2,9 +2,11 @@ import { owner } from '@/config/site';
 
 import { createRecordingLogger } from '../../../tests/support/content-logger';
 import { sampleSkills } from '../../../tests/support/skill-documents';
+import { practiceSkillRef, skillRef } from './fixtures/data/skills';
 import { createFixtureDataset, type FixtureDataset } from './fixtures/dataset';
 import { fixtureId, techId } from './fixtures/ids';
 import { type ContentLogger } from './log';
+import { skillIdFor } from './migrations/skills';
 import { type ContentRepository } from './repository';
 import { contentLocales, skillCategories, techCategories } from './schema';
 
@@ -125,6 +127,11 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       for (const project of projects) {
         expect(project.techIds.every((id) => technologyIds.has(id))).toBe(true);
       }
+
+      const skillIds = new Set((await repository.getSkills('en')).map((skill) => skill.id));
+      for (const project of projects) {
+        expect(project.skillIds.every((id) => skillIds.has(id))).toBe(true);
+      }
     });
 
     it('finds a project with its long-form content', async () => {
@@ -139,6 +146,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
         expect(lookup.project.gallery).toHaveLength(3);
         expect(lookup.project.gallery[0]?.caption).toBeTruthy();
         expect(lookup.project.techIds).toHaveLength(5);
+        expect(lookup.project.skillIds).toEqual(lookup.project.techIds.map(skillIdFor));
         expect(wordCount(lookup.project.body ?? '')).toBeGreaterThanOrEqual(400);
       }
     });
@@ -179,6 +187,7 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
       expect(entries[0]?.roles[0]?.end).toBeUndefined();
       expect(entries[2]?.collapsedByDefault).toBe(true);
       expect(entries[0]?.roles[0]?.title).toBe('Engenheiro Full Stack Sênior');
+      expect(entries[0]?.skillIds).toEqual(entries[0]?.techIds.map(skillIdFor));
     });
 
     it('lists education entries', async () => {
@@ -190,7 +199,12 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
         'certification',
         'certification',
       ]);
-      expect(entries.every((entry) => !('skillIds' in entry))).toBe(true);
+      expect(entries.every((entry) => Array.isArray(entry.skillIds))).toBe(true);
+      expect(entries[0]?.skillIds).toEqual([
+        skillRef('SQL'),
+        practiceSkillRef('SOLID'),
+        practiceSkillRef('Solution architecture'),
+      ]);
     });
 
     it('resolves all seeded technologies with icons (D37)', async () => {
@@ -368,6 +382,60 @@ export function describeRepositoryContract(name: string, factory: RepositoryFact
 
       expect(orbit?.techIds).not.toContain(techId('React'));
       expect(orbit?.techIds).toHaveLength(4);
+    });
+
+    it('drops references to hidden skills', async () => {
+      const react = skillIdFor(techId('React'));
+      const solid = practiceSkillRef('SOLID');
+      const { repository, logger } = setup((dataset) => {
+        for (const skill of dataset.skill) {
+          if (skill.id === react || skill.id === solid) skill.visible = false;
+        }
+      });
+      const [orbit] = await repository.getProjects('en');
+      const lookup = await repository.getProject('en', 'orbit-dashboard');
+      const [lumen] = await repository.getExperience('en');
+      const [degree] = await repository.getEducation('en');
+
+      expect(orbit?.skillIds).not.toContain(react);
+      expect(orbit?.skillIds).toHaveLength(4);
+      expect(orbit?.techIds).toHaveLength(5);
+      expect(lookup.status === 'found' && lookup.project.skillIds).not.toContain(react);
+      expect(lookup.status === 'found' && lookup.project.skillIds).toHaveLength(4);
+      expect(lumen?.skillIds).not.toContain(react);
+      expect(lumen?.skillIds).toHaveLength(6);
+      expect(degree?.skillIds).not.toContain(solid);
+      expect(degree?.skillIds).toHaveLength(2);
+      expect(logger.warnings.filter((entry) => entry.event === 'unknown-skill')).toEqual([]);
+    });
+
+    it('drops and logs unknown skill references', async () => {
+      const missing = fixtureId('skill', 'Missing skill');
+      const { repository, logger } = setup((dataset) => {
+        for (const owner of [...dataset.project, ...dataset.experience, ...dataset.education]) {
+          owner.skillIds?.push(missing);
+        }
+      });
+      const projects = await repository.getProjects('en');
+      const lookup = await repository.getProject('en', 'orbit-dashboard');
+      const experience = await repository.getExperience('en');
+      const education = await repository.getEducation('en');
+      const [orbit] = projects;
+      const [lumen] = experience;
+      const [degree] = education;
+
+      for (const owner of [...projects, ...experience, ...education]) {
+        expect(owner.skillIds).not.toContain(missing);
+      }
+
+      expect(lookup.status === 'found' && lookup.project.skillIds).not.toContain(missing);
+
+      for (const owner of [orbit, lumen, degree]) {
+        expect(logger.warnings).toContainEqual({
+          event: 'unknown-skill',
+          details: { id: owner?.id, skillId: missing },
+        });
+      }
     });
 
     it('skips and logs an invalid document', async () => {

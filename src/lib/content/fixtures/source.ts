@@ -15,6 +15,13 @@ function technologyRefs(dataset: FixtureDataset): Array<{ id: string; visible: b
   }));
 }
 
+function skillRefs(dataset: FixtureDataset): Array<{ id: string; visible: boolean }> {
+  return dataset.skill.map((skill) => ({
+    id: skill.id,
+    visible: skill.visible ?? true,
+  }));
+}
+
 function withoutLongForm(project: DocumentInput<'project'>): {
   approach: { en: string; pt: string };
   context: { en: string; pt: string };
@@ -72,6 +79,7 @@ export function createFixtureSource(
       read({
         projects: dataset.project.filter(isVisible).map(withoutLongForm),
         technologies: technologyRefs(dataset),
+        skills: skillRefs(dataset),
       }),
     projectsBySlug: (slug) =>
       read({
@@ -81,13 +89,16 @@ export function createFixtureSource(
             && (project.slug === slug || (project.previousSlugs ?? []).includes(slug)),
         ),
         technologies: technologyRefs(dataset),
+        skills: skillRefs(dataset),
       }),
     experience: () =>
       read({
         entries: dataset.experience.filter(isVisible),
         technologies: technologyRefs(dataset),
+        skills: skillRefs(dataset),
       }),
-    education: () => read(dataset.education.filter(isVisible)),
+    education: () =>
+      read({ entries: dataset.education.filter(isVisible), skills: skillRefs(dataset) }),
     technologies: () => read(dataset.technology.filter(isVisible)),
     practices: () => read(dataset.practice.filter(isVisible)),
     skills: () => read(dataset.skill.filter(isVisible)),

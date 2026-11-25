@@ -148,17 +148,41 @@ export function parseCollection<T extends DocumentType>(
   return documents.sort((a, b) => byOrder(a as Ordered, b as Ordered));
 }
 
-export interface TechnologyRef {
+export interface ContentRef {
   id: string;
   visible: boolean;
 }
 
-/**
- * Keeps references to visible technologies. Hidden ones are dropped silently;
- * unknown ids are reported.
- */
+export type TechnologyRef = ContentRef;
+
+export type RefFilter = (ownerId: string, ids: readonly string[]) => string[];
+
+interface RefFilterOptions {
+  event: 'unknown-skill' | 'unknown-technology';
+  key: 'skillId' | 'techId';
+}
+
 export function createTechFilter(
   refs: null | readonly unknown[] | undefined,
+  logger: ContentLogger = contentLogger,
+): RefFilter {
+  return createRefFilter(refs, { event: 'unknown-technology', key: 'techId' }, logger);
+}
+
+export function createSkillFilter(
+  refs: null | readonly unknown[] | undefined,
+  logger: ContentLogger = contentLogger,
+): RefFilter {
+  return createRefFilter(refs, { event: 'unknown-skill', key: 'skillId' }, logger);
+}
+
+/**
+ * Keeps references to visible documents. Hidden ones are dropped silently;
+ * unknown ids are reported under `event`.
+ */
+export function createRefFilter(
+  refs: null | readonly unknown[] | undefined,
+  options: RefFilterOptions,
   logger: ContentLogger = contentLogger,
 ) {
   const visible = new Set<string>();
@@ -171,12 +195,12 @@ export function createTechFilter(
     if (ref.visible !== false) visible.add(ref.id);
   }
 
-  return (ownerId: string, techIds: readonly string[]): string[] =>
-    techIds.filter((techId) => {
-      if (!known.has(techId)) {
-        logger.warn('unknown-technology', { id: ownerId, techId });
+  return (ownerId: string, ids: readonly string[]): string[] =>
+    ids.filter((refId) => {
+      if (!known.has(refId)) {
+        logger.warn(options.event, { id: ownerId, [options.key]: refId });
       }
 
-      return visible.has(techId);
+      return visible.has(refId);
     });
 }

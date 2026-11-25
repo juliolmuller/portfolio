@@ -57,6 +57,7 @@ const base: ProjectSummary = {
   kind: 'web',
   status: 'live',
   techIds: [],
+  skillIds: [],
   links: {},
   title: 'Test App',
   tagline: 'A tagline',

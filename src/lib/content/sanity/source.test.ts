@@ -68,12 +68,21 @@ describe('sanity adapter', () => {
       ),
     );
 
+    await repository.getProjects('en');
     await repository.getProject('en', 'orbit-dashboard');
     await repository.getExperience('en');
+    await repository.getEducation('en');
     await repository.getSkills('en');
     expect(seen).toEqual([
-      [contentTags.projects, 'content:project:orbit-dashboard', contentTags.technologies],
-      [contentTags.experience, contentTags.technologies],
+      [contentTags.projects, contentTags.technologies, contentTags.skills],
+      [
+        contentTags.projects,
+        'content:project:orbit-dashboard',
+        contentTags.technologies,
+        contentTags.skills,
+      ],
+      [contentTags.experience, contentTags.technologies, contentTags.skills],
+      [contentTags.education, contentTags.skills],
       [contentTags.skills],
     ]);
   });
