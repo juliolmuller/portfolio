@@ -15,31 +15,18 @@ export async function GET(request: Request): Promise<NextResponse<unknown>> {
   }
 
   const content = getContent();
-  const [
-    profile,
-    contact,
-    resume,
-    links,
-    recommended,
-    projects,
-    experience,
-    education,
-    skills,
-    technologies,
-    practices,
-  ] = await Promise.all([
-    content.getProfile(locale),
-    content.getContact(locale),
-    content.getResume(),
-    content.getFeaturedLinks(locale),
-    content.getRecommendedProfiles(locale),
-    content.getProjects(locale),
-    content.getExperience(locale),
-    content.getEducation(locale),
-    content.getSkills(locale),
-    content.getTechnologies(locale),
-    content.getPractices(locale),
-  ]);
+  const [profile, contact, resume, links, recommended, projects, experience, education, skills] =
+    await Promise.all([
+      content.getProfile(locale),
+      content.getContact(locale),
+      content.getResume(),
+      content.getFeaturedLinks(locale),
+      content.getRecommendedProfiles(locale),
+      content.getProjects(locale),
+      content.getExperience(locale),
+      content.getEducation(locale),
+      content.getSkills(locale),
+    ]);
 
   return NextResponse.json(
     buildSnapshot({
@@ -53,8 +40,6 @@ export async function GET(request: Request): Promise<NextResponse<unknown>> {
       experience,
       education,
       skills,
-      technologies,
-      practices,
     }),
     {
       // Admin saves cannot purge a CDN copy of this route, so never keep one:

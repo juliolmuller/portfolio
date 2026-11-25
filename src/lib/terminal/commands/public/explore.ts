@@ -1,18 +1,9 @@
+import { skillCategories, type SkillCategory } from '@/lib/content/taxonomy';
 import { formatPartialDate } from '@/lib/format';
 
 import { type OutputNode, text } from '../../output';
 import { errorText, lines, periodLabel } from '../helpers';
 import { type Command, type CommandContext } from '../types';
-
-const CATEGORIES = [
-  'language',
-  'frontend',
-  'backend',
-  'data',
-  'cloud',
-  'integration',
-  'ai',
-] as const;
 
 const KINDS = ['web', 'mobile', 'desktop', 'automation', 'integration', 'open-source'] as const;
 
@@ -210,13 +201,10 @@ const recommend: Command = {
   },
 };
 
-function matchCategory(
-  ctx: CommandContext,
-  value: string,
-): 'ai' | 'backend' | 'cloud' | 'data' | 'frontend' | 'integration' | 'language' | undefined {
+function matchCategory(ctx: CommandContext, value: string): SkillCategory | undefined {
   const needle = value.toLowerCase();
 
-  return CATEGORIES.find(
+  return skillCategories.find(
     (id) =>
       id === needle
       || `${id}s` === needle
@@ -235,13 +223,13 @@ const skills: Command = {
   needsContent: true,
   complete: (_ctx, args, partial) =>
     args.at(-1) === '--category'
-      ? CATEGORIES.filter((id) => id.startsWith(partial))
+      ? skillCategories.filter((id) => id.startsWith(partial))
       : '--category'.startsWith(partial)
         ? ['--category']
         : [],
   async run(ctx, args) {
     const requested = args.flags['category'];
-    let selected: ReadonlyArray<(typeof CATEGORIES)[number]> = CATEGORIES;
+    let selected: readonly SkillCategory[] = skillCategories;
 
     if (typeof requested === 'string') {
       const match = matchCategory(ctx, requested);
@@ -249,7 +237,7 @@ const skills: Command = {
       if (!match) {
         return [
           errorText(ctx.t('terminal.skills.unknown', { category: requested })),
-          text(ctx.t('terminal.skills.available', { list: CATEGORIES.join(', ') }), 'dim'),
+          text(ctx.t('terminal.skills.available', { list: skillCategories.join(', ') }), 'dim'),
         ];
       }
 
@@ -258,9 +246,9 @@ const skills: Command = {
 
     const output: OutputNode[] = [];
     for (const id of selected) {
-      const names = ctx.content.technologies
-        .filter((tech) => tech.category === id)
-        .map((tech) => tech.name);
+      const names = ctx.content.skills
+        .filter((skill) => skill.categories.includes(id))
+        .map((skill) => skill.name);
 
       if (names.length === 0) continue;
 
@@ -268,13 +256,6 @@ const skills: Command = {
         text(ctx.t(`stack.categories.${id}`), 'bold'),
         text(names.join(' · '), 'accent'),
         { type: 'blank' },
-      );
-    }
-
-    if (typeof requested !== 'string' && ctx.content.practices.length > 0) {
-      output.push(
-        text(ctx.t('stack.practicesTitle'), 'bold'),
-        text(ctx.content.practices.join(' · '), 'accent'),
       );
     }
 

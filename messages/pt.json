@@ -403,7 +403,6 @@
       "ai": "Agentes de IA e ferramentas",
       "engineering": "Engenharia de software"
     },
-    "practicesTitle": "Práticas e conceitos",
     "filterLabel": "Filtrar por categoria",
     "filterChip": "{category} {count, plural, one {# habilidade} other {# habilidades}}",
     "officialSite": "Site oficial ↗"
@@ -469,7 +468,6 @@
     "highlights": "Destaques",
     "outcome": "Resultado",
     "details": "A história completa",
-    "technologies": "Tecnologias",
     "skills": "Habilidades",
     "gallery": "Galeria",
     "openImage": "Abrir imagem {index} de {total}: {alt}",

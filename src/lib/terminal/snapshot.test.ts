@@ -68,8 +68,13 @@ describe.each(['en', 'pt'] as const)('snapshot (%s)', (locale) => {
     }
   });
 
-  // The legacy `technologies` catalog is a separate collection that the stack
-  // commands still read, so it is deliberately not asserted here.
+  it('no longer carries the legacy technologies or practices', async () => {
+    const snapshot = await fixtureSnapshot(locale);
+
+    expect(snapshot).not.toHaveProperty('technologies');
+    expect(snapshot).not.toHaveProperty('practices');
+  });
+
   it('drops a hidden skill from skills and from project and experience technologies', async () => {
     const react = skillIdFor(techId('React'));
     const visibleRepository = createRepository(createFixtureSource(), { warn: () => {} });

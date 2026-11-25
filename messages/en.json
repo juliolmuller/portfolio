@@ -403,7 +403,6 @@
       "ai": "AI agents & tooling",
       "engineering": "Software engineering"
     },
-    "practicesTitle": "Practices and concepts",
     "filterLabel": "Filter by category",
     "filterChip": "{category} {count, plural, one {# skill} other {# skills}}",
     "officialSite": "Official site ↗"
@@ -469,7 +468,6 @@
     "highlights": "Highlights",
     "outcome": "Outcome",
     "details": "The full story",
-    "technologies": "Technologies",
     "skills": "Skills",
     "gallery": "Gallery",
     "openImage": "Open image {index} of {total}: {alt}",
