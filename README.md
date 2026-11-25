@@ -1,6 +1,6 @@
 # juliolmuller.com
 
-Personal portfolio of Julio L. Muller, Senior Full Stack Software Engineer in Curitiba, Brazil. Bilingual (English and Brazilian Portuguese), dark only, server-rendered, with a working terminal, a 3D technology cloud and a private admin reachable only from that terminal.
+Personal portfolio of Julio L. Muller, Senior Full Stack Software Engineer in Curitiba, Brazil. Bilingual (English and Brazilian Portuguese), dark only, server-rendered, with a working terminal, a 3D skills cloud and a private admin reachable only from that terminal.
 
 The initial content is fictional demo data; [docs/USAGE.md](docs/USAGE.md) explains how to replace it.
 
@@ -8,7 +8,7 @@ The initial content is fictional demo data; [docs/USAGE.md](docs/USAGE.md) expla
 
 - **Public site:** Home (hero, about, stack, selected work, resume, contact, recommended people), `/projects` with a crawlable filter and pagination, project pages with a gallery lightbox, a resume PDF route and an accessibility statement, all in `/en` and `/pt`.
 - **Terminal:** a windowed shell (`Ctrl/Cmd + /`) that knows the site (`help`, `ls`, `cd`, `cat`, `open`, `goto`, `lang`, `projects`, `resume`, `neofetch`, `git log`, a few harmless easter eggs…), with history and Tab completion. It can be moved, resized, snapped, minimized and maximized, and becomes a bottom sheet on phones.
-- **Technology cloud:** a rotating geoid of logos with category filters; the List view is the no-JS, reduced-motion and screen-reader equivalent.
+- **Skills cloud:** a rotating geoid of skill logos with category filters; the List view (every visible skill, with or without a logo) is the no-JS, reduced-motion and screen-reader equivalent.
 - **Admin:** `su julio` in the terminal opens a session for `/admin`, where every piece of content is edited. Anonymous requests get the same 404 as any unknown URL.
 - **Quality bar:** WCAG 2.2 AA, maximal SEO, strict security headers, no third-party requests or visitor cookies (only cookieless same-origin Vercel Web Analytics).
 
