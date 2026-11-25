@@ -17,10 +17,10 @@ Both datasets are **private**: nothing is readable without a token, so hidden it
 
 Create them in [sanity.io/manage](https://www.sanity.io/manage/project/njcnsmax) → API → Tokens. Paste each value straight into `.env.local` (locally) or the Vercel project settings, and never anywhere else.
 
-| Variable             | Role   | Used by                         |
-| -------------------- | ------ | ------------------------------- |
-| `SANITY_READ_TOKEN`  | Viewer | public reads (`sanity/http.ts`) |
-| `SANITY_WRITE_TOKEN` | Editor | admin writes, `sanity:seed`     |
+| Variable             | Role   | Used by                                               |
+| -------------------- | ------ | ----------------------------------------------------- |
+| `SANITY_READ_TOKEN`  | Viewer | public reads (`sanity/http.ts`)                       |
+| `SANITY_WRITE_TOKEN` | Editor | admin writes, `sanity:seed`, `skills:migrate --apply` |
 
 Use one token pair per environment (local, preview, production) so a leaked token can be revoked alone. A Viewer token can read every dataset in the project. If previews must never read `production`, add a custom role scoped to `development`. Custom roles need an Enterprise plan; otherwise accept the risk.
 
@@ -49,11 +49,29 @@ SANITY_WRITE_TOKEN=…
 
 ### Skills (D93, epic #54)
 
-The `skill` type is in the schema, previewed by English name and primary category. The public reader `getSkills` (tag `content:skills`) exists (#57) but no UI uses it; the admin has a Skills area (#66). Fixtures hold 112 skill copies (96 technologies, 16 practices) built with the shared mapper (#59); re-seed `development` (`bun run sanity:seed --dataset development`; the copies are new documents and no ids change, so `--reset` is optional) or run `skills:migrate` (#65) there, since both write the same ids. Until then `content:smoke` against `development` reports a `getSkills` difference. Projects, experience entries and education entries store `skills` (strong references to `skill`, mirrored from `techIds` in fixtures for projects and experience, #60, #61; a few technology and practice references on education, #62); the public repository returns them as `skillIds` (visible skills only, #63) but no component renders them yet, and the admin keeps them on save and, for now, checks that they exist only on projects (experience and education follow in #64). `AdminService.remove` refuses to delete a technology or a skill that a project or an experience entry still links; education links follow with #64 (the Sanity store's `references()` already reports them; the fixtures store catches up in #64). Redeploy the schema to each dataset so the Studio shows the new field (the admin writes it either way), and re-seed `development` so fixture projects, experience and education get `skills`. Until then `content:smoke` may report a difference in admin reads of projects, experience and education, and in `skillIds` from `getProjects`, `getProject`, `getExperience` and `getEducation`. Owner steps:
+The `skill` type is in the schema, previewed by English name and primary category. The public reader `getSkills` (tag `content:skills`) exists (#57) but no UI uses it; the admin has a Skills area (#66). Fixtures hold 112 skill copies (96 technologies, 16 practices) built with the shared mapper (#59); re-seed `development` (`bun run sanity:seed --dataset development`; the copies are new documents and no ids change, so `--reset` is optional) or run `skills:migrate` there (see "Skills migration" below), since both write the same ids. Until then `content:smoke` against `development` reports a `getSkills` difference. Projects, experience entries and education entries store `skills` (strong references to `skill`, mirrored from `techIds` in fixtures for projects and experience, #60, #61; a few technology and practice references on education, #62); the public repository returns them as `skillIds` (visible skills only, #63) but no component renders them yet, and the admin keeps them on save and, for now, checks that they exist only on projects (experience and education follow in #64). `AdminService.remove` refuses to delete a technology or a skill that a project or an experience entry still links; education links follow with #64 (the Sanity store's `references()` already reports them; the fixtures store catches up in #64). Redeploy the schema to each dataset so the Studio shows the new field (the admin writes it either way), and re-seed `development` so fixture projects, experience and education get `skills`. Until then `content:smoke` may report a difference in admin reads of projects, experience and education, and in `skillIds` from `getProjects`, `getProject`, `getExperience` and `getEducation`. Owner steps:
 
 1. Redeploy the `default` workspace schema to `development` now.
 2. Redeploy it to `production` at release gate R1.
 3. Add `"skill"` to the webhook `_type` filter (see "Revalidation webhook"). With `skill` in the filter, a skill change revalidates `content:skills`. `bun run content:smoke` now also reads skills; running it against `development` after the schema redeploy is optional but useful.
+
+#### Skills migration (D93)
+
+`bun run skills:migrate` copies technologies and practices into skills and adds the matching references to projects and experience entries (#65). It needs `SANITY_PROJECT_ID` and, because the datasets are private, `SANITY_READ_TOKEN` (or `SANITY_WRITE_TOKEN`); `--apply` needs `SANITY_WRITE_TOKEN`. Prerequisites: the schema is redeployed with the `skill` type and the `skills` fields, `"skill"` is in the webhook `_type` filter, and no Studio draft of a project or experience entry is open (publish or discard it first: the script patches published documents, and publishing an older draft later would drop the new links).
+
+```sh
+bun run skills:migrate --dataset development            # dry run, writes nothing
+bun run skills:migrate --dataset development --apply    # writes
+bun run skills:migrate --dataset development --check    # exit 0 when nothing is left
+bun run skills:migrate --dataset production --apply --force
+```
+
+- Re-running is safe. A second `--apply` reports "Nothing left to do". Run it again before release gate R2.
+- It only creates missing skills (`createIfNotExists`) and appends missing references. It never modifies or deletes technologies, practices or existing skills, never removes or reorders a stored link, and reads published documents only (drafts are ignored).
+- An owner that would pass its limit (32 skills on a project, 48 on experience), or whose technology has no skill, is reported and left unlinked.
+- Edits to Technologies and Practices after the copy are not carried over (they are frozen between R1 and R2). Drift (a copy that differs from its source) and name collisions are printed but do not fail `--check`, because skills are meant to be edited after the copy. `--check` fails only on missing copies or links, overflow, unresolved links, invalid sources or skipped documents (a document with invalid fields is listed by id and field path and is never copied or linked until it is fixed).
+- A "changed since it was read" error means an owner was edited meanwhile: run the command again.
+- The script does not revalidate. Press "Revalidate all public pages" in the admin dashboard afterwards.
 
 ### Migration 2026-11 (D67)
 
