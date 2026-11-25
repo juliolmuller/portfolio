@@ -32,9 +32,10 @@ function fail(message: string): never {
 }
 
 const dataset = args.dataset ?? env.SANITY_DATASET;
+// A dry run and `--check` only read, so they prefer the read-only token.
 const token = args.apply
   ? env.SANITY_WRITE_TOKEN
-  : (env.SANITY_WRITE_TOKEN ?? env.SANITY_READ_TOKEN);
+  : (env.SANITY_READ_TOKEN ?? env.SANITY_WRITE_TOKEN);
 
 if (args.apply && args.check) fail('--apply and --check cannot be combined.');
 
@@ -49,6 +50,8 @@ if (args.apply && dataset === 'production' && !args.force) {
 }
 
 if (args.apply && !env.SANITY_WRITE_TOKEN) fail('SANITY_WRITE_TOKEN is not set.');
+
+if (!token) fail('SANITY_READ_TOKEN or SANITY_WRITE_TOKEN is not set.');
 
 const client: SanityClient = createClient({
   projectId: env.SANITY_PROJECT_ID,
@@ -180,13 +183,17 @@ async function main(): Promise<void> {
   report(plan, skipped);
 
   if (args.check) {
-    if (isPlanComplete(plan)) {
+    if (isPlanComplete(plan) && skipped.length === 0) {
       console.info('\n✓ Nothing left to do.');
 
       return;
     }
 
-    fail('Skills are missing or not linked. Run with --apply.');
+    fail(
+      skipped.length > 0
+        ? 'Some documents were skipped (invalid fields) or skills are missing or not linked. Fix the skipped documents, then run with --apply.'
+        : 'Skills are missing or not linked. Run with --apply.',
+    );
   }
 
   if (!args.apply) {
@@ -196,12 +203,13 @@ async function main(): Promise<void> {
   }
 
   const clean = await apply(plan);
-  const after = planSkillCopy((await load()).input, new Date().toISOString());
+  const reloaded = await load();
+  const after = planSkillCopy(reloaded.input, new Date().toISOString());
 
   console.info(
-    isPlanComplete(after)
+    isPlanComplete(after) && reloaded.skipped.length === 0
       ? '\n✓ Nothing left to do.'
-      : `\nLeft to do: ${after.create.length} skills, ${after.link.length} links, ${after.overflow.length} overflow, ${after.unresolved.length} unresolved, ${after.invalid.length} invalid.`,
+      : `\nLeft to do: ${after.create.length} skills, ${after.link.length} links, ${after.overflow.length} overflow, ${after.unresolved.length} unresolved, ${after.invalid.length} invalid, ${reloaded.skipped.length} skipped.`,
   );
   console.info('Then press "Revalidate all public pages" in the admin dashboard.');
 

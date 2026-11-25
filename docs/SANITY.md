@@ -17,10 +17,10 @@ Both datasets are **private**: nothing is readable without a token, so hidden it
 
 Create them in [sanity.io/manage](https://www.sanity.io/manage/project/njcnsmax) → API → Tokens. Paste each value straight into `.env.local` (locally) or the Vercel project settings, and never anywhere else.
 
-| Variable             | Role   | Used by                         |
-| -------------------- | ------ | ------------------------------- |
-| `SANITY_READ_TOKEN`  | Viewer | public reads (`sanity/http.ts`) |
-| `SANITY_WRITE_TOKEN` | Editor | admin writes, `sanity:seed`     |
+| Variable             | Role   | Used by                                               |
+| -------------------- | ------ | ----------------------------------------------------- |
+| `SANITY_READ_TOKEN`  | Viewer | public reads (`sanity/http.ts`)                       |
+| `SANITY_WRITE_TOKEN` | Editor | admin writes, `sanity:seed`, `skills:migrate --apply` |
 
 Use one token pair per environment (local, preview, production) so a leaked token can be revoked alone. A Viewer token can read every dataset in the project. If previews must never read `production`, add a custom role scoped to `development`. Custom roles need an Enterprise plan; otherwise accept the risk.
 
@@ -57,7 +57,7 @@ The `skill` type is in the schema, previewed by English name and primary categor
 
 #### Skills migration (D93)
 
-`bun run skills:migrate` copies technologies and practices into skills and adds the matching references to projects and experience entries (#65). It needs `SANITY_PROJECT_ID`; `--apply` also needs `SANITY_WRITE_TOKEN`. Prerequisites: the schema is redeployed with the `skill` type and the `skills` fields, and `"skill"` is in the webhook `_type` filter.
+`bun run skills:migrate` copies technologies and practices into skills and adds the matching references to projects and experience entries (#65). It needs `SANITY_PROJECT_ID` and, because the datasets are private, `SANITY_READ_TOKEN` (or `SANITY_WRITE_TOKEN`); `--apply` needs `SANITY_WRITE_TOKEN`. Prerequisites: the schema is redeployed with the `skill` type and the `skills` fields, `"skill"` is in the webhook `_type` filter, and no Studio draft of a project or experience entry is open (publish or discard it first: the script patches published documents, and publishing an older draft later would drop the new links).
 
 ```sh
 bun run skills:migrate --dataset development            # dry run, writes nothing
@@ -69,7 +69,7 @@ bun run skills:migrate --dataset production --apply --force
 - Re-running is safe. A second `--apply` reports "Nothing left to do". Run it again before release gate R2.
 - It only creates missing skills (`createIfNotExists`) and appends missing references. It never modifies or deletes technologies, practices or existing skills, never removes or reorders a stored link, and reads published documents only (drafts are ignored).
 - An owner that would pass its limit (32 skills on a project, 48 on experience), or whose technology has no skill, is reported and left unlinked.
-- Edits to Technologies and Practices after the copy are not carried over (they are frozen between R1 and R2). Drift (a copy that differs from its source) and name collisions are printed but do not fail `--check`, because skills are meant to be edited after the copy. `--check` fails only on missing copies or links, overflow, unresolved links or invalid sources.
+- Edits to Technologies and Practices after the copy are not carried over (they are frozen between R1 and R2). Drift (a copy that differs from its source) and name collisions are printed but do not fail `--check`, because skills are meant to be edited after the copy. `--check` fails only on missing copies or links, overflow, unresolved links, invalid sources or skipped documents (a document with invalid fields is listed by id and field path and is never copied or linked until it is fixed).
 - A "changed since it was read" error means an owner was edited meanwhile: run the command again.
 - The script does not revalidate. Press "Revalidate all public pages" in the admin dashboard afterwards.
 

@@ -15,7 +15,7 @@ import { type SkillCopyInput, type SkillOwnerRef } from './plan';
 
 const ownerSchema = z.object({
   id: documentIdSchema,
-  rev: z.string().max(64).optional(),
+  rev: z.string().min(1).max(64),
   techIds: z.array(documentIdSchema).default([]),
   skillIds: z.array(documentIdSchema).default([]),
 });
