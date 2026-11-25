@@ -19,7 +19,7 @@ Related: [USAGE.md](./USAGE.md) (signing in and editing content) · [SANITY.md](
 Rules that hold everywhere:
 
 - **Each environment gets its own secrets**: Sanity tokens, `SESSION_SECRET`, admin password and webhook secret. A leaked value can then be revoked alone.
-- **Only production writes to the `production` dataset.** Local work and previews use `development`. `admin:smoke` and `sanity:seed` refuse `production` (seeding needs `--force`).
+- **Only production writes to the `production` dataset.** Local work and previews use `development`. `admin:smoke` and `sanity:seed` refuse `production` (seeding needs `--force`), and so does `skills:migrate --apply`.
 - **`NEXT_PUBLIC_SITE_URL` and the security headers are fixed at build time.** After changing any variable in Vercel, redeploy.
 
 ## 1. Prerequisites
@@ -247,16 +247,17 @@ Admin edits on staging already refresh staging. A `development` webhook only mat
 
 ## 7. Ongoing operations
 
-| Task                        | How                                                                                                     |
-| --------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Ship a change               | Branch from `next`, PR to `next` (preview build; CI runs on the push), merge `next` → `main` to release |
-| Dependency updates          | Dependabot PRs on Mondays                                                                               |
-| Rotate the admin password   | `bun run admin:hash`, update `ADMIN_PASSWORD_HASH` in Vercel, redeploy                                  |
-| Sign everyone out           | Change `SESSION_SECRET`, redeploy                                                                       |
-| Rotate a Sanity token       | Create the new token, update Vercel, redeploy, then delete the old token                                |
-| Change the Sanity schema    | See [SANITY.md → Schema](./SANITY.md#schema)                                                            |
-| Regenerate visual baselines | Actions → _Visual baselines_                                                                            |
-| Debug production            | Vercel → Deployments → Runtime Logs. Content warnings log document paths, never values                  |
+| Task                                  | How                                                                                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Ship a change                         | Branch from `next`, PR to `next` (preview build; CI runs on the push), merge `next` → `main` to release                        |
+| Dependency updates                    | Dependabot PRs on Mondays                                                                                                      |
+| Rotate the admin password             | `bun run admin:hash`, update `ADMIN_PASSWORD_HASH` in Vercel, redeploy                                                         |
+| Sign everyone out                     | Change `SESSION_SECRET`, redeploy                                                                                              |
+| Rotate a Sanity token                 | Create the new token, update Vercel, redeploy, then delete the old token                                                       |
+| Change the Sanity schema              | See [SANITY.md → Schema](./SANITY.md#schema)                                                                                   |
+| Copy technologies/practices to skills | `bun run skills:migrate` (dry run), `--apply`, `--check`; see [SANITY.md → Skills migration](./SANITY.md#skills-migration-d93) |
+| Regenerate visual baselines           | Actions → _Visual baselines_                                                                                                   |
+| Debug production                      | Vercel → Deployments → Runtime Logs. Content warnings log document paths, never values                                         |
 
 Self-hosting works with `bun run build && bun run start` behind a reverse proxy that terminates TLS, compresses responses and **overwrites** `X-Forwarded-For` (the login rate limiter trusts its first entry). If the proxy rewrites the host, set `serverActions.allowedOrigins`.
 
