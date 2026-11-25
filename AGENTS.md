@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # juliolmuller.com — agent guide
 
-Bilingual (en/pt), dark-only personal portfolio: Next.js 16 App Router on Vercel, content in Sanity (or in-memory fixtures), a windowed terminal, a 3D tech cloud, and an admin reachable only through the terminal (`su julio`). This file is the single source of project rules for every agent (Claude Code reads it via `CLAUDE.md`, Cursor reads it natively).
+Bilingual (en/pt), dark-only personal portfolio: Next.js 16 App Router on Vercel, content in Sanity (or in-memory fixtures), a windowed terminal, a 3D skills cloud, and an admin reachable only through the terminal (`su julio`). This file is the single source of project rules for every agent (Claude Code reads it via `CLAUDE.md`, Cursor reads it natively).
 
 ## Read before you change things
 

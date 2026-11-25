@@ -90,7 +90,9 @@ pages / components / terminal snapshot / sitemap / admin
 - **Secret commands** (`su`, `admin`, `logout`) live in a separate dynamically imported module, English only, never in catalogs; without a session they are byte-identical to unknown commands. Secret lines are volatile (never stored, never in history) (D52).
 - The window manager (`src/lib/window-manager` geometry, `src/stores/window-store.ts`) writes gesture styles straight to the DOM in rAF and commits on release; `Esc` reverts; snap uses hysteresis (8 px arm / 32 px release) (D49, D63). State persists in `sessionStorage` (`jm.window.<id>.v1`, `jm.terminal.v1`).
 
-## Technology cloud
+## Skills cloud
+
+Called the skills cloud in copy (D96); code keeps the `tech-cloud` names and `/tech-icons` URLs.
 
 Server resolves each technology and skill to a content-hashed SVG file served from `/tech-icons/<hash>.svg` (`?fill=` for the geoid; technologies leave in #91), so no icon paths reach the client or the HTML twice (D59). The geoid is a full-bleed ellipsoid (`80svh`, min 600 px) with frame-time-scaled motion, yaw-only drag, category chips and exclusive filtering (D37–D45, D66). SSR, no-JS, reduced motion and Pause animations render the grouped List view. Icon resolution order: Simple Icons → Devicon-plain → monogram (D13). The data comes from skills (`getSkills`): `toStackItems` splits the List items (all visible skills) from the cloud items (`inCloud`) on the server, and only icon URLs reach the client (#74).
 

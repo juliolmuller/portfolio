@@ -20,7 +20,8 @@ test('stack list is in the first HTML', async ({ request }) => {
 
   const html = await response.text();
 
-  expect(html).toContain('Technologies I work with');
+  expect(html).toContain('Skills I work with');
+  expect(html).not.toContain('Technologies I work with');
   expect(html).toContain('TypeScript');
   expect(html).toContain('Zustand');
   expect(html).toContain('Redis');
@@ -32,6 +33,13 @@ test('stack list is in the first HTML', async ({ request }) => {
   expect(html).not.toContain('id="stack-practices"');
   expect(html).not.toContain('>Cloud</button>');
   expect(html).not.toContain('>List</button>');
+});
+
+test('stack title is translated in the first HTML', async ({ request }) => {
+  const html = await (await request.get('/pt')).text();
+
+  expect(html).toContain('Habilidades com que trabalho');
+  expect(html).not.toContain('Tecnologias com que trabalho');
 });
 
 test('cloud hydrates and category chips dim the geoid', async ({ page }) => {

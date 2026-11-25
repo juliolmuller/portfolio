@@ -189,7 +189,7 @@
         "usage": "recommend"
       },
       "skills": {
-        "summary": "Technologies by category (alias: stack).",
+        "summary": "Skills by category (alias: stack).",
         "usage": "skills [--category name]"
       },
       "projects": {
@@ -391,8 +391,8 @@
   },
   "stack": {
     "eyebrow": "Stack",
-    "title": "Technologies I work with",
-    "lead": "The tools I reach for, grouped by where they fit in a system. A map of breadth, not a scoreboard.",
+    "title": "Skills I work with",
+    "lead": "The tools and practices I rely on, grouped by where they fit in a system. A map of breadth, not a scoreboard.",
     "categories": {
       "language": "Languages",
       "frontend": "Frontend",
@@ -405,7 +405,7 @@
     },
     "practicesTitle": "Practices and concepts",
     "filterLabel": "Filter by category",
-    "filterChip": "{category} {count, plural, one {# technology} other {# technologies}}",
+    "filterChip": "{category} {count, plural, one {# skill} other {# skills}}",
     "officialSite": "Official site ↗"
   },
   "work": {

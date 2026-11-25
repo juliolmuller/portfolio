@@ -14,7 +14,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Rendering, routing, i18n    | D1/D1b, D2, D3, D16, D18, D19, D33–D35, D57, D62, D84–D86, D88      |
 | Content and Sanity          | D7, D8, D9, D14, D25–D30, D53, D65, D76, D77, D87, D90, D93         |
 | Security and admin          | D4, D10, D11, D21, D51, D52, D54–D56, D70                           |
-| Tech cloud                  | D13, D22, D37–D45, D59, D66                                         |
+| Skills cloud (tech cloud)   | D13, D22, D37–D45, D59, D66, D96                                    |
 | Home, hero, header          | D17, D46–D48, D67, D69, D81, D82, D91                               |
 | Window manager and terminal | D49, D50, D52, D63, D64, D80, D82                                   |
 | Quality, tests, CI          | D12, D23, D31, D32, D36, D58, D60, D61, D78, D79, D83, D89, D92–D95 |
@@ -88,7 +88,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D55 — Admin UI structure** (active). One dynamic tree (`/admin/[area]`, `/new`, `/[id]`) driven by `areas.ts` / `area-config.tsx`; URLs carry only the uuid part of ids (the proxy lowercases URLs and ids have capitals); shared editor fields (`LocalizedField`, Markdown editor with safe preview, image field with focal point, list editor with up/down + drag, icon pickers); dirty guard, error summary, conflict dialog, typed-confirmation delete; saves return the stored document. Admin copy is English only.
 - **D56 — Security headers as built** (active). `src/lib/security/headers.ts` is dependency-free (imported by `next.config.ts`); common headers on **every** path; HSTS `max-age=63072000; includeSubDomains` (no `preload` until the owner confirms) only for https site URLs (otherwise WebKit upgrades localhost). `experimental.sri` stays off (stamps only some Turbopack chunks, all same-origin). zod is not imported by client code (v4 probes `new Function('')`, a CSP violation, and bloats the bundle). `security.spec.ts` records `securitypolicyviolation`: zero allowed.
 
-## Tech cloud
+## Skills cloud (tech cloud)
 
 - **D13 — Technology icon resolution** (active, audited). Simple Icons first, `devicon-plain` (single-tone) second, monogram last; only plain `path/circle/ellipse/rect/polygon` geometry (no gradients, transforms, strokes, `evenodd`). Overrides: TanStack Query → `reactquery`; Swagger/OpenAPI → `swagger`; Pub/Sub → `googlepubsub`; BigQuery → `googlebigquery`; Java, AWS, Zustand, gRPC, AngularJS from devicon-plain. Monograms (pinned via `monogram` field): SQL, Excel/Power Query (`XL`), Power BI (`BI`), SharePoint, VBA, VS Code, GPT. Re-run `icons:audit` (also writes `.cache/icons-audit.html`) after changing technologies.
 - **D22 — Nav indicator without Motion `layoutId`** (active). `layoutId` needs `domMax` (~10 KB gzip). The pill is positioned from the active link's box with a CSS transition.
@@ -101,6 +101,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 - **D43 — Centered chips** (active). **D44 — Filter mutes unmatched icons** (active): ×0.08 opacity, no pointer events; exclusive filtering. Items may carry several categories (first = primary, shown in captions); a filter matches any of them and the List view lists an item under each (#69). **D45 — Dim eases in rAF** (active): lerp factor 0.12 (~250 ms); depth opacity stays a direct write.
 - **D59 — Logos as cached files; document weight** (active). `/tech-icons/<hash>.svg` (hash = two FNV-1a passes over viewBox+paths) is `immutable`, only visible technologies and skills resolve (#70; technologies leave in #91), `?fill=<6 hex>` colours it; List view draws the same file as a CSS mask. Project detail keeps a few inline icons. JetBrains Mono not preloaded. Detail cover uses `preload` + `fetchPriority="high"` (`priority` is deprecated). Home HTML went 690 → 278 KB (47 KB gzip).
 - **D66 — Frame-time scaling and drag model** (active; from `techs-cloud` PR #1). `k = min(gap, 50 ms)/16.67 ms` for spin, easing, dim and friction; pointer travel accumulated per frame; stationary-hold decay; stage size from ResizeObserver only; loop stops when hidden/off-screen/zero-sized. Pure math in `src/lib/tech-cloud/motion.ts` (tested at 60/90/120/144 Hz); the timeline rail reuses it (D81). Not transposed: `touch-action: none` (the geoid sits in a scrolling page).
+- **D96 — Skills cloud naming** (active; owner request, overrides SPEC §7 heading). Since the cloud reads Skills (#74), copy calls it the skills cloud: title "Skills I work with" / "Habilidades com que trabalho", chips count skills, the terminal `skills` summary says skills. Still never meters, levels or proficiency (SPEC §7 spirit kept). The "Stack" eyebrow, nav label, `#stack` anchor and `stack` alias stay. Code identifiers (`tech-cloud/`, `TechIcon`) and the immutable `/tech-icons/<hash>.svg` URLs are not renamed (Owner decision 14 in #54); resume, card and project labels switch with their readers (#76, #78).
 
 ## Home, hero, header
 
@@ -164,6 +165,7 @@ Resolved against npm and the docs bundled in the published packages on 2026-10-1
 | Motion layout filter vs Server Component cards          | D34                |
 | Prerendered `/projects` vs `searchParams`               | D35                |
 | Original Home order and long H1 vs owner changes        | D46–D48, D67       |
+| Stack heading must not say "skills" (§7)                | D96                |
 | Performance targets (150 KB JS, LCP < 2 s, Perf ≥ 95)   | D58, D60 (not met) |
 
 ## Risks (open and closed)
