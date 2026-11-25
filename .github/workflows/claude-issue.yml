@@ -745,6 +745,9 @@ jobs:
             echo 'else'
             printf '  gh pr create --head %q --base %q --title %q --body-file %q --assignee %q --label %q %s\n' "$BRANCH" "$BASE_BRANCH" "$title" "$handoff/pr-body.md" "$OWNER_LOGIN" "$labels" "$draft"
             echo 'fi'
+            # Last command: "Verify the PR exists" fails without it, because the Claude step reports success
+            # even when the script stops halfway (a failed draft sync after the push, for instance).
+            printf 'touch %q\n' "$RUNNER_TEMP/publish.done"
           } > "$RUNNER_TEMP/publish.sh"
           chmod +x "$RUNNER_TEMP/publish.sh"
 
@@ -782,6 +785,10 @@ jobs:
           pr=$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number')
           if [ -z "$pr" ]; then
             echo "::error::publish.sh did not open a PR for $BRANCH. A push touching .github/workflows needs the Claude App to have the Workflows permission."
+            exit 1
+          fi
+          if [ ! -f "$RUNNER_TEMP/publish.done" ]; then
+            echo "::error::publish.sh did not finish (see the Push and open PR step): the branch is pushed but the PR was not fully updated, for example its draft state. Use Re-run failed jobs on this job to finish it."
             exit 1
           fi
 
