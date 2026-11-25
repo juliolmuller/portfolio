@@ -60,9 +60,11 @@ describe('admin education projection', () => {
   });
 
   it('parses an entry without skills to an empty list', async () => {
-    const plain = createFixtureDataset().education[2];
+    const plain = createFixtureDataset().education.find(
+      (entry) => (entry.skillIds ?? []).length === 0,
+    );
 
-    if (!plain) throw new Error('Expected fixture education');
+    if (!plain) throw new Error('Expected a fixture education without skills');
 
     const row = await fetchGroq(adminGetQuery('education'), { id: plain.id }, []);
 
