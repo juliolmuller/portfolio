@@ -535,3 +535,186 @@ describe('remove, flags and order', () => {
     );
   });
 });
+
+type Store = ReturnType<typeof setup>['store'];
+type Owners = Record<'education' | 'experience' | 'project', AdminDoc[]>;
+
+async function owners(store: Store): Promise<Owners> {
+  return {
+    project: await store.list('project'),
+    experience: await store.list('experience'),
+    education: await store.list('education'),
+  };
+}
+
+const skillsOf = (doc: AdminDoc): string[] => (doc['skillIds'] as string[] | undefined) ?? [];
+const byId = (docs: AdminDoc[], id: string): AdminDoc => docs.find((doc) => doc.id === id)!;
+
+function usageOf(all: Owners, skill: string): Record<keyof Owners, string[]> {
+  const linked = (docs: AdminDoc[]): string[] =>
+    docs.filter((doc) => skillsOf(doc).includes(skill)).map((doc) => doc.id);
+
+  return {
+    project: linked(all.project),
+    experience: linked(all.experience),
+    education: linked(all.education),
+  };
+}
+
+async function pickSkill(store: Store): Promise<{ all: Owners; skill: string }> {
+  const all = await owners(store);
+  const skill = skillsOf(all.project.find((doc) => skillsOf(doc).length > 0)!)[0]!;
+
+  return { all, skill };
+}
+
+describe('saveSkillUsage', () => {
+  it('adds and removes the skill, keeps order and only touches changed owners', async () => {
+    const { store, service, revalidated, audits } = setup();
+    const { all, skill } = await pickSkill(store);
+    const usage = usageOf(all, skill);
+    const removed = usage.project.pop()!;
+    const entry = all.education.find((doc) => !skillsOf(doc).includes(skill))!;
+
+    usage.education.push(entry.id);
+
+    const result = await service.saveSkillUsage(skill, usage);
+    const after = await owners(store);
+
+    expect(result).toEqual({ ok: true, changed: 2 });
+    expect(skillsOf(byId(after.project, removed))).toEqual(
+      skillsOf(byId(all.project, removed)).filter((id) => id !== skill),
+    );
+    expect(skillsOf(byId(after.education, entry.id))).toEqual([...skillsOf(entry), skill]);
+
+    for (const doc of after.experience) {
+      expect(doc.rev).toBe(byId(all.experience, doc.id).rev);
+    }
+
+    expect(revalidated.some((item) => item.startsWith('project:'))).toBe(true);
+    expect(revalidated).toContain('education:');
+    expect(revalidated.some((item) => item.startsWith('experience:'))).toBe(false);
+    expect(audits).toEqual(['skill:skill-usage']);
+  });
+
+  it('keeps the position of other skills when removing and appending', async () => {
+    const { store, service } = setup();
+    const { all, skill } = await pickSkill(store);
+    const project = all.project.find((doc) => skillsOf(doc).includes(skill))!;
+    const usage = usageOf(all, skill);
+
+    usage.project = usage.project.filter((id) => id !== project.id);
+    await service.saveSkillUsage(skill, usage);
+
+    const without = skillsOf((await store.get('project', project.id))!);
+
+    expect(without).toEqual(skillsOf(project).filter((id) => id !== skill));
+
+    usage.project.push(project.id);
+    await service.saveSkillUsage(skill, usage);
+
+    expect(skillsOf((await store.get('project', project.id))!)).toEqual([...without, skill]);
+  });
+
+  it('is a no-op when the usage already matches', async () => {
+    const { store, service, revalidated, audits } = setup();
+    const { all, skill } = await pickSkill(store);
+    const result = await service.saveSkillUsage(skill, usageOf(all, skill));
+    const after = await owners(store);
+
+    expect(result).toEqual({ ok: true, changed: 0 });
+    expect(revalidated).toEqual([]);
+    expect(audits).toEqual([]);
+    expect(after).toEqual(all);
+  });
+
+  it('rejects unknown owner ids and writes nothing', async () => {
+    const { store, service } = setup();
+    const { all, skill } = await pickSkill(store);
+    const result = await service.saveSkillUsage(skill, {
+      ...usageOf(all, skill),
+      project: ['project.unknown'],
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      kind: 'invalid',
+      fieldErrors: { 'project.0': 'Unknown project' },
+    });
+    expect(await owners(store)).toEqual(all);
+  });
+
+  it('reports a missing skill and a read-only store', async () => {
+    const empty = { project: [], experience: [], education: [] };
+
+    expect(await setup().service.saveSkillUsage('skill.nope', empty)).toEqual({
+      ok: false,
+      kind: 'missing',
+    });
+    expect(await setup(false).service.saveSkillUsage('x', empty)).toEqual({
+      ok: false,
+      kind: 'readonly',
+    });
+  });
+
+  it('refuses to exceed an owner cap and names the owner', async () => {
+    const { store, service } = setup();
+    const { all, skill } = await pickSkill(store);
+    const entry = all.education[0]!;
+    const others = (await store.list('skill')).map((item) => item.id).filter((id) => id !== skill);
+
+    expect(others.length).toBeGreaterThanOrEqual(24);
+
+    await store.setSkillLinks([
+      { type: 'education', id: entry.id, skillIds: others.slice(0, 24), expectedRev: entry.rev! },
+    ]);
+
+    const before = await owners(store);
+    const usage = usageOf(before, skill);
+
+    usage.project.pop();
+    usage.education = [entry.id];
+
+    const result = await service.saveSkillUsage(skill, usage);
+
+    expect(result).toMatchObject({ ok: false, kind: 'invalid' });
+    expect(JSON.stringify(result)).toContain('already links 24 skills');
+    expect(JSON.stringify(result)).toContain(
+      (entry['title'] as { en: string } | undefined)?.en ?? entry.id,
+    );
+    expect(await owners(store)).toEqual(before);
+  });
+
+  it('leaves every owner unchanged on a conflict', async () => {
+    const { store, revalidated, audits } = setup();
+    const { all, skill } = await pickSkill(store);
+    const entry = all.education.find((doc) => !skillsOf(doc).includes(skill))!;
+    const usage = usageOf(all, skill);
+
+    usage.project.pop();
+    usage.education.push(entry.id);
+
+    const service = createAdminService(
+      {
+        ...store,
+        setSkillLinks: (changes) =>
+          store.setSkillLinks(
+            changes.map((change, index) =>
+              index === 1 ? { ...change, expectedRev: 'stale' } : change,
+            ),
+          ),
+      },
+      {
+        revalidate: (type) => revalidated.push(type),
+        audit: (event) => audits.push(event.action),
+        now: () => new Date(),
+      },
+    );
+    const result = await service.saveSkillUsage(skill, usage);
+
+    expect(result).toEqual({ ok: false, kind: 'conflict' });
+    expect(await owners(store)).toEqual(all);
+    expect(revalidated).toEqual([]);
+    expect(audits).toEqual([]);
+  });
+});

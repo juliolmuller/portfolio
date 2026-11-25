@@ -131,6 +131,27 @@ export function createFixturesAdminStore(
       return { ok: true, rev: INITIAL_REV };
     },
 
+    async setSkillLinks(changes): Promise<WriteResult> {
+      const docs: Stored[] = [];
+
+      for (const change of changes) {
+        const doc = find(change.type, change.id);
+        const problem = check(doc, change.expectedRev);
+
+        if (problem || !doc) return problem ?? { ok: false, reason: 'missing' };
+
+        docs.push(doc);
+      }
+
+      let rev = '';
+      for (const [index, doc] of docs.entries()) {
+        doc['skillIds'] = [...(changes[index]?.skillIds ?? [])];
+        rev = stamp(doc);
+      }
+
+      return { ok: true, rev };
+    },
+
     async referencesTo(id): Promise<Reference[]> {
       const found: Reference[] = [];
       for (const type of ['project', 'experience', 'education'] as const) {

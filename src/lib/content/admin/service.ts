@@ -1,6 +1,12 @@
-import { type DocumentOf, documentSchemas, type DocumentType } from '../schema';
+import { type DocumentOf, documentSchemas, type DocumentType, SKILL_LINK_CAPS } from '../schema';
 import { type FieldErrors, pruneEmpty, toFieldErrors } from './normalize';
-import { type AdminDoc, type AdminStore, type Reference } from './types';
+import {
+  type AdminDoc,
+  type AdminStore,
+  type Reference,
+  type SkillLinkChange,
+  type SkillLinkOwner,
+} from './types';
 
 export const SINGLETONS = ['profile', 'contact', 'resume'] as const;
 const singletons: readonly DocumentType[] = SINGLETONS;
@@ -39,6 +45,24 @@ export type DeleteOutcome =
 export type FlagOutcome =
   { kind: 'conflict' | 'missing' | 'readonly'; ok: false } | { ok: true; rev: string };
 
+export interface SkillUsage {
+  education: string[];
+  experience: string[];
+  project: string[];
+}
+
+export type SkillUsageOutcome =
+  | { changed: number; ok: true }
+  | { fieldErrors: FieldErrors; formErrors: string[]; kind: 'invalid'; ok: false }
+  | { kind: 'conflict' | 'missing' | 'readonly'; ok: false };
+
+const SKILL_OWNER_TYPES = ['project', 'experience', 'education'] as const;
+const OWNER_NOUN: Record<SkillLinkOwner, string> = {
+  project: 'project',
+  experience: 'experience entry',
+  education: 'education entry',
+};
+
 const META_KEYS = ['id', 'rev', 'updatedAt', 'isFixture', 'order'];
 
 const invalid = (fieldErrors: FieldErrors, formErrors: string[] = []): SaveOutcome => ({
@@ -61,6 +85,7 @@ export function createAdminService(
   remove(type: DocumentType, id: string, rev?: string): Promise<DeleteOutcome>;
   reorder(type: DocumentType, ids: string[]): Promise<FlagOutcome>;
   save(type: DocumentType, id: null | string, values: unknown, rev?: string): Promise<SaveOutcome>;
+  saveSkillUsage(skillId: string, usage: SkillUsage): Promise<SkillUsageOutcome>;
   setFlag(
     type: DocumentType,
     id: string,
@@ -286,6 +311,84 @@ export function createAdminService(
       hooks.audit({ type, id, action: `${field}=${value}` });
 
       return { ok: true, rev: result.rev };
+    },
+
+    /**
+     * Makes `usage` the set of owners that link the skill: appends the skill to
+     * owners that gain it and removes it from the ones that drop it, in one
+     * all-or-nothing write. Other links keep their order.
+     */
+    async saveSkillUsage(skillId: string, usage: SkillUsage): Promise<SkillUsageOutcome> {
+      if (readonly) return { ok: false, kind: 'readonly' };
+
+      if (!(await store.get('skill', skillId))) return { ok: false, kind: 'missing' };
+
+      const fieldErrors: FieldErrors = {};
+      const changes: SkillLinkChange[] = [];
+      const slugs: string[] = [];
+      const changedTypes = new Set<SkillLinkOwner>();
+
+      for (const type of SKILL_OWNER_TYPES) {
+        const owners = await store.list(type);
+        const byId = new Map(owners.map((owner) => [owner.id, owner]));
+        const wanted = new Set(usage[type]);
+
+        [...wanted].forEach((id, index) => {
+          if (!byId.has(id)) fieldErrors[`${type}.${index}`] = `Unknown ${OWNER_NOUN[type]}`;
+        });
+
+        for (const owner of owners) {
+          const skillIds = (owner['skillIds'] as string[] | undefined) ?? [];
+          const has = skillIds.includes(skillId);
+          const want = wanted.has(owner.id);
+
+          if (want === has) continue;
+
+          let next: string[];
+
+          if (want) {
+            const cap = SKILL_LINK_CAPS[type];
+
+            if (skillIds.length >= cap) {
+              const title = owner['title'] as { en?: string } | undefined;
+              const label = title?.en ?? (owner['company'] as string | undefined) ?? owner.id;
+
+              fieldErrors[`${type}.${[...wanted].indexOf(owner.id)}`] =
+                `${label} already links ${cap} skills, the most a ${OWNER_NOUN[type]} can have`;
+              continue;
+            }
+
+            next = [...skillIds, skillId];
+          } else {
+            next = skillIds.filter((id) => id !== skillId);
+          }
+
+          changes.push({ type, id: owner.id, skillIds: next, expectedRev: owner.rev ?? '' });
+          changedTypes.add(type);
+
+          if (type === 'project') slugs.push(owner['slug'] as string);
+        }
+      }
+
+      if (Object.keys(fieldErrors).length > 0) {
+        return { ok: false, kind: 'invalid', fieldErrors, formErrors: [] };
+      }
+
+      if (changes.length === 0) return { ok: true, changed: 0 };
+
+      const result = await store.setSkillLinks(changes);
+
+      if (!result.ok) {
+        return { ok: false, kind: result.reason === 'exists' ? 'conflict' : result.reason };
+      }
+
+      for (const type of changedTypes) {
+        hooks.revalidate(type, type === 'project' ? unique(slugs.filter(Boolean)) : []);
+      }
+
+      hooks.audit({ type: 'skill', id: skillId, action: 'skill-usage' });
+
+      return { ok: true, changed: changes.length };
     },
 
     /**

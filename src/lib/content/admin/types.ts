@@ -20,6 +20,15 @@ export interface Reference {
   type: string;
 }
 
+export type SkillLinkOwner = 'education' | 'experience' | 'project';
+
+export interface SkillLinkChange {
+  expectedRev: string;
+  id: string;
+  skillIds: string[];
+  type: SkillLinkOwner;
+}
+
 export interface UploadMeta {
   contentType: string;
   filename: string;
@@ -56,6 +65,11 @@ export interface AdminStore {
    */
   referencesTo(id: string): Promise<Reference[]>;
   remove(type: DocumentType, id: string, expectedRev?: string): Promise<WriteResult>;
+  /**
+   * Replaces the `skillIds` of several owners. All or nothing: every revision
+   * is checked before anything is written.
+   */
+  setSkillLinks(changes: SkillLinkChange[]): Promise<WriteResult>;
   readonly source: 'fixtures' | 'sanity';
   uploadFile(bytes: Buffer, meta: UploadMeta): Promise<FileAsset>;
 

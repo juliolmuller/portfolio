@@ -1,4 +1,9 @@
-import { type PracticeDocument, type SkillDocument, type TechnologyDocument } from '../schema';
+import {
+  type PracticeDocument,
+  SKILL_LINK_CAPS,
+  type SkillDocument,
+  type TechnologyDocument,
+} from '../schema';
 import { slugify } from '../slugify';
 import { mapTechIds, practiceToSkill, skillIdFor, technologyToSkill } from './skills';
 
@@ -10,9 +15,13 @@ import { mapTechIds, practiceToSkill, skillIdFor, technologyToSkill } from './sk
  */
 
 /**
- * Same as the `skillIds` maximums in `projectSchema` and `experienceSchema`.
+ * The `skillIds` maximums of the owners the planner handles, from
+ * `SKILL_LINK_CAPS`.
  */
-export const OWNER_SKILL_CAPS = { project: 32, experience: 48 } as const;
+export const OWNER_SKILL_CAPS = {
+  project: SKILL_LINK_CAPS.project,
+  experience: SKILL_LINK_CAPS.experience,
+} as const;
 
 export type SkillOwnerType = keyof typeof OWNER_SKILL_CAPS;
 

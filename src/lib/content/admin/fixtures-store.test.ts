@@ -88,3 +88,49 @@ describe('fixtures admin store', () => {
     expect(ids.slice(-2)).toEqual([second, first]);
   });
 });
+
+describe('fixtures admin store setSkillLinks', () => {
+  const open = (): ReturnType<typeof createFixturesAdminStore> =>
+    createFixturesAdminStore(createFixtureDataset(), { readOnlyReason: 'test', writable: true });
+
+  it('applies several changes and bumps each revision', async () => {
+    const store = open();
+    const [project] = await store.list('project');
+    const [education] = await store.list('education');
+    const result = await store.setSkillLinks([
+      { type: 'project', id: project!.id, skillIds: [], expectedRev: project!.rev! },
+      { type: 'education', id: education!.id, skillIds: ['a'], expectedRev: education!.rev! },
+    ]);
+    const after = (await store.list('project')).find((doc) => doc.id === project!.id)!;
+    const afterEducation = (await store.list('education')).find((doc) => doc.id === education!.id)!;
+
+    expect(result.ok).toBe(true);
+    expect(after['skillIds']).toEqual([]);
+    expect(after.rev).not.toBe(project!.rev);
+    expect(afterEducation['skillIds']).toEqual(['a']);
+    expect(afterEducation.rev).not.toBe(education!.rev);
+  });
+
+  it('applies nothing when one revision is stale', async () => {
+    const store = open();
+    const [project] = await store.list('project');
+    const [education] = await store.list('education');
+    const result = await store.setSkillLinks([
+      { type: 'project', id: project!.id, skillIds: [], expectedRev: project!.rev! },
+      { type: 'education', id: education!.id, skillIds: [], expectedRev: 'stale' },
+    ]);
+    const after = (await store.list('project')).find((doc) => doc.id === project!.id)!;
+
+    expect(result).toEqual({ ok: false, reason: 'conflict' });
+    expect(after['skillIds']).toEqual(project!['skillIds']);
+    expect(after.rev).toBe(project!.rev);
+  });
+
+  it('reports a missing document', async () => {
+    const result = await open().setSkillLinks([
+      { type: 'project', id: 'nope', skillIds: [], expectedRev: 'x' },
+    ]);
+
+    expect(result).toEqual({ ok: false, reason: 'missing' });
+  });
+});

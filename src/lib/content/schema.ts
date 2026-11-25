@@ -32,6 +32,12 @@ export type ContentLocale = (typeof contentLocales)[number];
 
 // --- Primitives --------------------------------------------------------------
 
+/**
+ * Most skills an owner can link; the single source for the schemas, the
+ * migration planner and the skill usage write.
+ */
+export const SKILL_LINK_CAPS = { project: 32, experience: 48, education: 24 } as const;
+
 const text = (max: number): z.ZodString => z.string().trim().min(1).max(max);
 
 const FENCED_CODE = /```[\s\S]*?```|~~~[\s\S]*?~~~/g;
@@ -410,7 +416,7 @@ export const projectSchema = z
     kind: z.enum(projectKinds),
     status: z.enum(projectStatuses),
     techIds: z.array(documentIdSchema).max(24).default([]),
-    skillIds: z.array(documentIdSchema).max(32).default([]),
+    skillIds: z.array(documentIdSchema).max(SKILL_LINK_CAPS.project).default([]),
     cover: imageSchema.optional(),
     gallery: z.array(galleryItemSchema).max(12).default([]),
     links: z
@@ -481,7 +487,7 @@ export const experienceSchema = z.object({
     .refine(isUnique, { message: 'Duplicate technology' }),
   skillIds: z
     .array(documentIdSchema)
-    .max(48)
+    .max(SKILL_LINK_CAPS.experience)
     .default([])
     .refine(isUnique, { message: 'Duplicate skill' }),
   collapsedByDefault: z.boolean().default(false),
@@ -502,7 +508,7 @@ export const educationSchema = z
     url: httpsUrlSchema.optional(),
     skillIds: z
       .array(documentIdSchema)
-      .max(24)
+      .max(SKILL_LINK_CAPS.education)
       .default([])
       .refine(isUnique, { message: 'Duplicate skill' }),
     order: orderSchema,
