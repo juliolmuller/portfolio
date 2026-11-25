@@ -417,7 +417,7 @@
     "visitAppLabel": "Abrir app: {title} (abre em uma nova aba)",
     "viewDetails": "Ver detalhes",
     "viewDetailsLabel": "Ver detalhes sobre {title}",
-    "moreTechnologies": "{count, plural, one {mais # tecnologia} other {mais # tecnologias}}",
+    "moreSkills": "{count, plural, one {mais # habilidade} other {mais # habilidades}}",
     "kinds": {
       "web": "Web",
       "mobile": "Mobile",

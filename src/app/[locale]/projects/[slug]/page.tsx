@@ -10,8 +10,8 @@ import { CoverTransition } from '@/components/portfolio/cover-transition';
 import { DeviceFrame } from '@/components/portfolio/device-frame';
 import { Gallery } from '@/components/portfolio/gallery';
 import { GeneratedCover } from '@/components/portfolio/generated-cover';
+import { nameLookup } from '@/components/portfolio/names';
 import { ProjectCard } from '@/components/portfolio/project-card';
-import { techNameLookup } from '@/components/portfolio/tech-names';
 import { Breadcrumb } from '@/components/seo/breadcrumb';
 import { JsonLd } from '@/components/seo/json-ld';
 import { ButtonAnchor, ButtonLink } from '@/components/ui/button';
@@ -84,7 +84,7 @@ export default async function ProjectPage({
       content.getPractices(locale),
     ]);
 
-  const namesFor = techNameLookup(skills);
+  const skillNamesFor = nameLookup(skills);
   const skillById = new Map(skills.map((skill) => [skill.id, skill]));
   const usedSkills = project.skillIds
     .map((id) => skillById.get(id))
@@ -253,7 +253,7 @@ export default async function ProjectPage({
               <ul className="mt-8 grid gap-6 min-[1100px]:grid-cols-3 md:grid-cols-2">
                 {related.map((item) => (
                   <li key={item.id}>
-                    <ProjectCard project={item} techNames={namesFor(item.skillIds)} />
+                    <ProjectCard project={item} skillNames={skillNamesFor(item.skillIds)} />
                   </li>
                 ))}
               </ul>

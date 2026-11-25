@@ -122,7 +122,7 @@ export default async function HomePage(): Promise<React.JSX.Element> {
       <Hero profile={profile} nextSection={nextSection} />
       {profile ? <About locale={locale} profile={profile} /> : null}
       {skills.length > 0 ? <Stack skills={skills} /> : null}
-      {featured.length > 0 ? <Work projects={featured} technologies={technologies} /> : null}
+      {featured.length > 0 ? <Work projects={featured} skills={skills} /> : null}
       {experience.length > 0 || education.length > 0 ? (
         <Resume
           locale={locale}

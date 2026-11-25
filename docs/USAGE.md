@@ -79,7 +79,7 @@ A project can only reference existing skills. In **Skills**, check that every to
 | Cover image               | JPEG, PNG, WebP or AVIF ≤ 4 MB. Alt text in both languages is required. Set the focal point so crops keep the subject | Without a cover a generated one is used                |
 | Gallery                   | Up to 12 images, each with alt text and an optional caption                                                           | Opens in the lightbox                                  |
 
-On the project page, the Skills section lists the project's skills (with their icon when they have one, by name otherwise), and Related projects are ranked by how many skills they share. The project form's **Technologies** picker does not change this section: until the skill links become editable, they are added by `bun run skills:migrate` (see [SANITY.md](./SANITY.md#skills-migration)), so a new project shows no Skills section until then.
+Project cards (Home, `/projects` and related projects) show the project's skills (`skillIds`, up to four plus a count), and the Skills section on the project page lists them all (with their icon when they have one, by name otherwise). Related projects are ranked by how many skills they share. The form no longer shows a project's old technologies: they stay stored but unseen, so a project created before the switch shows no skills until you pick them in the form or `bun run skills:migrate` links the matching ones (see [SANITY.md](./SANITY.md#skills-migration-d93)).
 
 Click **Save and publish**. The project is live at `/en/projects/<slug>` and `/pt/projects/<slug>`.
 
